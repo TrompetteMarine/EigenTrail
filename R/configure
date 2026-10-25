@@ -1,8 +1,57 @@
 #!/bin/sh
 set -eu
+# Use installed tools only; never let a rustup proxy install a toolchain.
+export RUSTUP_AUTO_INSTALL=0
+
+version_at_least() {
+    awk -v actual="$1" -v minimum="$2" 'BEGIN {
+        split(actual, a, "."); split(minimum, m, ".");
+        for (i = 1; i <= 3; i++) {
+            if (a[i] + 0 > m[i] + 0) exit 0;
+            if (a[i] + 0 < m[i] + 0) exit 1;
+        }
+        exit 0;
+    }'
+}
+
+find_rust_tool() {
+    tool=$1
+    requested=$2
+    system_tool=$(command -v "$tool" || true)
+    for candidate in "$requested" "$system_tool" "${HOME:-}/.cargo/bin/$tool"; do
+        [ -n "$candidate" ] && [ -x "$candidate" ] || continue
+        description=$("$candidate" --version 2>/dev/null) || continue
+        version=$(printf '%s\n' "$description" | sed -n 's/^[^ ]* \([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/p')
+        [ -n "$version" ] || continue
+        if version_at_least "$version" 1.99.0; then
+            printf '%s\n' "Using $description ($candidate)" >&2
+            printf '%s\n' "$candidate"
+            return 0
+        fi
+    done
+    echo "EigenTrail requires installed $tool >= 1.99.0. Install Cargo and rustc with your system package manager or https://rustup.rs/; installation will not download tools." >&2
+    return 1
+}
+
+eigentrail_cargo=$(find_rust_tool cargo "${CARGO:-}")
+eigentrail_rustc=$(find_rust_tool rustc "${RUSTC:-}")
 case "$(uname -s)" in
   Darwin) eigentrail_system_libs='-liconv -framework Security -framework CoreFoundation' ;;
   Linux) eigentrail_system_libs='-ldl -lpthread -lm' ;;
   *) echo 'Unsupported native platform' >&2; exit 1 ;;
 esac
-sed "s/@SYSTEM_LIBS@/$eigentrail_system_libs/" src/Makevars.in > src/Makevars
+if [ ! -f src/rust/vendor.tar.xz ] || [ ! -f src/rust/.cargo/config.toml ]; then
+    echo 'Missing bundled Rust sources. Install a source package prepared with scripts/stage_r.py --vendor-workspace.' >&2
+    exit 1
+fi
+if [ ! -d src/rust/vendor ]; then
+    tar -xf src/rust/vendor.tar.xz -C src/rust || {
+        echo 'Cannot unpack bundled Rust sources; tar with xz support is required.' >&2
+        exit 1
+    }
+fi
+escape_sed() { printf '%s' "$1" | sed 's/[\\&|]/\\&/g'; }
+sed -e "s|@SYSTEM_LIBS@|$(escape_sed "$eigentrail_system_libs")|" \
+    -e "s|@CARGO@|$(escape_sed "$eigentrail_cargo")|" \
+    -e "s|@RUSTC@|$(escape_sed "$eigentrail_rustc")|" \
+    src/Makevars.in > src/Makevars

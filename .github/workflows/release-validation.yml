@@ -1,0 +1,158 @@
+name: Native release validation
+
+# Artifact validation only. Publishing requires a separate explicitly approved
+# workflow with a protected environment; this job has no registry credentials.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-validation-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  native:
+    name: ${{ matrix.os }} / ${{ matrix.machine }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            machine: arm64
+            python_arch: arm64
+            rustflags: ''
+            cflags: ''
+            deployment_target: '14.0'
+          - os: ubuntu-24.04
+            machine: x86_64
+            python_arch: x64
+            rustflags: '-C target-cpu=haswell'
+            cflags: '-march=haswell -mtune=haswell'
+            deployment_target: ''
+    env:
+      CARGO_BUILD_JOBS: '2'
+      CARGO_INCREMENTAL: '0'
+      RUSTFLAGS: ${{ matrix.rustflags }}
+      CFLAGS: ${{ matrix.cflags }}
+      CXXFLAGS: ${{ matrix.cflags }}
+      PKG_CFLAGS: ${{ matrix.cflags }}
+      PKG_CXXFLAGS: ${{ matrix.cflags }}
+      MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+      MATURIN_NO_INSTALL_RUST: '1'
+      MATURIN_PEP517_ARGS: '--locked --offline'
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.14'
+          architecture: ${{ matrix.python_arch }}
+      - uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2.14.0
+        with:
+          r-version: '4.5.1'
+          use-public-rspm: false
+      - name: Native build prerequisites
+        run: |
+          export CARGO_TARGET_DIR="$RUNNER_TEMP/eigentrail-target"
+          printf 'CARGO_TARGET_DIR=%s\n' "$CARGO_TARGET_DIR" >> "$GITHUB_ENV"
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            sudo apt-get update
+            sudo apt-get install --yes build-essential m4 pkg-config xz-utils
+          else
+            brew install m4 make
+          fi
+          rustup toolchain install 1.99.0 --profile minimal --component rustfmt,clippy
+          rustup default 1.99.0
+          mkdir -p artifacts/python artifacts/raw artifacts/r "$RUNNER_TEMP/eigentrail-wheelhouse"
+          python -m pip download --only-binary=:all: --requirement python/requirements-build.txt --dest "$RUNNER_TEMP/eigentrail-wheelhouse"
+          python -m pip install --no-index --find-links "$RUNNER_TEMP/eigentrail-wheelhouse" --requirement python/requirements-build.txt
+          cargo fetch --locked
+      - name: Record actual native runner, CPU and compilers
+        run: |
+          python scripts/release_smoke.py --environment-only --expected-machine '${{ matrix.machine }}' --out artifacts/runner
+          git rev-parse HEAD > artifacts/source-commit.txt
+      - name: Rust checks and complete release-mode test suite
+        run: |
+          set -o pipefail
+          cargo fmt --all -- --check
+          cargo clippy --locked --lib --bins -- -D warnings
+          for test in scripts/test_*.py; do python "$test"; done
+          python R/tests/test_configure.py
+          python scripts/check_release.py > artifacts/source-metadata.json
+          cargo test --release --locked -- --test-threads=1 2>&1 | tee artifacts/rust-tests.log
+          cargo install --offline --locked --path crates/eigentrail-check --root "$RUNNER_TEMP/eigentrail-cli"
+      - name: Cargo source package validation without publishing
+        run: |
+          set -o pipefail
+          cargo publish --dry-run --locked -p eigentrail-core -p eigentrail-check 2>&1 | tee artifacts/cargo-dry-run.log
+          mkdir -p artifacts/cargo
+          cp "$CARGO_TARGET_DIR"/package/eigentrail-{core,check}-*.crate artifacts/cargo/
+      - name: Build Python wheel and locked source distribution
+        run: |
+          extra=()
+          if [[ "$RUNNER_OS" == Linux ]]; then extra+=(--compatibility linux); fi
+          (cd python && python -m maturin build --release --locked --out ../artifacts/python --interpreter python "${extra[@]}")
+          (cd python && python -m maturin sdist --out ../artifacts/raw)
+          raw=(artifacts/raw/eigentrail-*.tar.gz)
+          [[ ${#raw[@]} -eq 1 ]]
+          python scripts/stage_python_sdist.py "${raw[0]}" "artifacts/python/$(basename "${raw[0]}")"
+          wheels=(artifacts/python/*.whl)
+          [[ ${#wheels[@]} -eq 1 ]]
+          python scripts/check_release.py --artifact "${wheels[0]}" --artifact "artifacts/python/$(basename "${raw[0]}")" > artifacts/python/metadata-check.json
+      - name: Install wheel outside checkout and run smoke
+        run: |
+          python -m venv "$RUNNER_TEMP/eigentrail-wheel"
+          wheels=(artifacts/python/*.whl)
+          [[ ${#wheels[@]} -eq 1 ]]
+          "$RUNNER_TEMP/eigentrail-wheel/bin/python" -m pip install --no-index --find-links "$RUNNER_TEMP/eigentrail-wheelhouse" "${wheels[0]}"
+          "$RUNNER_TEMP/eigentrail-wheel/bin/python" -I scripts/release_smoke.py --cli "$RUNNER_TEMP/eigentrail-cli/bin/eigentrail-check" --out "$RUNNER_TEMP/eigentrail-smoke-wheel"
+      - name: Build and install source distribution outside checkout
+        env:
+          CARGO_NET_OFFLINE: 'true'
+          PIP_NO_CACHE_DIR: '1'
+        run: |
+          python -m venv "$RUNNER_TEMP/eigentrail-source"
+          sources=(artifacts/python/eigentrail-*.tar.gz)
+          [[ ${#sources[@]} -eq 1 ]]
+          "$RUNNER_TEMP/eigentrail-source/bin/python" -m pip install --no-index --find-links "$RUNNER_TEMP/eigentrail-wheelhouse" "${sources[0]}"
+          "$RUNNER_TEMP/eigentrail-source/bin/python" -I scripts/release_smoke.py --cli "$RUNNER_TEMP/eigentrail-cli/bin/eigentrail-check" --out "$RUNNER_TEMP/eigentrail-smoke-source"
+      - name: Prepare source-only offline R vendor closure
+        run: |
+          python scripts/stage_r.py --prepare-vendor build/r-vendor-workspace
+          cargo metadata --offline --format-version 1 --manifest-path build/r-vendor-workspace/Cargo.toml > artifacts/r/vendor-metadata.json
+          cargo vendor --locked --offline --versioned-dirs --manifest-path build/r-vendor-workspace/Cargo.toml build/r-vendor-workspace/vendor > artifacts/r/vendor-config.txt
+          python scripts/stage_r.py --vendor-workspace build/r-vendor-workspace > "$RUNNER_TEMP/eigentrail-r-stage.txt"
+      - name: Build, install and check R source
+        env:
+          CARGO_NET_OFFLINE: 'true'
+        run: |
+          stage="$(tail -n 1 "$RUNNER_TEMP/eigentrail-r-stage.txt")"
+          mkdir -p "$RUNNER_TEMP/eigentrail-r-library"
+          (cd artifacts/r && R CMD build --no-manual --no-build-vignettes "$stage")
+          sources=(artifacts/r/eigentrail_*.tar.gz)
+          [[ ${#sources[@]} -eq 1 ]]
+          R CMD INSTALL --use-vanilla --library="$RUNNER_TEMP/eigentrail-r-library" "${sources[0]}"
+          source="$(cd artifacts/r && pwd)/$(basename "${sources[0]}")"
+          (cd artifacts/r && R CMD check --as-cran --no-manual "$source")
+          "$RUNNER_TEMP/eigentrail-wheel/bin/python" -I scripts/release_smoke.py --cli "$RUNNER_TEMP/eigentrail-cli/bin/eigentrail-check" --r-library "$RUNNER_TEMP/eigentrail-r-library" --out "$RUNNER_TEMP/eigentrail-smoke-r"
+      - name: Upload candidate artifacts and actual logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: validation-${{ matrix.os }}-${{ matrix.machine }}
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            artifacts/
+            ${{ runner.temp }}/eigentrail-smoke-wheel/
+            ${{ runner.temp }}/eigentrail-smoke-source/
+            ${{ runner.temp }}/eigentrail-smoke-r/

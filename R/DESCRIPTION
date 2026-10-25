@@ -2,10 +2,17 @@ Package: eigentrail
 Type: Package
 Title: Checked Covariance Trajectories with TRACE
 Version: 0.1.0
-Authors@R: person("Gabriel", "Bontemps", role=c("aut", "cre"), email="gabriel@example.invalid")
+Authors@R: person("Gabriel", "Bontemps", role=c("aut", "cre"), email="gbontemps@protonmail.com")
 Description: Local covariance trajectory proposals and independent numerical checks.
     Statistical statements remain conditional on declared sampling assumptions.
 License: MIT + file LICENSE
 Encoding: UTF-8
-SystemRequirements: Rust 1.99.0, C compiler, GNU make, R >= 4.5
+Depends: R (>= 4.5.0)
+URL: https://github.com/TrompetteMarine/EigenTrail
+BugReports: https://github.com/TrompetteMarine/EigenTrail/issues
+Copyright: Gabriel Bontemps; authors and copyright holders of the bundled Rust
+    dependencies, identified in inst/THIRD_PARTY_NOTICES.md and inst/licenses/.
+SystemRequirements: Cargo (>= 1.99.0), rustc (>= 1.99.0), C compiler,
+    GNU make, tar with xz support; Linux requires x86-64-v3 (Haswell) CPU
+    instructions and operating-system support
 NeedsCompilation: yes

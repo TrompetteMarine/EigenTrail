@@ -33,6 +33,13 @@ Native macOS ARM64 is tested. Linux requires Haswell/x86-64-v3 and appropriate
 OS instruction support; native Linux qualification is pending. Packages are not
 yet published to PyPI, CRAN or crates.io.
 
+Linux builds from this checkout and the staged Python/R source packages select
+the Haswell CPU target. Cargo registry users must set
+`RUSTFLAGS="-C target-cpu=haswell"` for their consuming builds and checker
+installation; Cargo ignores configuration bundled inside a dependency. See the
+[Linux source instructions](docs/packaging.md#linux-source-builds).
+Linux binary wheels remain behind a separate qualification gate.
+
 ## Track a covariance path
 
 ```python
@@ -89,3 +96,7 @@ that oracle. Python/R source distributions are built with the small helpers in
 
 First-party code is [MIT licensed](LICENSE). Required dependency licenses and
 [third-party notices](THIRD_PARTY_NOTICES.md) accompany source and native packages.
+
+Maintainer: [Gabriel Bontemps](mailto:gbontemps@protonmail.com).
+See [build and publication instructions](docs/packaging.md) for local checks and
+the remaining registry setup steps.

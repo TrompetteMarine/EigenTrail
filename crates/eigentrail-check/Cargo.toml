@@ -4,6 +4,13 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+description = "Independent checker and CLI for TRACE covariance trajectories"
+keywords = ["covariance", "eigenvectors", "tracking", "verification"]
+categories = ["science", "mathematics", "command-line-utilities"]
+include = ["src/**", "LICENSE"]
 
 [dependencies]
 eigentrail-core.workspace = true

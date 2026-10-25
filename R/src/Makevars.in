@@ -1,7 +1,16 @@
 CARGO_TARGET_DIR ?= $(CURDIR)/rust/target
+CARGO = @CARGO@
+RUSTC = @RUSTC@
+export CARGO_TARGET_DIR
+export RUSTC
+export RUSTUP_AUTO_INSTALL = 0
+export CARGO_NET_OFFLINE = true
+export CARGO_BUILD_JOBS = 2
+export CARGO_HOME = $(CURDIR)/rust/.cargo-home
 PKG_LIBS = -L$(CARGO_TARGET_DIR)/release -leigentrail_r -L$(R_HOME)/lib -lR @SYSTEM_LIBS@
+.NOTPARALLEL:
 all: $(SHLIB)
 .PHONY: rust-build
 $(SHLIB): rust-build
 rust-build:
-	cd rust && cargo build --release --locked -p eigentrail-r
+	cd rust && "$(CARGO)" build --lib --release --locked --offline -j 2 -p eigentrail-r

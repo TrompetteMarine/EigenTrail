@@ -1,0 +1,3 @@
+# inari's x86-64 backend requires AVX/FMA; this is the declared Linux baseline.
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-C", "target-cpu=haswell"]

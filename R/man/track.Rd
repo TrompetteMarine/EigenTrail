@@ -123,3 +123,16 @@ and verifies a simple weighted anchor before returning persistent axis labels,
 strengths and possible ranks. Tied anchors and absent premises return explicit
 exhaustion without individual labels. A simple anchor does not establish the
 common-frame model.}
+\examples{
+covariances <- array(0, dim = c(2, 2, 3))
+for (j in seq_len(3)) covariances[, , j] <- diag(c(2, 1))
+times <- c(0, 0.5, 1)
+
+# Zero radii and regularity are declared for this constant example.
+# Output is canonical JSON; no JSON package is needed to call the API.
+report <- track(covariances, times, radii = rep(0, 3), lipschitz = 0)
+stopifnot(is.character(report), length(report) == 1L)
+history <- track_history(covariances, times, rep(0, 3), 0,
+                         query_times = c(0.25, 0.75))
+stopifnot(is.character(history), length(history) == 1L)
+}

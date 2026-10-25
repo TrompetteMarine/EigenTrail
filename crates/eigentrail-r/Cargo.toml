@@ -3,6 +3,12 @@ name = "eigentrail-r"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+description = "R bindings for EigenTrail covariance trajectories"
+publish = false
 
 [lib]
 crate-type = ["staticlib"]

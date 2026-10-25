@@ -39,7 +39,7 @@ def stage(source, destination):
     assert prefix + '/pyproject.toml' in files and prefix + '/PKG-INFO' in files
     lock = (ROOT / 'Cargo.lock').read_bytes()
     assert files[prefix + '/Cargo.lock'][0] == lock, 'Raw source lock differs from the adopted workspace'
-    replacement = {ROOT / name for name in ['Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml']}
+    replacement = {ROOT / name for name in ['Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml', '.cargo/config.toml']}
     replacement.update(path for path in (ROOT / 'crates/eigentrail-r').rglob('*') if path.is_file())
     changed = set()
     for path in sorted(replacement):

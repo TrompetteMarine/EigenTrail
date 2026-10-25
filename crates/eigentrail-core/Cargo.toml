@@ -4,6 +4,13 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+description = "TRACE covariance eigen tracking with checked numerical bounds"
+keywords = ["covariance", "eigenvectors", "tracking", "intervals"]
+categories = ["science", "mathematics"]
+include = ["src/**", "LICENSE"]
 
 [dependencies]
 serde.workspace = true
