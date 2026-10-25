@@ -2,7 +2,9 @@
 
 The maintainer is Gabriel Bontemps, <gbontemps@protonmail.com>. Native macOS ARM64
 with CPython 3.14 and R 4.5 is tested. Linux requires Haswell/x86-64-v3 and suitable
-OS instruction support; native Linux qualification remains pending. Release only
+OS instruction support. Native Mac and Linux artifact checks
+[pass](https://github.com/TrompetteMarine/EigenTrail/actions/runs/40231849932);
+execution on the minimum Linux CPU remains pending. Release only
 artifacts that pass installation and execution on their declared platform.
 
 ## Build Python packages
@@ -115,6 +117,11 @@ offline Cargo configuration, so its installation needs no maintainer registry
 cache. Check it in a clean library with the declared Rust/C/GNU make prerequisites.
 Retain first-party MIT text, third-party notices, dependency licenses and Rust
 standard-library notices in distributed source and native packages.
+
+The native validation run has no R check errors or warnings. Mac reports one
+incoming-submission/source-size note; Linux also reports the explicitly selected
+`-march=haswell` flag as non-portable. Review the declared CPU/toolchain scope
+with CRAN before submission; these results are not CRAN acceptance.
 
 For offline Python development builds, prepare the Rust cache and Python
 wheelhouse, set `CARGO_NET_OFFLINE=true`, `MATURIN_NO_INSTALL_RUST=1` and

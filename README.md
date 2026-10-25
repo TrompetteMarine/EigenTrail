@@ -30,9 +30,11 @@ cargo install --locked --path crates/eigentrail-check
 eigentrail-check --help
 ```
 
-Native macOS ARM64 is tested. Linux requires Haswell/x86-64-v3 and appropriate
-OS instruction support; native Linux qualification is pending. Packages are not
-yet published to PyPI, CRAN or crates.io.
+Native macOS ARM64 and hosted Linux x86-64 package checks
+[pass](https://github.com/TrompetteMarine/EigenTrail/actions/runs/40231849932).
+Linux requires Haswell/x86-64-v3 and appropriate OS instruction support; execution
+on the minimum CPU remains pending. Packages are not yet published to PyPI, CRAN
+or crates.io.
 
 Linux builds from this checkout and the staged Python/R source packages select
 the Haswell CPU target. Cargo registry users must set
