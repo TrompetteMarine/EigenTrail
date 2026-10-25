@@ -90,6 +90,7 @@ itself qualify execution on the minimum supported CPU.
 
 ## Build the R source package
 
+The R package is declared for Unix platforms, including macOS and Linux.
 With the Rust toolchain and required registry sources already cached, prepare an
 isolated production workspace and its vendored dependencies:
 
@@ -129,12 +130,15 @@ completed release.
 
 1. **Rust:** publish `eigentrail-core` before `eigentrail-check`, since the checker
    depends on that exact core version. Inspect `cargo package --list`. Cargo 1.99
-   can verify both packages together before either is uploaded:
-   `cargo publish --dry-run --locked --offline -p eigentrail-core -p eigentrail-check`.
-   This uses a temporary registry for the selected inter-package dependency and
-   requires the remaining registry sources to be cached. A successful dry run
-   checks local packaging/builds; actual registry authentication and publication
-   still need to succeed separately.
+   can package both crates together before either is uploaded. For offline
+   archive/build verification with cached dependencies, use
+   `cargo package --locked --offline -p eigentrail-core -p eigentrail-check`.
+   Run publication preflight with
+   `cargo publish --dry-run --locked -p eigentrail-core -p eigentrail-check`;
+   this can require registry metadata access even when dependency sources are
+   cached. Neither command uploads. A publish dry run is passed only when its
+   own command succeeds; registry authentication and actual publication remain
+   separate steps.
    The Python/R binding crates have `publish=false`; their sources are bundled
    with their language packages. Cargo's
    [publication guide](https://doc.rust-lang.org/cargo/reference/publishing.html)

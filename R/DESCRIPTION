@@ -13,6 +13,7 @@ BugReports: https://github.com/TrompetteMarine/EigenTrail/issues
 Copyright: Gabriel Bontemps; authors and copyright holders of the bundled Rust
     dependencies, identified in inst/THIRD_PARTY_NOTICES.md and inst/licenses/.
 SystemRequirements: Cargo (>= 1.99.0), rustc (>= 1.99.0), C compiler,
-    GNU make, tar with xz support; Linux requires x86-64-v3 (Haswell) CPU
-    instructions and operating-system support
+    GNU make, tar with xz support; macOS ARM64 or GNU/Linux x86-64-v3
+    (Haswell) with operating-system instruction support
+OS_type: unix
 NeedsCompilation: yes

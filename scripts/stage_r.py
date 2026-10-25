@@ -172,9 +172,7 @@ def stage(workspace):
         target = rust / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(workspace / relative, target)
-    config = rust / '.cargo'
-    config.mkdir()
-    (config / 'config.toml').write_text(
+    (rust / 'cargo-config.toml').write_text(
         '[source.crates-io]\nreplace-with = "vendored-sources"\n'
         '[source.vendored-sources]\ndirectory = "vendor"\n'
         '[net]\noffline = true\n[build]\njobs = 2\n'

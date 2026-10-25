@@ -66,9 +66,9 @@ jobs:
           printf 'CARGO_TARGET_DIR=%s\n' "$CARGO_TARGET_DIR" >> "$GITHUB_ENV"
           if [[ "$RUNNER_OS" == Linux ]]; then
             sudo apt-get update
-            sudo apt-get install --yes build-essential m4 pkg-config xz-utils
+            sudo apt-get install --yes --no-install-recommends build-essential m4 pkg-config xz-utils devscripts
           else
-            brew install m4 make
+            brew install m4 make checkbashisms
           fi
           rustup toolchain install 1.99.0 --profile minimal --component rustfmt,clippy
           rustup default 1.99.0
@@ -94,6 +94,7 @@ jobs:
         run: |
           set -o pipefail
           cargo publish --dry-run --locked -p eigentrail-core -p eigentrail-check 2>&1 | tee artifacts/cargo-dry-run.log
+          cargo package --locked --offline --no-verify -p eigentrail-core -p eigentrail-check
           mkdir -p artifacts/cargo
           cp "$CARGO_TARGET_DIR"/package/eigentrail-{core,check}-*.crate artifacts/cargo/
       - name: Build Python wheel and locked source distribution
