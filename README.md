@@ -1,4 +1,4 @@
-# EigenTrail Dev
+# EigenTrail
 
 EigenTrail tracks covariance eigenvalues and eigenspaces over time with the TRACE
 method. It returns checked uncertainty bounds, persistent associations and
