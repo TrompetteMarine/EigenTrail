@@ -15,11 +15,12 @@ source .venv/bin/activate
 python -m pip install ./python
 ```
 
-For R (R 4.5 or later, Rust and GNU make installed):
+For R (R 4.5 or later, Rust and GNU make installed), first
+[build the vendored source package](docs/packaging.md#build-the-r-source-package),
+then install the resulting archive:
 
 ```sh
-python3 scripts/stage_r.py
-R CMD INSTALL <directory-printed-by-the-script>
+R CMD INSTALL eigentrail_0.1.0.tar.gz
 ```
 
 For the standalone command-line checker:
