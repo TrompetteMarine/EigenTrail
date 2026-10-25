@@ -35,7 +35,7 @@ def fixture():
         'features': ['feature_0', 'feature_1'], 'lipschitz': 0.,
         'calibration': {'kind': 'Conditional', 'radii': [RADIUS, RADIUS],
             'assumptions': 'supplied nodal covariance envelope; declared global Lipschitz regularity'},
-        'correction': 0., 'target': .002, 'numerical_allowance': .00001, 'memory_bytes': 512 * 1024**2})
+        'correction': [0., 0.], 'target': .002, 'numerical_allowance': .00001, 'memory_bytes': 512 * 1024**2})
 
 
 def validate_report(report):
