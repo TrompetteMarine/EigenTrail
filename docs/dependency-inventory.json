@@ -1,0 +1,2876 @@
+{
+  "schema": "eigentrail.dependencies.v1",
+  "packages": [
+    {
+      "name": "autocfg",
+      "version": "1.5.1",
+      "license": "Apache-2.0 OR MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/cuviper/autocfg",
+      "features": []
+    },
+    {
+      "name": "az",
+      "version": "1.3.0",
+      "license": "MIT/Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://gitlab.com/tspiteri/az",
+      "features": []
+    },
+    {
+      "name": "bitflags",
+      "version": "2.13.2",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/bitflags/bitflags",
+      "features": []
+    },
+    {
+      "name": "block-buffer",
+      "version": "0.10.4",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/RustCrypto/utils",
+      "features": []
+    },
+    {
+      "name": "bytemuck",
+      "version": "1.25.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/Lokathor/bytemuck",
+      "features": [
+        "aarch64_simd",
+        "bytemuck_derive",
+        "derive",
+        "wasm_simd"
+      ]
+    },
+    {
+      "name": "bytemuck_derive",
+      "version": "1.12.1",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/Lokathor/bytemuck",
+      "features": []
+    },
+    {
+      "name": "byteorder",
+      "version": "1.5.0",
+      "license": "Unlicense OR MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/BurntSushi/byteorder",
+      "features": [
+        "default",
+        "std"
+      ]
+    },
+    {
+      "name": "cfg-if",
+      "version": "1.0.5",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/rust-lang/cfg-if",
+      "features": []
+    },
+    {
+      "name": "cpufeatures",
+      "version": "0.2.17",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/RustCrypto/utils",
+      "features": []
+    },
+    {
+      "name": "crunchy",
+      "version": "0.2.4",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/eira-fransham/crunchy",
+      "features": [
+        "default",
+        "limit_128"
+      ]
+    },
+    {
+      "name": "crypto-common",
+      "version": "0.1.7",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/RustCrypto/traits",
+      "features": [
+        "std"
+      ]
+    },
+    {
+      "name": "defer",
+      "version": "0.2.1",
+      "license": "MIT/Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/andrewhickman/defer/",
+      "features": []
+    },
+    {
+      "name": "digest",
+      "version": "0.10.7",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/RustCrypto/traits",
+      "features": [
+        "alloc",
+        "block-buffer",
+        "core-api",
+        "default",
+        "std"
+      ]
+    },
+    {
+      "name": "dyn-stack",
+      "version": "0.13.2",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://codeberg.org/sarah-quinones/dyn-stack",
+      "features": [
+        "alloc",
+        "core-error",
+        "std"
+      ]
+    },
+    {
+      "name": "dyn-stack-macros",
+      "version": "0.1.3",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/kitegi/dynstack/",
+      "features": []
+    },
+    {
+      "name": "eigentrail-check",
+      "version": "0.1.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": null,
+      "repository": null,
+      "features": []
+    },
+    {
+      "name": "eigentrail-core",
+      "version": "0.1.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": null,
+      "repository": null,
+      "features": []
+    },
+    {
+      "name": "eigentrail-python",
+      "version": "0.1.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": null,
+      "repository": null,
+      "features": []
+    },
+    {
+      "name": "eigentrail-r",
+      "version": "0.1.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": null,
+      "repository": null,
+      "features": []
+    },
+    {
+      "name": "enum-as-inner",
+      "version": "0.6.1",
+      "license": "MIT/Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/bluejekyll/enum-as-inner",
+      "features": []
+    },
+    {
+      "name": "equator",
+      "version": "0.2.2",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-ek/equator/",
+      "features": []
+    },
+    {
+      "name": "equator",
+      "version": "0.6.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-ek/equator/",
+      "features": []
+    },
+    {
+      "name": "equator-macro",
+      "version": "0.2.1",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-ek/equator/",
+      "features": []
+    },
+    {
+      "name": "equator-macro",
+      "version": "0.6.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-ek/equator/",
+      "features": []
+    },
+    {
+      "name": "extendr-api",
+      "version": "0.9.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/extendr/extendr",
+      "features": [
+        "result_condition"
+      ]
+    },
+    {
+      "name": "extendr-ffi",
+      "version": "0.9.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/extendr/extendr",
+      "features": [
+        "default"
+      ]
+    },
+    {
+      "name": "extendr-macros",
+      "version": "0.9.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/extendr/extendr",
+      "features": []
+    },
+    {
+      "name": "faer",
+      "version": "0.24.4",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://codeberg.org/sarah-quinones/faer",
+      "features": [
+        "linalg",
+        "std"
+      ]
+    },
+    {
+      "name": "faer-traits",
+      "version": "0.24.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://codeberg.org/sarah-quinones/faer",
+      "features": [
+        "std"
+      ]
+    },
+    {
+      "name": "forward_ref",
+      "version": "1.0.0",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/jtempest/forward_ref",
+      "features": []
+    },
+    {
+      "name": "gemm",
+      "version": "0.19.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-ek/gemm/",
+      "features": [
+        "std"
+      ]
+    },
+    {
+      "name": "gemm-c32",
+      "version": "0.19.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-ek/gemm/",
+      "features": [
+        "std"
+      ]
+    },
+    {
+      "name": "gemm-c64",
+      "version": "0.19.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-ek/gemm/",
+      "features": [
+        "std"
+      ]
+    },
+    {
+      "name": "gemm-common",
+      "version": "0.19.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-ek/gemm/",
+      "features": [
+        "f16",
+        "half",
+        "std",
+        "sysctl"
+      ]
+    },
+    {
+      "name": "gemm-f16",
+      "version": "0.19.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-ek/gemm/",
+      "features": [
+        "std"
+      ]
+    },
+    {
+      "name": "gemm-f32",
+      "version": "0.19.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-ek/gemm/",
+      "features": [
+        "std"
+      ]
+    },
+    {
+      "name": "gemm-f64",
+      "version": "0.19.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-ek/gemm/",
+      "features": [
+        "std"
+      ]
+    },
+    {
+      "name": "generativity",
+      "version": "1.2.1",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/CAD97/generativity",
+      "features": []
+    },
+    {
+      "name": "generic-array",
+      "version": "0.14.7",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/fizyk20/generic-array.git",
+      "features": [
+        "more_lengths"
+      ]
+    },
+    {
+      "name": "getrandom",
+      "version": "0.3.4",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/rust-random/getrandom",
+      "features": [
+        "std"
+      ]
+    },
+    {
+      "name": "gmp-mpfr-sys",
+      "version": "1.7.1",
+      "license": "LGPL-3.0+",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://gitlab.com/tspiteri/gmp-mpfr-sys",
+      "features": [
+        "mpfr"
+      ]
+    },
+    {
+      "name": "half",
+      "version": "2.7.1",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/VoidStarKat/half-rs",
+      "features": [
+        "bytemuck",
+        "num-traits"
+      ]
+    },
+    {
+      "name": "heck",
+      "version": "0.5.0",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/withoutboats/heck",
+      "features": []
+    },
+    {
+      "name": "hermit-abi",
+      "version": "0.5.3",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/hermit-os/hermit-rs",
+      "features": [
+        "default"
+      ]
+    },
+    {
+      "name": "inari",
+      "version": "2.0.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/unageek/inari",
+      "features": [
+        "gmp",
+        "gmp-mpfr-sys",
+        "nom",
+        "rug"
+      ]
+    },
+    {
+      "name": "interpol",
+      "version": "0.2.1",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/tanakh/interpol",
+      "features": []
+    },
+    {
+      "name": "itoa",
+      "version": "1.0.18",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/dtolnay/itoa",
+      "features": []
+    },
+    {
+      "name": "lazy_static",
+      "version": "1.5.1",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/rust-lang-nursery/lazy-static.rs",
+      "features": []
+    },
+    {
+      "name": "libc",
+      "version": "0.2.191",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/rust-lang/libc",
+      "features": [
+        "default",
+        "std"
+      ]
+    },
+    {
+      "name": "libm",
+      "version": "0.2.16",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/rust-lang/compiler-builtins",
+      "features": [
+        "arch",
+        "default"
+      ]
+    },
+    {
+      "name": "matrixmultiply",
+      "version": "0.3.11",
+      "license": "MIT/Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/bluss/matrixmultiply/",
+      "features": [
+        "cgemm",
+        "std"
+      ]
+    },
+    {
+      "name": "memchr",
+      "version": "2.8.3",
+      "license": "Unlicense OR MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/BurntSushi/memchr",
+      "features": [
+        "alloc",
+        "std"
+      ]
+    },
+    {
+      "name": "minimal-lexical",
+      "version": "0.2.1",
+      "license": "MIT/Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/Alexhuszagh/minimal-lexical",
+      "features": [
+        "std"
+      ]
+    },
+    {
+      "name": "nano-gemm",
+      "version": "0.2.2",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-ek/nano-gemm/",
+      "features": [
+        "std"
+      ]
+    },
+    {
+      "name": "nano-gemm-c32",
+      "version": "0.2.1",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-ek/nano-gemm/",
+      "features": []
+    },
+    {
+      "name": "nano-gemm-c64",
+      "version": "0.2.1",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-ek/nano-gemm/",
+      "features": []
+    },
+    {
+      "name": "nano-gemm-codegen",
+      "version": "0.2.1",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-ek/nano-gemm/",
+      "features": []
+    },
+    {
+      "name": "nano-gemm-core",
+      "version": "0.2.1",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-ek/nano-gemm/",
+      "features": []
+    },
+    {
+      "name": "nano-gemm-f32",
+      "version": "0.2.1",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-ek/nano-gemm/",
+      "features": []
+    },
+    {
+      "name": "nano-gemm-f64",
+      "version": "0.2.1",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-ek/nano-gemm/",
+      "features": []
+    },
+    {
+      "name": "ndarray",
+      "version": "0.17.2",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/rust-ndarray/ndarray",
+      "features": [
+        "default",
+        "std"
+      ]
+    },
+    {
+      "name": "nom",
+      "version": "7.1.3",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/Geal/nom",
+      "features": [
+        "alloc",
+        "std"
+      ]
+    },
+    {
+      "name": "num-complex",
+      "version": "0.4.6",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/rust-num/num-complex",
+      "features": [
+        "bytemuck",
+        "default",
+        "std"
+      ]
+    },
+    {
+      "name": "num-integer",
+      "version": "0.1.47",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/rust-num/num-integer",
+      "features": [
+        "default",
+        "std"
+      ]
+    },
+    {
+      "name": "num-traits",
+      "version": "0.2.19",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/rust-num/num-traits",
+      "features": [
+        "default",
+        "i128",
+        "libm",
+        "std"
+      ]
+    },
+    {
+      "name": "num_cpus",
+      "version": "1.17.0",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/seanmonstar/num_cpus",
+      "features": []
+    },
+    {
+      "name": "numpy",
+      "version": "0.30.0",
+      "license": "BSD-2-Clause",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/PyO3/rust-numpy",
+      "features": []
+    },
+    {
+      "name": "once_cell",
+      "version": "1.21.4",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/matklad/once_cell",
+      "features": [
+        "alloc",
+        "default",
+        "race",
+        "std"
+      ]
+    },
+    {
+      "name": "paste",
+      "version": "1.0.15",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/dtolnay/paste",
+      "features": []
+    },
+    {
+      "name": "portable-atomic",
+      "version": "1.15.0",
+      "license": "Apache-2.0 OR MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/taiki-e/portable-atomic",
+      "features": [
+        "default",
+        "fallback",
+        "require-cas"
+      ]
+    },
+    {
+      "name": "portable-atomic-util",
+      "version": "0.2.8",
+      "license": "Apache-2.0 OR MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/taiki-e/portable-atomic-util",
+      "features": [
+        "alloc",
+        "default"
+      ]
+    },
+    {
+      "name": "ppv-lite86",
+      "version": "0.2.21",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/cryptocorrosion/cryptocorrosion",
+      "features": [
+        "simd",
+        "std"
+      ]
+    },
+    {
+      "name": "private-gemm-x86",
+      "version": "0.1.22",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-quinones/gemm-x64-v2/",
+      "features": []
+    },
+    {
+      "name": "proc-macro2",
+      "version": "1.0.107",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/dtolnay/proc-macro2",
+      "features": [
+        "default",
+        "proc-macro"
+      ]
+    },
+    {
+      "name": "pulp",
+      "version": "0.22.3",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-quinones/pulp/",
+      "features": [
+        "std",
+        "x86-v3"
+      ]
+    },
+    {
+      "name": "pulp-wasm-simd-flag",
+      "version": "0.1.1",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-quinones/pulp/",
+      "features": []
+    },
+    {
+      "name": "pyo3",
+      "version": "0.30.1",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/pyo3/pyo3",
+      "features": [
+        "default",
+        "extension-module",
+        "macros",
+        "pyo3-macros"
+      ]
+    },
+    {
+      "name": "pyo3-build-config",
+      "version": "0.30.1",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/pyo3/pyo3",
+      "features": [
+        "default",
+        "extension-module",
+        "resolve-config"
+      ]
+    },
+    {
+      "name": "pyo3-ffi",
+      "version": "0.30.1",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/pyo3/pyo3",
+      "features": [
+        "default",
+        "extension-module"
+      ]
+    },
+    {
+      "name": "pyo3-macros",
+      "version": "0.30.1",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/pyo3/pyo3",
+      "features": []
+    },
+    {
+      "name": "pyo3-macros-backend",
+      "version": "0.30.1",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/pyo3/pyo3",
+      "features": []
+    },
+    {
+      "name": "qd",
+      "version": "0.8.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-quinones/qd/",
+      "features": [
+        "std"
+      ]
+    },
+    {
+      "name": "quote",
+      "version": "1.0.47",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/dtolnay/quote",
+      "features": [
+        "default",
+        "proc-macro"
+      ]
+    },
+    {
+      "name": "r-efi",
+      "version": "5.3.0",
+      "license": "MIT OR Apache-2.0 OR LGPL-2.1-or-later",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/r-efi/r-efi",
+      "features": []
+    },
+    {
+      "name": "rand_chacha",
+      "version": "0.9.0",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/rust-random/rand",
+      "features": [
+        "default",
+        "std"
+      ]
+    },
+    {
+      "name": "rand_core",
+      "version": "0.9.5",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/rust-random/rand",
+      "features": [
+        "std"
+      ]
+    },
+    {
+      "name": "raw-cpuid",
+      "version": "11.6.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/gz/rust-cpuid",
+      "features": []
+    },
+    {
+      "name": "rawpointer",
+      "version": "0.2.1",
+      "license": "MIT/Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/bluss/rawpointer/",
+      "features": []
+    },
+    {
+      "name": "readonly",
+      "version": "0.2.14",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/dtolnay/readonly",
+      "features": []
+    },
+    {
+      "name": "reborrow",
+      "version": "0.5.5",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/sarah-ek/reborrow/",
+      "features": [
+        "default"
+      ]
+    },
+    {
+      "name": "rug",
+      "version": "1.30.0",
+      "license": "LGPL-3.0+",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://gitlab.com/tspiteri/rug",
+      "features": [
+        "float",
+        "gmp-mpfr-sys",
+        "integer",
+        "rational"
+      ]
+    },
+    {
+      "name": "rustc-hash",
+      "version": "2.1.3",
+      "license": "Apache-2.0 OR MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/rust-lang/rustc-hash",
+      "features": [
+        "default",
+        "std"
+      ]
+    },
+    {
+      "name": "ryu",
+      "version": "1.0.23",
+      "license": "Apache-2.0 OR BSL-1.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/dtolnay/ryu",
+      "features": []
+    },
+    {
+      "name": "same-file",
+      "version": "1.0.6",
+      "license": "Unlicense/MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/BurntSushi/same-file",
+      "features": []
+    },
+    {
+      "name": "seq-macro",
+      "version": "0.3.6",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/dtolnay/seq-macro",
+      "features": []
+    },
+    {
+      "name": "serde",
+      "version": "1.0.228",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/serde-rs/serde",
+      "features": [
+        "default",
+        "derive",
+        "serde_derive",
+        "std"
+      ]
+    },
+    {
+      "name": "serde_core",
+      "version": "1.0.228",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/serde-rs/serde",
+      "features": [
+        "result",
+        "std"
+      ]
+    },
+    {
+      "name": "serde_derive",
+      "version": "1.0.228",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/serde-rs/serde",
+      "features": [
+        "default"
+      ]
+    },
+    {
+      "name": "serde_json",
+      "version": "1.0.145",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/serde-rs/json",
+      "features": [
+        "default",
+        "raw_value",
+        "std"
+      ]
+    },
+    {
+      "name": "sha2",
+      "version": "0.10.9",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/RustCrypto/hashes",
+      "features": [
+        "default",
+        "std"
+      ]
+    },
+    {
+      "name": "syn",
+      "version": "1.0.109",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/dtolnay/syn",
+      "features": [
+        "clone-impls",
+        "default",
+        "derive",
+        "full",
+        "parsing",
+        "printing",
+        "proc-macro",
+        "quote"
+      ]
+    },
+    {
+      "name": "syn",
+      "version": "2.0.119",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/dtolnay/syn",
+      "features": [
+        "clone-impls",
+        "default",
+        "derive",
+        "extra-traits",
+        "full",
+        "parsing",
+        "printing",
+        "proc-macro"
+      ]
+    },
+    {
+      "name": "syn",
+      "version": "3.0.9",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/dtolnay/syn",
+      "features": [
+        "clone-impls",
+        "default",
+        "derive",
+        "extra-traits",
+        "full",
+        "parsing",
+        "printing",
+        "proc-macro",
+        "visit-mut"
+      ]
+    },
+    {
+      "name": "sysctl",
+      "version": "0.6.0",
+      "license": "MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/johalun/sysctl-rs",
+      "features": []
+    },
+    {
+      "name": "target-lexicon",
+      "version": "0.13.5",
+      "license": "Apache-2.0 WITH LLVM-exception",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/bytecodealliance/target-lexicon",
+      "features": [
+        "default"
+      ]
+    },
+    {
+      "name": "thiserror",
+      "version": "1.0.69",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/dtolnay/thiserror",
+      "features": []
+    },
+    {
+      "name": "thiserror-impl",
+      "version": "1.0.69",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/dtolnay/thiserror",
+      "features": []
+    },
+    {
+      "name": "typenum",
+      "version": "1.20.1",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/paholg/typenum",
+      "features": []
+    },
+    {
+      "name": "unicode-ident",
+      "version": "1.0.27",
+      "license": "(MIT OR Apache-2.0) AND Unicode-3.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/dtolnay/unicode-ident",
+      "features": []
+    },
+    {
+      "name": "version_check",
+      "version": "0.9.5",
+      "license": "MIT/Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/SergioBenitez/version_check",
+      "features": []
+    },
+    {
+      "name": "walkdir",
+      "version": "2.5.0",
+      "license": "Unlicense/MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/BurntSushi/walkdir",
+      "features": []
+    },
+    {
+      "name": "wasip2",
+      "version": "1.0.4+wasi-0.2.12",
+      "license": "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/bytecodealliance/wasi-rs",
+      "features": []
+    },
+    {
+      "name": "winapi-util",
+      "version": "0.1.11",
+      "license": "Unlicense OR MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/BurntSushi/winapi-util",
+      "features": []
+    },
+    {
+      "name": "windows-link",
+      "version": "0.2.1",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "features": []
+    },
+    {
+      "name": "windows-sys",
+      "version": "0.61.2",
+      "license": "MIT OR Apache-2.0",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "features": [
+        "Win32",
+        "Win32_Foundation",
+        "Win32_Globalization",
+        "Win32_Storage",
+        "Win32_Storage_FileSystem",
+        "Win32_System",
+        "Win32_System_Com",
+        "Win32_System_Console",
+        "Win32_System_SystemInformation",
+        "Win32_UI",
+        "Win32_UI_Shell",
+        "default"
+      ]
+    },
+    {
+      "name": "wit-bindgen",
+      "version": "0.57.1",
+      "license": "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/bytecodealliance/wit-bindgen",
+      "features": []
+    },
+    {
+      "name": "zerocopy",
+      "version": "0.8.63",
+      "license": "BSD-2-Clause OR Apache-2.0 OR MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/google/zerocopy",
+      "features": [
+        "derive",
+        "simd",
+        "zerocopy-derive"
+      ]
+    },
+    {
+      "name": "zerocopy-derive",
+      "version": "0.8.63",
+      "license": "BSD-2-Clause OR Apache-2.0 OR MIT",
+      "license_file": null,
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/google/zerocopy",
+      "features": []
+    }
+  ],
+  "workspace_features_scope": "includes development validation features; distinct from production graphs",
+  "production_graphs": {
+    "eigentrail-core": {
+      "packages": {
+        "autocfg": [
+          "1.5.1"
+        ],
+        "bitflags": [
+          "2.13.2"
+        ],
+        "block-buffer": [
+          "0.10.4"
+        ],
+        "bytemuck": [
+          "1.25.2"
+        ],
+        "byteorder": [
+          "1.5.0"
+        ],
+        "cfg-if": [
+          "1.0.5"
+        ],
+        "cpufeatures": [
+          "0.2.17"
+        ],
+        "crypto-common": [
+          "0.1.7"
+        ],
+        "digest": [
+          "0.10.7"
+        ],
+        "dyn-stack": [
+          "0.13.2"
+        ],
+        "dyn-stack-macros": [
+          "0.1.3"
+        ],
+        "eigentrail-core": [
+          "0.1.0"
+        ],
+        "enum-as-inner": [
+          "0.6.1"
+        ],
+        "equator": [
+          "0.2.2",
+          "0.6.0"
+        ],
+        "equator-macro": [
+          "0.2.1",
+          "0.6.0"
+        ],
+        "faer": [
+          "0.24.4"
+        ],
+        "faer-traits": [
+          "0.24.0"
+        ],
+        "forward_ref": [
+          "1.0.0"
+        ],
+        "gemm": [
+          "0.19.0"
+        ],
+        "gemm-c32": [
+          "0.19.0"
+        ],
+        "gemm-c64": [
+          "0.19.0"
+        ],
+        "gemm-common": [
+          "0.19.0"
+        ],
+        "gemm-f32": [
+          "0.19.0"
+        ],
+        "gemm-f64": [
+          "0.19.0"
+        ],
+        "generativity": [
+          "1.2.1"
+        ],
+        "generic-array": [
+          "0.14.7"
+        ],
+        "heck": [
+          "0.5.0"
+        ],
+        "inari": [
+          "2.0.0"
+        ],
+        "itoa": [
+          "1.0.18"
+        ],
+        "libc": [
+          "0.2.191"
+        ],
+        "libm": [
+          "0.2.16"
+        ],
+        "memchr": [
+          "2.8.3"
+        ],
+        "nano-gemm": [
+          "0.2.2"
+        ],
+        "nano-gemm-c32": [
+          "0.2.1"
+        ],
+        "nano-gemm-c64": [
+          "0.2.1"
+        ],
+        "nano-gemm-codegen": [
+          "0.2.1"
+        ],
+        "nano-gemm-core": [
+          "0.2.1"
+        ],
+        "nano-gemm-f32": [
+          "0.2.1"
+        ],
+        "nano-gemm-f64": [
+          "0.2.1"
+        ],
+        "num-complex": [
+          "0.4.6"
+        ],
+        "num-traits": [
+          "0.2.19"
+        ],
+        "once_cell": [
+          "1.21.4"
+        ],
+        "paste": [
+          "1.0.15"
+        ],
+        "proc-macro2": [
+          "1.0.107"
+        ],
+        "pulp": [
+          "0.22.3"
+        ],
+        "pulp-wasm-simd-flag": [
+          "0.1.1"
+        ],
+        "qd": [
+          "0.8.0"
+        ],
+        "quote": [
+          "1.0.47"
+        ],
+        "raw-cpuid": [
+          "11.6.0"
+        ],
+        "reborrow": [
+          "0.5.5"
+        ],
+        "ryu": [
+          "1.0.23"
+        ],
+        "seq-macro": [
+          "0.3.6"
+        ],
+        "serde": [
+          "1.0.228"
+        ],
+        "serde_core": [
+          "1.0.228"
+        ],
+        "serde_derive": [
+          "1.0.228"
+        ],
+        "serde_json": [
+          "1.0.145"
+        ],
+        "sha2": [
+          "0.10.9"
+        ],
+        "syn": [
+          "2.0.119"
+        ],
+        "sysctl": [
+          "0.6.0"
+        ],
+        "thiserror": [
+          "1.0.69"
+        ],
+        "thiserror-impl": [
+          "1.0.69"
+        ],
+        "typenum": [
+          "1.20.1"
+        ],
+        "unicode-ident": [
+          "1.0.27"
+        ],
+        "version_check": [
+          "0.9.5"
+        ]
+      },
+      "features": [
+        "eigentrail-core v0.1.0 (crates/eigentrail-core) ",
+        "faer v0.24.4 linalg,std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "dyn-stack v0.13.2 alloc,core-error,std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "dyn-stack-macros v0.1.3 (proc-macro) ",
+        "equator v0.6.0 ",
+        "equator-macro v0.6.0 (proc-macro) ",
+        "faer-traits v0.24.0 std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "generativity v1.2.1 ",
+        "libm v0.2.16 arch,default",
+        "num-complex v0.4.6 bytemuck,std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "num-traits v0.2.19 i128,std",
+        "autocfg v1.5.1 ",
+        "num-traits v0.2.19 i128,std (*)",
+        "pulp v0.22.3 std,x86-v3",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "cfg-if v1.0.5 ",
+        "libm v0.2.16 arch,default",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "pulp-wasm-simd-flag v0.1.1 ",
+        "reborrow v0.5.5 default",
+        "version_check v0.9.5 ",
+        "qd v0.8.0 std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "libm v0.2.16 arch,default",
+        "num-traits v0.2.19 i128,std (*)",
+        "pulp v0.22.3 std,x86-v3 (*)",
+        "reborrow v0.5.5 default",
+        "gemm v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-c32 v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-common v0.19.0 std,sysctl",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "libm v0.2.16 arch,default",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "once_cell v1.21.4 alloc,race,std",
+        "paste v1.0.15 (proc-macro) ",
+        "pulp v0.22.3 std,x86-v3 (*)",
+        "raw-cpuid v11.6.0 ",
+        "bitflags v2.13.2 ",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "sysctl v0.6.0 ",
+        "bitflags v2.13.2 ",
+        "byteorder v1.5.0 default,std",
+        "enum-as-inner v0.6.1 (proc-macro) ",
+        "heck v0.5.0 ",
+        "proc-macro2 v1.0.107 default,proc-macro",
+        "unicode-ident v1.0.27 ",
+        "quote v1.0.47 default,proc-macro",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "syn v2.0.119 clone-impls,default,derive,full,parsing,printing,proc-macro",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "unicode-ident v1.0.27 ",
+        "libc v0.2.191 default,std",
+        "thiserror v1.0.69 ",
+        "thiserror-impl v1.0.69 (proc-macro) ",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "syn v2.0.119 clone-impls,default,derive,full,parsing,printing,proc-macro (*)",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "gemm-c64 v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-common v0.19.0 std,sysctl (*)",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "gemm-common v0.19.0 std,sysctl (*)",
+        "gemm-f32 v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-common v0.19.0 std,sysctl (*)",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "gemm-f64 v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-common v0.19.0 std,sysctl (*)",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "generativity v1.2.1 ",
+        "libm v0.2.16 arch,default",
+        "nano-gemm v0.2.2 std",
+        "equator v0.2.2 ",
+        "equator-macro v0.2.1 (proc-macro) ",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "syn v2.0.119 clone-impls,default,derive,full,parsing,printing,proc-macro (*)",
+        "nano-gemm-c32 v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "nano-gemm-codegen v0.2.1 ",
+        "nano-gemm-c64 v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "nano-gemm-codegen v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "nano-gemm-f32 v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "nano-gemm-codegen v0.2.1 ",
+        "nano-gemm-f64 v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "nano-gemm-codegen v0.2.1 ",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "nano-gemm-codegen v0.2.1 ",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "pulp v0.22.3 std,x86-v3 (*)",
+        "reborrow v0.5.5 default",
+        "inari v2.0.0 ",
+        "cfg-if v1.0.5 ",
+        "forward_ref v1.0.0 ",
+        "serde v1.0.228 default,derive,serde_derive,std",
+        "serde_core v1.0.228 result,std",
+        "serde_derive v1.0.228 (proc-macro) default",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "syn v2.0.119 clone-impls,default,derive,full,parsing,printing,proc-macro (*)",
+        "serde_json v1.0.145 default,raw_value,std",
+        "itoa v1.0.18 ",
+        "memchr v2.8.3 alloc,std",
+        "ryu v1.0.23 ",
+        "serde_core v1.0.228 result,std",
+        "sha2 v0.10.9 default,std",
+        "cfg-if v1.0.5 ",
+        "cpufeatures v0.2.17 ",
+        "libc v0.2.191 default,std",
+        "digest v0.10.7 alloc,block-buffer,core-api,default,std",
+        "block-buffer v0.10.4 ",
+        "generic-array v0.14.7 more_lengths",
+        "typenum v1.20.1 ",
+        "version_check v0.9.5 ",
+        "crypto-common v0.1.7 std",
+        "generic-array v0.14.7 more_lengths (*)",
+        "typenum v1.20.1 "
+      ]
+    },
+    "eigentrail-check": {
+      "packages": {
+        "autocfg": [
+          "1.5.1"
+        ],
+        "bitflags": [
+          "2.13.2"
+        ],
+        "block-buffer": [
+          "0.10.4"
+        ],
+        "bytemuck": [
+          "1.25.2"
+        ],
+        "byteorder": [
+          "1.5.0"
+        ],
+        "cfg-if": [
+          "1.0.5"
+        ],
+        "cpufeatures": [
+          "0.2.17"
+        ],
+        "crypto-common": [
+          "0.1.7"
+        ],
+        "digest": [
+          "0.10.7"
+        ],
+        "dyn-stack": [
+          "0.13.2"
+        ],
+        "dyn-stack-macros": [
+          "0.1.3"
+        ],
+        "eigentrail-check": [
+          "0.1.0"
+        ],
+        "eigentrail-core": [
+          "0.1.0"
+        ],
+        "enum-as-inner": [
+          "0.6.1"
+        ],
+        "equator": [
+          "0.2.2",
+          "0.6.0"
+        ],
+        "equator-macro": [
+          "0.2.1",
+          "0.6.0"
+        ],
+        "faer": [
+          "0.24.4"
+        ],
+        "faer-traits": [
+          "0.24.0"
+        ],
+        "forward_ref": [
+          "1.0.0"
+        ],
+        "gemm": [
+          "0.19.0"
+        ],
+        "gemm-c32": [
+          "0.19.0"
+        ],
+        "gemm-c64": [
+          "0.19.0"
+        ],
+        "gemm-common": [
+          "0.19.0"
+        ],
+        "gemm-f32": [
+          "0.19.0"
+        ],
+        "gemm-f64": [
+          "0.19.0"
+        ],
+        "generativity": [
+          "1.2.1"
+        ],
+        "generic-array": [
+          "0.14.7"
+        ],
+        "heck": [
+          "0.5.0"
+        ],
+        "inari": [
+          "2.0.0"
+        ],
+        "itoa": [
+          "1.0.18"
+        ],
+        "libc": [
+          "0.2.191"
+        ],
+        "libm": [
+          "0.2.16"
+        ],
+        "memchr": [
+          "2.8.3"
+        ],
+        "nano-gemm": [
+          "0.2.2"
+        ],
+        "nano-gemm-c32": [
+          "0.2.1"
+        ],
+        "nano-gemm-c64": [
+          "0.2.1"
+        ],
+        "nano-gemm-codegen": [
+          "0.2.1"
+        ],
+        "nano-gemm-core": [
+          "0.2.1"
+        ],
+        "nano-gemm-f32": [
+          "0.2.1"
+        ],
+        "nano-gemm-f64": [
+          "0.2.1"
+        ],
+        "num-complex": [
+          "0.4.6"
+        ],
+        "num-traits": [
+          "0.2.19"
+        ],
+        "once_cell": [
+          "1.21.4"
+        ],
+        "paste": [
+          "1.0.15"
+        ],
+        "proc-macro2": [
+          "1.0.107"
+        ],
+        "pulp": [
+          "0.22.3"
+        ],
+        "pulp-wasm-simd-flag": [
+          "0.1.1"
+        ],
+        "qd": [
+          "0.8.0"
+        ],
+        "quote": [
+          "1.0.47"
+        ],
+        "raw-cpuid": [
+          "11.6.0"
+        ],
+        "reborrow": [
+          "0.5.5"
+        ],
+        "ryu": [
+          "1.0.23"
+        ],
+        "seq-macro": [
+          "0.3.6"
+        ],
+        "serde": [
+          "1.0.228"
+        ],
+        "serde_core": [
+          "1.0.228"
+        ],
+        "serde_derive": [
+          "1.0.228"
+        ],
+        "serde_json": [
+          "1.0.145"
+        ],
+        "sha2": [
+          "0.10.9"
+        ],
+        "syn": [
+          "2.0.119"
+        ],
+        "sysctl": [
+          "0.6.0"
+        ],
+        "thiserror": [
+          "1.0.69"
+        ],
+        "thiserror-impl": [
+          "1.0.69"
+        ],
+        "typenum": [
+          "1.20.1"
+        ],
+        "unicode-ident": [
+          "1.0.27"
+        ],
+        "version_check": [
+          "0.9.5"
+        ]
+      },
+      "features": [
+        "eigentrail-check v0.1.0 (crates/eigentrail-check) ",
+        "eigentrail-core v0.1.0 (crates/eigentrail-core) ",
+        "faer v0.24.4 linalg,std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "dyn-stack v0.13.2 alloc,core-error,std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "dyn-stack-macros v0.1.3 (proc-macro) ",
+        "equator v0.6.0 ",
+        "equator-macro v0.6.0 (proc-macro) ",
+        "faer-traits v0.24.0 std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "generativity v1.2.1 ",
+        "libm v0.2.16 arch,default",
+        "num-complex v0.4.6 bytemuck,std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "num-traits v0.2.19 i128,std",
+        "autocfg v1.5.1 ",
+        "num-traits v0.2.19 i128,std (*)",
+        "pulp v0.22.3 std,x86-v3",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "cfg-if v1.0.5 ",
+        "libm v0.2.16 arch,default",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "pulp-wasm-simd-flag v0.1.1 ",
+        "reborrow v0.5.5 default",
+        "version_check v0.9.5 ",
+        "qd v0.8.0 std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "libm v0.2.16 arch,default",
+        "num-traits v0.2.19 i128,std (*)",
+        "pulp v0.22.3 std,x86-v3 (*)",
+        "reborrow v0.5.5 default",
+        "gemm v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-c32 v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-common v0.19.0 std,sysctl",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "libm v0.2.16 arch,default",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "once_cell v1.21.4 alloc,race,std",
+        "paste v1.0.15 (proc-macro) ",
+        "pulp v0.22.3 std,x86-v3 (*)",
+        "raw-cpuid v11.6.0 ",
+        "bitflags v2.13.2 ",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "sysctl v0.6.0 ",
+        "bitflags v2.13.2 ",
+        "byteorder v1.5.0 default,std",
+        "enum-as-inner v0.6.1 (proc-macro) ",
+        "heck v0.5.0 ",
+        "proc-macro2 v1.0.107 default,proc-macro",
+        "unicode-ident v1.0.27 ",
+        "quote v1.0.47 default,proc-macro",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "syn v2.0.119 clone-impls,default,derive,full,parsing,printing,proc-macro",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "unicode-ident v1.0.27 ",
+        "libc v0.2.191 default,std",
+        "thiserror v1.0.69 ",
+        "thiserror-impl v1.0.69 (proc-macro) ",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "syn v2.0.119 clone-impls,default,derive,full,parsing,printing,proc-macro (*)",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "gemm-c64 v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-common v0.19.0 std,sysctl (*)",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "gemm-common v0.19.0 std,sysctl (*)",
+        "gemm-f32 v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-common v0.19.0 std,sysctl (*)",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "gemm-f64 v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-common v0.19.0 std,sysctl (*)",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "generativity v1.2.1 ",
+        "libm v0.2.16 arch,default",
+        "nano-gemm v0.2.2 std",
+        "equator v0.2.2 ",
+        "equator-macro v0.2.1 (proc-macro) ",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "syn v2.0.119 clone-impls,default,derive,full,parsing,printing,proc-macro (*)",
+        "nano-gemm-c32 v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "nano-gemm-codegen v0.2.1 ",
+        "nano-gemm-c64 v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "nano-gemm-codegen v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "nano-gemm-f32 v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "nano-gemm-codegen v0.2.1 ",
+        "nano-gemm-f64 v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "nano-gemm-codegen v0.2.1 ",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "nano-gemm-codegen v0.2.1 ",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "pulp v0.22.3 std,x86-v3 (*)",
+        "reborrow v0.5.5 default",
+        "inari v2.0.0 ",
+        "cfg-if v1.0.5 ",
+        "forward_ref v1.0.0 ",
+        "serde v1.0.228 default,derive,serde_derive,std",
+        "serde_core v1.0.228 result,std",
+        "serde_derive v1.0.228 (proc-macro) default",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "syn v2.0.119 clone-impls,default,derive,full,parsing,printing,proc-macro (*)",
+        "serde_json v1.0.145 default,raw_value,std",
+        "itoa v1.0.18 ",
+        "memchr v2.8.3 alloc,std",
+        "ryu v1.0.23 ",
+        "serde_core v1.0.228 result,std",
+        "sha2 v0.10.9 default,std",
+        "cfg-if v1.0.5 ",
+        "cpufeatures v0.2.17 ",
+        "libc v0.2.191 default,std",
+        "digest v0.10.7 alloc,block-buffer,core-api,default,std",
+        "block-buffer v0.10.4 ",
+        "generic-array v0.14.7 more_lengths",
+        "typenum v1.20.1 ",
+        "version_check v0.9.5 ",
+        "crypto-common v0.1.7 std",
+        "generic-array v0.14.7 more_lengths (*)",
+        "typenum v1.20.1 ",
+        "serde v1.0.228 default,derive,serde_derive,std (*)",
+        "serde_json v1.0.145 default,raw_value,std (*)",
+        "sha2 v0.10.9 default,std (*)"
+      ]
+    },
+    "eigentrail-python": {
+      "packages": {
+        "autocfg": [
+          "1.5.1"
+        ],
+        "bitflags": [
+          "2.13.2"
+        ],
+        "block-buffer": [
+          "0.10.4"
+        ],
+        "bytemuck": [
+          "1.25.2"
+        ],
+        "byteorder": [
+          "1.5.0"
+        ],
+        "cfg-if": [
+          "1.0.5"
+        ],
+        "cpufeatures": [
+          "0.2.17"
+        ],
+        "crypto-common": [
+          "0.1.7"
+        ],
+        "digest": [
+          "0.10.7"
+        ],
+        "dyn-stack": [
+          "0.13.2"
+        ],
+        "dyn-stack-macros": [
+          "0.1.3"
+        ],
+        "eigentrail-check": [
+          "0.1.0"
+        ],
+        "eigentrail-core": [
+          "0.1.0"
+        ],
+        "eigentrail-python": [
+          "0.1.0"
+        ],
+        "enum-as-inner": [
+          "0.6.1"
+        ],
+        "equator": [
+          "0.2.2",
+          "0.6.0"
+        ],
+        "equator-macro": [
+          "0.2.1",
+          "0.6.0"
+        ],
+        "faer": [
+          "0.24.4"
+        ],
+        "faer-traits": [
+          "0.24.0"
+        ],
+        "forward_ref": [
+          "1.0.0"
+        ],
+        "gemm": [
+          "0.19.0"
+        ],
+        "gemm-c32": [
+          "0.19.0"
+        ],
+        "gemm-c64": [
+          "0.19.0"
+        ],
+        "gemm-common": [
+          "0.19.0"
+        ],
+        "gemm-f32": [
+          "0.19.0"
+        ],
+        "gemm-f64": [
+          "0.19.0"
+        ],
+        "generativity": [
+          "1.2.1"
+        ],
+        "generic-array": [
+          "0.14.7"
+        ],
+        "heck": [
+          "0.5.0"
+        ],
+        "inari": [
+          "2.0.0"
+        ],
+        "itoa": [
+          "1.0.18"
+        ],
+        "libc": [
+          "0.2.191"
+        ],
+        "libm": [
+          "0.2.16"
+        ],
+        "matrixmultiply": [
+          "0.3.11"
+        ],
+        "memchr": [
+          "2.8.3"
+        ],
+        "nano-gemm": [
+          "0.2.2"
+        ],
+        "nano-gemm-c32": [
+          "0.2.1"
+        ],
+        "nano-gemm-c64": [
+          "0.2.1"
+        ],
+        "nano-gemm-codegen": [
+          "0.2.1"
+        ],
+        "nano-gemm-core": [
+          "0.2.1"
+        ],
+        "nano-gemm-f32": [
+          "0.2.1"
+        ],
+        "nano-gemm-f64": [
+          "0.2.1"
+        ],
+        "ndarray": [
+          "0.17.2"
+        ],
+        "num-complex": [
+          "0.4.6"
+        ],
+        "num-integer": [
+          "0.1.47"
+        ],
+        "num-traits": [
+          "0.2.19"
+        ],
+        "numpy": [
+          "0.30.0"
+        ],
+        "once_cell": [
+          "1.21.4"
+        ],
+        "paste": [
+          "1.0.15"
+        ],
+        "proc-macro2": [
+          "1.0.107"
+        ],
+        "pulp": [
+          "0.22.3"
+        ],
+        "pulp-wasm-simd-flag": [
+          "0.1.1"
+        ],
+        "pyo3": [
+          "0.30.1"
+        ],
+        "pyo3-build-config": [
+          "0.30.1"
+        ],
+        "pyo3-ffi": [
+          "0.30.1"
+        ],
+        "pyo3-macros": [
+          "0.30.1"
+        ],
+        "pyo3-macros-backend": [
+          "0.30.1"
+        ],
+        "qd": [
+          "0.8.0"
+        ],
+        "quote": [
+          "1.0.47"
+        ],
+        "raw-cpuid": [
+          "11.6.0"
+        ],
+        "rawpointer": [
+          "0.2.1"
+        ],
+        "reborrow": [
+          "0.5.5"
+        ],
+        "rustc-hash": [
+          "2.1.3"
+        ],
+        "ryu": [
+          "1.0.23"
+        ],
+        "seq-macro": [
+          "0.3.6"
+        ],
+        "serde": [
+          "1.0.228"
+        ],
+        "serde_core": [
+          "1.0.228"
+        ],
+        "serde_derive": [
+          "1.0.228"
+        ],
+        "serde_json": [
+          "1.0.145"
+        ],
+        "sha2": [
+          "0.10.9"
+        ],
+        "syn": [
+          "2.0.119",
+          "3.0.9"
+        ],
+        "sysctl": [
+          "0.6.0"
+        ],
+        "target-lexicon": [
+          "0.13.5"
+        ],
+        "thiserror": [
+          "1.0.69"
+        ],
+        "thiserror-impl": [
+          "1.0.69"
+        ],
+        "typenum": [
+          "1.20.1"
+        ],
+        "unicode-ident": [
+          "1.0.27"
+        ],
+        "version_check": [
+          "0.9.5"
+        ]
+      },
+      "features": [
+        "eigentrail-python v0.1.0 (crates/eigentrail-python) ",
+        "eigentrail-check v0.1.0 (crates/eigentrail-check) ",
+        "eigentrail-core v0.1.0 (crates/eigentrail-core) ",
+        "faer v0.24.4 linalg,std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "dyn-stack v0.13.2 alloc,core-error,std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "dyn-stack-macros v0.1.3 (proc-macro) ",
+        "equator v0.6.0 ",
+        "equator-macro v0.6.0 (proc-macro) ",
+        "faer-traits v0.24.0 std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "generativity v1.2.1 ",
+        "libm v0.2.16 arch,default",
+        "num-complex v0.4.6 bytemuck,default,std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "num-traits v0.2.19 default,i128,std",
+        "autocfg v1.5.1 ",
+        "num-traits v0.2.19 default,i128,std (*)",
+        "pulp v0.22.3 std,x86-v3",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "cfg-if v1.0.5 ",
+        "libm v0.2.16 arch,default",
+        "num-complex v0.4.6 bytemuck,default,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "pulp-wasm-simd-flag v0.1.1 ",
+        "reborrow v0.5.5 default",
+        "version_check v0.9.5 ",
+        "qd v0.8.0 std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "libm v0.2.16 arch,default",
+        "num-traits v0.2.19 default,i128,std (*)",
+        "pulp v0.22.3 std,x86-v3 (*)",
+        "reborrow v0.5.5 default",
+        "gemm v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-c32 v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-common v0.19.0 std,sysctl",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "libm v0.2.16 arch,default",
+        "num-complex v0.4.6 bytemuck,default,std (*)",
+        "num-traits v0.2.19 default,i128,std (*)",
+        "once_cell v1.21.4 alloc,default,race,std",
+        "paste v1.0.15 (proc-macro) ",
+        "pulp v0.22.3 std,x86-v3 (*)",
+        "raw-cpuid v11.6.0 ",
+        "bitflags v2.13.2 ",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "sysctl v0.6.0 ",
+        "bitflags v2.13.2 ",
+        "byteorder v1.5.0 default,std",
+        "enum-as-inner v0.6.1 (proc-macro) ",
+        "heck v0.5.0 ",
+        "proc-macro2 v1.0.107 default,proc-macro",
+        "unicode-ident v1.0.27 ",
+        "quote v1.0.47 default,proc-macro",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "syn v2.0.119 clone-impls,default,derive,full,parsing,printing,proc-macro",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "unicode-ident v1.0.27 ",
+        "libc v0.2.191 default,std",
+        "thiserror v1.0.69 ",
+        "thiserror-impl v1.0.69 (proc-macro) ",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "syn v2.0.119 clone-impls,default,derive,full,parsing,printing,proc-macro (*)",
+        "num-complex v0.4.6 bytemuck,default,std (*)",
+        "num-traits v0.2.19 default,i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "gemm-c64 v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-common v0.19.0 std,sysctl (*)",
+        "num-complex v0.4.6 bytemuck,default,std (*)",
+        "num-traits v0.2.19 default,i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "gemm-common v0.19.0 std,sysctl (*)",
+        "gemm-f32 v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-common v0.19.0 std,sysctl (*)",
+        "num-complex v0.4.6 bytemuck,default,std (*)",
+        "num-traits v0.2.19 default,i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "gemm-f64 v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-common v0.19.0 std,sysctl (*)",
+        "num-complex v0.4.6 bytemuck,default,std (*)",
+        "num-traits v0.2.19 default,i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "num-complex v0.4.6 bytemuck,default,std (*)",
+        "num-traits v0.2.19 default,i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "generativity v1.2.1 ",
+        "libm v0.2.16 arch,default",
+        "nano-gemm v0.2.2 std",
+        "equator v0.2.2 ",
+        "equator-macro v0.2.1 (proc-macro) ",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "syn v2.0.119 clone-impls,default,derive,full,parsing,printing,proc-macro (*)",
+        "nano-gemm-c32 v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "num-complex v0.4.6 bytemuck,default,std (*)",
+        "nano-gemm-codegen v0.2.1 ",
+        "nano-gemm-c64 v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "num-complex v0.4.6 bytemuck,default,std (*)",
+        "nano-gemm-codegen v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "nano-gemm-f32 v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "nano-gemm-codegen v0.2.1 ",
+        "nano-gemm-f64 v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "nano-gemm-codegen v0.2.1 ",
+        "num-complex v0.4.6 bytemuck,default,std (*)",
+        "nano-gemm-codegen v0.2.1 ",
+        "num-complex v0.4.6 bytemuck,default,std (*)",
+        "num-traits v0.2.19 default,i128,std (*)",
+        "pulp v0.22.3 std,x86-v3 (*)",
+        "reborrow v0.5.5 default",
+        "inari v2.0.0 ",
+        "cfg-if v1.0.5 ",
+        "forward_ref v1.0.0 ",
+        "serde v1.0.228 default,derive,serde_derive,std",
+        "serde_core v1.0.228 result,std",
+        "serde_derive v1.0.228 (proc-macro) default",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "syn v2.0.119 clone-impls,default,derive,full,parsing,printing,proc-macro (*)",
+        "serde_json v1.0.145 default,raw_value,std",
+        "itoa v1.0.18 ",
+        "memchr v2.8.3 alloc,std",
+        "ryu v1.0.23 ",
+        "serde_core v1.0.228 result,std",
+        "sha2 v0.10.9 default,std",
+        "cfg-if v1.0.5 ",
+        "cpufeatures v0.2.17 ",
+        "libc v0.2.191 default,std",
+        "digest v0.10.7 alloc,block-buffer,core-api,default,std",
+        "block-buffer v0.10.4 ",
+        "generic-array v0.14.7 more_lengths",
+        "typenum v1.20.1 ",
+        "version_check v0.9.5 ",
+        "crypto-common v0.1.7 std",
+        "generic-array v0.14.7 more_lengths (*)",
+        "typenum v1.20.1 ",
+        "serde v1.0.228 default,derive,serde_derive,std (*)",
+        "serde_json v1.0.145 default,raw_value,std (*)",
+        "sha2 v0.10.9 default,std (*)",
+        "eigentrail-core v0.1.0 (crates/eigentrail-core)  (*)",
+        "numpy v0.30.0 ",
+        "libc v0.2.191 default,std",
+        "ndarray v0.17.2 default,std",
+        "matrixmultiply v0.3.11 cgemm,std",
+        "rawpointer v0.2.1 ",
+        "autocfg v1.5.1 ",
+        "num-complex v0.4.6 bytemuck,default,std (*)",
+        "num-integer v0.1.47 default,std",
+        "num-traits v0.2.19 default,i128,std (*)",
+        "num-traits v0.2.19 default,i128,std (*)",
+        "rawpointer v0.2.1 ",
+        "num-complex v0.4.6 bytemuck,default,std (*)",
+        "num-integer v0.1.47 default,std (*)",
+        "num-traits v0.2.19 default,i128,std (*)",
+        "pyo3 v0.30.1 default,extension-module,macros,pyo3-macros",
+        "libc v0.2.191 default,std",
+        "once_cell v1.21.4 alloc,default,race,std",
+        "pyo3-ffi v0.30.1 default,extension-module",
+        "libc v0.2.191 default,std",
+        "pyo3-build-config v0.30.1 default,extension-module,resolve-config",
+        "target-lexicon v0.13.5 default",
+        "pyo3-macros v0.30.1 (proc-macro) ",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "pyo3-macros-backend v0.30.1 ",
+        "heck v0.5.0 ",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "syn v3.0.9 clone-impls,default,derive,extra-traits,full,parsing,printing,proc-macro,visit-mut",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "unicode-ident v1.0.27 ",
+        "quote v1.0.47 default,proc-macro (*)",
+        "syn v3.0.9 clone-impls,default,derive,extra-traits,full,parsing,printing,proc-macro,visit-mut (*)",
+        "pyo3-build-config v0.30.1 default,extension-module,resolve-config (*)",
+        "rustc-hash v2.1.3 default,std",
+        "pyo3-build-config v0.30.1 default,extension-module,resolve-config (*)",
+        "pyo3 v0.30.1 default,extension-module,macros,pyo3-macros (*)",
+        "serde_json v1.0.145 default,raw_value,std (*)",
+        "pyo3-build-config v0.30.1 default,extension-module,resolve-config (*)"
+      ]
+    },
+    "eigentrail-r": {
+      "packages": {
+        "autocfg": [
+          "1.5.1"
+        ],
+        "bitflags": [
+          "2.13.2"
+        ],
+        "block-buffer": [
+          "0.10.4"
+        ],
+        "bytemuck": [
+          "1.25.2"
+        ],
+        "byteorder": [
+          "1.5.0"
+        ],
+        "cfg-if": [
+          "1.0.5"
+        ],
+        "cpufeatures": [
+          "0.2.17"
+        ],
+        "crypto-common": [
+          "0.1.7"
+        ],
+        "digest": [
+          "0.10.7"
+        ],
+        "dyn-stack": [
+          "0.13.2"
+        ],
+        "dyn-stack-macros": [
+          "0.1.3"
+        ],
+        "eigentrail-check": [
+          "0.1.0"
+        ],
+        "eigentrail-core": [
+          "0.1.0"
+        ],
+        "eigentrail-r": [
+          "0.1.0"
+        ],
+        "enum-as-inner": [
+          "0.6.1"
+        ],
+        "equator": [
+          "0.2.2",
+          "0.6.0"
+        ],
+        "equator-macro": [
+          "0.2.1",
+          "0.6.0"
+        ],
+        "extendr-api": [
+          "0.9.0"
+        ],
+        "extendr-ffi": [
+          "0.9.0"
+        ],
+        "extendr-macros": [
+          "0.9.0"
+        ],
+        "faer": [
+          "0.24.4"
+        ],
+        "faer-traits": [
+          "0.24.0"
+        ],
+        "forward_ref": [
+          "1.0.0"
+        ],
+        "gemm": [
+          "0.19.0"
+        ],
+        "gemm-c32": [
+          "0.19.0"
+        ],
+        "gemm-c64": [
+          "0.19.0"
+        ],
+        "gemm-common": [
+          "0.19.0"
+        ],
+        "gemm-f32": [
+          "0.19.0"
+        ],
+        "gemm-f64": [
+          "0.19.0"
+        ],
+        "generativity": [
+          "1.2.1"
+        ],
+        "generic-array": [
+          "0.14.7"
+        ],
+        "heck": [
+          "0.5.0"
+        ],
+        "inari": [
+          "2.0.0"
+        ],
+        "itoa": [
+          "1.0.18"
+        ],
+        "lazy_static": [
+          "1.5.1"
+        ],
+        "libc": [
+          "0.2.191"
+        ],
+        "libm": [
+          "0.2.16"
+        ],
+        "memchr": [
+          "2.8.3"
+        ],
+        "nano-gemm": [
+          "0.2.2"
+        ],
+        "nano-gemm-c32": [
+          "0.2.1"
+        ],
+        "nano-gemm-c64": [
+          "0.2.1"
+        ],
+        "nano-gemm-codegen": [
+          "0.2.1"
+        ],
+        "nano-gemm-core": [
+          "0.2.1"
+        ],
+        "nano-gemm-f32": [
+          "0.2.1"
+        ],
+        "nano-gemm-f64": [
+          "0.2.1"
+        ],
+        "num-complex": [
+          "0.4.6"
+        ],
+        "num-traits": [
+          "0.2.19"
+        ],
+        "once_cell": [
+          "1.21.4"
+        ],
+        "paste": [
+          "1.0.15"
+        ],
+        "proc-macro2": [
+          "1.0.107"
+        ],
+        "pulp": [
+          "0.22.3"
+        ],
+        "pulp-wasm-simd-flag": [
+          "0.1.1"
+        ],
+        "qd": [
+          "0.8.0"
+        ],
+        "quote": [
+          "1.0.47"
+        ],
+        "raw-cpuid": [
+          "11.6.0"
+        ],
+        "readonly": [
+          "0.2.14"
+        ],
+        "reborrow": [
+          "0.5.5"
+        ],
+        "ryu": [
+          "1.0.23"
+        ],
+        "seq-macro": [
+          "0.3.6"
+        ],
+        "serde": [
+          "1.0.228"
+        ],
+        "serde_core": [
+          "1.0.228"
+        ],
+        "serde_derive": [
+          "1.0.228"
+        ],
+        "serde_json": [
+          "1.0.145"
+        ],
+        "sha2": [
+          "0.10.9"
+        ],
+        "syn": [
+          "2.0.119",
+          "3.0.9"
+        ],
+        "sysctl": [
+          "0.6.0"
+        ],
+        "thiserror": [
+          "1.0.69"
+        ],
+        "thiserror-impl": [
+          "1.0.69"
+        ],
+        "typenum": [
+          "1.20.1"
+        ],
+        "unicode-ident": [
+          "1.0.27"
+        ],
+        "version_check": [
+          "0.9.5"
+        ]
+      },
+      "features": [
+        "eigentrail-r v0.1.0 (crates/eigentrail-r) ",
+        "eigentrail-check v0.1.0 (crates/eigentrail-check) ",
+        "eigentrail-core v0.1.0 (crates/eigentrail-core) ",
+        "faer v0.24.4 linalg,std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "dyn-stack v0.13.2 alloc,core-error,std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "dyn-stack-macros v0.1.3 (proc-macro) ",
+        "equator v0.6.0 ",
+        "equator-macro v0.6.0 (proc-macro) ",
+        "faer-traits v0.24.0 std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "generativity v1.2.1 ",
+        "libm v0.2.16 arch,default",
+        "num-complex v0.4.6 bytemuck,std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "num-traits v0.2.19 i128,std",
+        "autocfg v1.5.1 ",
+        "num-traits v0.2.19 i128,std (*)",
+        "pulp v0.22.3 std,x86-v3",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "cfg-if v1.0.5 ",
+        "libm v0.2.16 arch,default",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "pulp-wasm-simd-flag v0.1.1 ",
+        "reborrow v0.5.5 default",
+        "version_check v0.9.5 ",
+        "qd v0.8.0 std",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "libm v0.2.16 arch,default",
+        "num-traits v0.2.19 i128,std (*)",
+        "pulp v0.22.3 std,x86-v3 (*)",
+        "reborrow v0.5.5 default",
+        "gemm v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-c32 v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-common v0.19.0 std,sysctl",
+        "bytemuck v1.25.2 aarch64_simd,wasm_simd",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "libm v0.2.16 arch,default",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "once_cell v1.21.4 alloc,default,race,std",
+        "paste v1.0.15 (proc-macro) ",
+        "pulp v0.22.3 std,x86-v3 (*)",
+        "raw-cpuid v11.6.0 ",
+        "bitflags v2.13.2 ",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "sysctl v0.6.0 ",
+        "bitflags v2.13.2 ",
+        "byteorder v1.5.0 default,std",
+        "enum-as-inner v0.6.1 (proc-macro) ",
+        "heck v0.5.0 ",
+        "proc-macro2 v1.0.107 default,proc-macro",
+        "unicode-ident v1.0.27 ",
+        "quote v1.0.47 default,proc-macro",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "syn v2.0.119 clone-impls,default,derive,extra-traits,full,parsing,printing,proc-macro",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "unicode-ident v1.0.27 ",
+        "libc v0.2.191 default,std",
+        "thiserror v1.0.69 ",
+        "thiserror-impl v1.0.69 (proc-macro) ",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "syn v2.0.119 clone-impls,default,derive,extra-traits,full,parsing,printing,proc-macro (*)",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "gemm-c64 v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-common v0.19.0 std,sysctl (*)",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "gemm-common v0.19.0 std,sysctl (*)",
+        "gemm-f32 v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-common v0.19.0 std,sysctl (*)",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "gemm-f64 v0.19.0 std",
+        "dyn-stack v0.13.2 alloc,core-error,std (*)",
+        "gemm-common v0.19.0 std,sysctl (*)",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "paste v1.0.15 (proc-macro) ",
+        "raw-cpuid v11.6.0  (*)",
+        "seq-macro v0.3.6 (proc-macro) ",
+        "generativity v1.2.1 ",
+        "libm v0.2.16 arch,default",
+        "nano-gemm v0.2.2 std",
+        "equator v0.2.2 ",
+        "equator-macro v0.2.1 (proc-macro) ",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "syn v2.0.119 clone-impls,default,derive,extra-traits,full,parsing,printing,proc-macro (*)",
+        "nano-gemm-c32 v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "nano-gemm-codegen v0.2.1 ",
+        "nano-gemm-c64 v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "nano-gemm-codegen v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "nano-gemm-f32 v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "nano-gemm-codegen v0.2.1 ",
+        "nano-gemm-f64 v0.2.1 ",
+        "nano-gemm-core v0.2.1 ",
+        "nano-gemm-codegen v0.2.1 ",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "nano-gemm-codegen v0.2.1 ",
+        "num-complex v0.4.6 bytemuck,std (*)",
+        "num-traits v0.2.19 i128,std (*)",
+        "pulp v0.22.3 std,x86-v3 (*)",
+        "reborrow v0.5.5 default",
+        "inari v2.0.0 ",
+        "cfg-if v1.0.5 ",
+        "forward_ref v1.0.0 ",
+        "serde v1.0.228 default,derive,serde_derive,std",
+        "serde_core v1.0.228 result,std",
+        "serde_derive v1.0.228 (proc-macro) default",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "syn v2.0.119 clone-impls,default,derive,extra-traits,full,parsing,printing,proc-macro (*)",
+        "serde_json v1.0.145 default,raw_value,std",
+        "itoa v1.0.18 ",
+        "memchr v2.8.3 alloc,std",
+        "ryu v1.0.23 ",
+        "serde_core v1.0.228 result,std",
+        "sha2 v0.10.9 default,std",
+        "cfg-if v1.0.5 ",
+        "cpufeatures v0.2.17 ",
+        "libc v0.2.191 default,std",
+        "digest v0.10.7 alloc,block-buffer,core-api,default,std",
+        "block-buffer v0.10.4 ",
+        "generic-array v0.14.7 more_lengths",
+        "typenum v1.20.1 ",
+        "version_check v0.9.5 ",
+        "crypto-common v0.1.7 std",
+        "generic-array v0.14.7 more_lengths (*)",
+        "typenum v1.20.1 ",
+        "serde v1.0.228 default,derive,serde_derive,std (*)",
+        "serde_json v1.0.145 default,raw_value,std (*)",
+        "sha2 v0.10.9 default,std (*)",
+        "eigentrail-core v0.1.0 (crates/eigentrail-core)  (*)",
+        "extendr-api v0.9.0 result_condition",
+        "extendr-ffi v0.9.0 default",
+        "extendr-macros v0.9.0 (proc-macro) ",
+        "lazy_static v1.5.1 ",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "syn v2.0.119 clone-impls,default,derive,extra-traits,full,parsing,printing,proc-macro (*)",
+        "once_cell v1.21.4 alloc,default,race,std",
+        "paste v1.0.15 (proc-macro) ",
+        "readonly v0.2.14 (proc-macro) ",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "syn v3.0.9 clone-impls,default,derive,parsing,printing,proc-macro,visit-mut",
+        "proc-macro2 v1.0.107 default,proc-macro (*)",
+        "quote v1.0.47 default,proc-macro (*)",
+        "unicode-ident v1.0.27 ",
+        "serde_json v1.0.145 default,raw_value,std (*)"
+      ]
+    }
+  },
+  "native": [
+    {
+      "name": "GMP",
+      "version": "6.3.0",
+      "role": "development/validation oracle only; absent from selected production normal/build graphs",
+      "linking": "static in oracle test builds via gmp-mpfr-sys 1.7.1",
+      "redistribution": "LGPL/GPL options; qualification of distributed artifacts remains required"
+    },
+    {
+      "name": "MPFR",
+      "version": "4.2.2",
+      "role": "development/validation oracle only; absent from selected production normal/build graphs",
+      "linking": "static in oracle test builds via gmp-mpfr-sys 1.7.1",
+      "redistribution": "LGPL-3.0-or-later; qualification of distributed artifacts remains required"
+    }
+  ],
+  "distribution_qualified": false,
+  "native_cpu_build_audit": "pending; Linux Haswell flags require execution on baseline runner"
+}

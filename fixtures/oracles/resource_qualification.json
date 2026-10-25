@@ -1,0 +1,178 @@
+{
+  "schema": "eigentrail.resource-qualification-oracle.v1",
+  "budget_bytes": 536870912,
+  "wire": {
+    "dates": {
+      "bytes": 1090371,
+      "sha256": "616d691714737e72dfae45e84702ccd315f4424c1212e9889f49615fc600a59f"
+    },
+    "dimension": {
+      "bytes": 3018665,
+      "sha256": "720c8cf177f613887b163db3060d229a87264da5aff6efab783c78c3d2f5800b"
+    },
+    "configurations": {
+      "bytes": 3817,
+      "sha256": "b5f6e14f3bb820bbde10bd2ddba7cd043a3ca3c7e4f8070c0479bc7fb7b820a5"
+    }
+  },
+  "case_groups": {
+    "dimension": {
+      "features": 256,
+      "dates": 2,
+      "covariance": "identity",
+      "radius": "0",
+      "K": "0",
+      "full_block": [
+        0,
+        256
+      ],
+      "full_block_bound": "0",
+      "strength_contains": "1",
+      "share_contains": "1/256",
+      "rank": [
+        1,
+        256
+      ],
+      "outcome": "Completed"
+    },
+    "dates": {
+      "features": 1,
+      "dates": 10000,
+      "covariance": "1",
+      "radius": "0",
+      "K": "0",
+      "strength": [
+        "1",
+        "1"
+      ],
+      "share": [
+        "1",
+        "1"
+      ],
+      "rank": [
+        1,
+        1
+      ],
+      "unique_cells": 9999,
+      "outcome": "Completed"
+    },
+    "configurations": {
+      "configurations": 16,
+      "ids": [
+        "cfg00",
+        "cfg01",
+        "cfg02",
+        "cfg03",
+        "cfg04",
+        "cfg05",
+        "cfg06",
+        "cfg07",
+        "cfg08",
+        "cfg09",
+        "cfg10",
+        "cfg11",
+        "cfg12",
+        "cfg13",
+        "cfg14",
+        "cfg15"
+      ],
+      "features": 1,
+      "dates": 2,
+      "queries": [
+        "0",
+        "1/2",
+        "1"
+      ],
+      "covariance": "1",
+      "radius": "0",
+      "K": "0",
+      "strength": [
+        "1",
+        "1"
+      ],
+      "share": [
+        "1",
+        "1"
+      ],
+      "rank": [
+        1,
+        1
+      ],
+      "outcome": "Completed",
+      "pruning_allowed": false
+    },
+    "worker": {
+      "actual_shared_helper": true,
+      "stack_bytes": 2097152,
+      "control_bytes": 65536,
+      "outcomes": [
+        "Completed",
+        "Resource",
+        "Cancelled"
+      ],
+      "retain_managed_result_after_handoff": true,
+      "join_before_releasing_worker_storage": true,
+      "cold_dimension": 256,
+      "numerical_prewarm_allowed": false,
+      "count_hidden_numerical_thread_local_storage": true,
+      "measurement": "System allocator across parent and worker threads"
+    },
+    "admission": {
+      "joint_features": 256,
+      "joint_dates": 10000,
+      "raw_stack_bytes": 5242880000,
+      "joint_outcome": "Resource",
+      "copy_before_refusal": false,
+      "borrowed_budget_bytes": 8388608,
+      "borrowed_assumptions_capacity_bytes": 8388608,
+      "standalone_and_active_outcome": "Resource",
+      "transport_values_capacity_bytes": 8388608,
+      "transport_active_outcome": "Resource",
+      "stationary_block_cells": 4096,
+      "stationary_block_features": 2,
+      "stationary_block_eigenvalues": [
+        "2",
+        "1"
+      ],
+      "stationary_block_rotation": [
+        [
+          "1",
+          "0"
+        ],
+        [
+          "0",
+          "1"
+        ]
+      ],
+      "stationary_block_outcome": "Completed",
+      "stationary_block_peak_above_visible_borrowed_at_most": 73728,
+      "conservative_borrowed_double_charge_allowed": true
+    },
+    "cancellation": {
+      "assumptions_ascii_bytes": 134217728,
+      "wire_bytes": 134218245,
+      "wire_sha256": "a6f1a370b40e87445a26a72dbd5b3542931c02b237b28305e95ab3614bf72be3",
+      "native_languages": [
+        "Python",
+        "R"
+      ],
+      "signal_to_clean_exit_seconds_at_most": 1,
+      "outcome": "Cancelled",
+      "completed_certificate_allowed": false,
+      "pre_cancelled_decode_outcome": "Cancelled",
+      "transport_max_cells": 65536,
+      "above_transport_limit": "Exhausted",
+      "qualification": "declared finite workload on recorded native runner"
+    }
+  },
+  "measurement": {
+    "system_peak_at_most_ledger_peak": true,
+    "ledger_peak_at_most_budget": true,
+    "counter_underflows": 0,
+    "retained_output_charged": true,
+    "drop_returns_operation_baseline": true,
+    "context_drop_returns_managed_heap_zero": true,
+    "borrowed_fixtures_created_before_probe": true
+  },
+  "scope": "Finite native macOS ARM64 path qualification, not universal cap/cancellation proof, interpreter memory, allocator overhead, RSS or Linux/platform qualification. Preserve earlier independent oracles and scientific targets."
+}

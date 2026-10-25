@@ -1,0 +1,171 @@
+{
+  "schema": "eigentrail.license-source-recovery.v1",
+  "scope": "Upstream license URLs, source commits and hashes for bundled dependency notices.",
+  "recovered": [
+    {
+      "target": "licenses/dependencies/equator-0.2.2/LICENSE",
+      "sha256": "97d3424e347e8fa236806725ce9837bb453d4dfc9ce1d4733fd6023a8038000a",
+      "bytes": 1062,
+      "source": "licenses/dependencies/equator-0.2.2/LICENSE",
+      "provenance": "upstream-at-package-vcs-commit",
+      "url": "https://raw.githubusercontent.com/sarah-ek/equator/9d4107bdd6a75598aed4a60fe46200c9e9f4e653/LICENSE",
+      "commit": "9d4107bdd6a75598aed4a60fe46200c9e9f4e653",
+      "name": "equator",
+      "version": "0.2.2"
+    },
+    {
+      "target": "licenses/dependencies/equator-macro-0.2.1/LICENSE",
+      "sha256": "97d3424e347e8fa236806725ce9837bb453d4dfc9ce1d4733fd6023a8038000a",
+      "bytes": 1062,
+      "source": "licenses/dependencies/equator-macro-0.2.1/LICENSE",
+      "provenance": "upstream-at-package-vcs-commit",
+      "url": "https://raw.githubusercontent.com/sarah-ek/equator/c9061f3da9a7cc53b0d388f26ab6bb95422823c3/LICENSE",
+      "commit": "c9061f3da9a7cc53b0d388f26ab6bb95422823c3",
+      "name": "equator-macro",
+      "version": "0.2.1"
+    },
+    {
+      "target": "licenses/dependencies/extendr-api-0.9.0/LICENSE",
+      "sha256": "fb9c2cccbdcb61ea51e0d553a6474297031544104985279c5c32d25c5c99977e",
+      "bytes": 1090,
+      "source": "licenses/dependencies/extendr-api-0.9.0/LICENSE",
+      "provenance": "upstream-at-package-vcs-commit",
+      "url": "https://raw.githubusercontent.com/extendr/extendr/564d0de80ba6cff3f8c04e3b3e336d1346590ec6/LICENSE",
+      "commit": "564d0de80ba6cff3f8c04e3b3e336d1346590ec6",
+      "name": "extendr-api",
+      "version": "0.9.0"
+    },
+    {
+      "target": "licenses/dependencies/extendr-ffi-0.9.0/LICENSE",
+      "sha256": "fb9c2cccbdcb61ea51e0d553a6474297031544104985279c5c32d25c5c99977e",
+      "bytes": 1090,
+      "source": "licenses/dependencies/extendr-ffi-0.9.0/LICENSE",
+      "provenance": "upstream-at-package-vcs-commit",
+      "url": "https://raw.githubusercontent.com/extendr/extendr/4848773321e9905f0426d12878b0c212085d4814/LICENSE",
+      "commit": "4848773321e9905f0426d12878b0c212085d4814",
+      "name": "extendr-ffi",
+      "version": "0.9.0"
+    },
+    {
+      "target": "licenses/dependencies/extendr-macros-0.9.0/LICENSE",
+      "sha256": "fb9c2cccbdcb61ea51e0d553a6474297031544104985279c5c32d25c5c99977e",
+      "bytes": 1090,
+      "source": "licenses/dependencies/extendr-macros-0.9.0/LICENSE",
+      "provenance": "upstream-at-package-vcs-commit",
+      "url": "https://raw.githubusercontent.com/extendr/extendr/4848773321e9905f0426d12878b0c212085d4814/LICENSE",
+      "commit": "4848773321e9905f0426d12878b0c212085d4814",
+      "name": "extendr-macros",
+      "version": "0.9.0"
+    },
+    {
+      "target": "licenses/dependencies/faer-0.24.4/LICENSE",
+      "sha256": "1f6b7e2a30afc2f5f253cb3535e041f91de1e1f9815b38714dfd94e53e61d972",
+      "bytes": 1083,
+      "source": "licenses/dependencies/faer-0.24.4/LICENSE",
+      "provenance": "upstream-at-package-vcs-commit",
+      "url": "https://raw.githubusercontent.com/sarah-quinones/faer-rs/0539947ffb757a739d7e703a7d2fa0c792a909c1/LICENSE",
+      "commit": "0539947ffb757a739d7e703a7d2fa0c792a909c1",
+      "name": "faer",
+      "version": "0.24.4"
+    },
+    {
+      "target": "licenses/dependencies/faer-traits-0.24.0/LICENSE",
+      "sha256": "1f6b7e2a30afc2f5f253cb3535e041f91de1e1f9815b38714dfd94e53e61d972",
+      "bytes": 1083,
+      "source": "licenses/dependencies/faer-traits-0.24.0/LICENSE",
+      "provenance": "upstream-at-package-vcs-commit",
+      "url": "https://raw.githubusercontent.com/sarah-quinones/faer-rs/8dfcceee8eb3d81231366acc9d3f157ac5e7057a/LICENSE",
+      "commit": "8dfcceee8eb3d81231366acc9d3f157ac5e7057a",
+      "name": "faer-traits",
+      "version": "0.24.0"
+    },
+    {
+      "target": "licenses/dependencies/nano-gemm-0.2.2/LICENSE",
+      "sha256": "310b7323adcc27fc94c45d1155b6c89c17986576d790f766a04c855662428a7c",
+      "bytes": 1073,
+      "source": "licenses/dependencies/nano-gemm-0.2.2/LICENSE",
+      "provenance": "upstream-at-package-vcs-commit",
+      "url": "https://raw.githubusercontent.com/sarah-ek/nano-gemm/806b012a6f5ee0615042bf64675180fb97ff2ccc/LICENSE",
+      "commit": "806b012a6f5ee0615042bf64675180fb97ff2ccc",
+      "name": "nano-gemm",
+      "version": "0.2.2"
+    },
+    {
+      "target": "licenses/dependencies/nano-gemm-c32-0.2.1/LICENSE",
+      "sha256": "310b7323adcc27fc94c45d1155b6c89c17986576d790f766a04c855662428a7c",
+      "bytes": 1073,
+      "source": "licenses/dependencies/nano-gemm-c32-0.2.1/LICENSE",
+      "provenance": "upstream-at-package-vcs-commit",
+      "url": "https://raw.githubusercontent.com/sarah-ek/nano-gemm/d5f1cd77f0af31fb90aa0d128a76e2366c5dabc7/LICENSE",
+      "commit": "d5f1cd77f0af31fb90aa0d128a76e2366c5dabc7",
+      "name": "nano-gemm-c32",
+      "version": "0.2.1"
+    },
+    {
+      "target": "licenses/dependencies/nano-gemm-c64-0.2.1/LICENSE",
+      "sha256": "310b7323adcc27fc94c45d1155b6c89c17986576d790f766a04c855662428a7c",
+      "bytes": 1073,
+      "source": "licenses/dependencies/nano-gemm-c64-0.2.1/LICENSE",
+      "provenance": "upstream-at-package-vcs-commit",
+      "url": "https://raw.githubusercontent.com/sarah-ek/nano-gemm/d5f1cd77f0af31fb90aa0d128a76e2366c5dabc7/LICENSE",
+      "commit": "d5f1cd77f0af31fb90aa0d128a76e2366c5dabc7",
+      "name": "nano-gemm-c64",
+      "version": "0.2.1"
+    },
+    {
+      "target": "licenses/dependencies/nano-gemm-codegen-0.2.1/LICENSE",
+      "sha256": "310b7323adcc27fc94c45d1155b6c89c17986576d790f766a04c855662428a7c",
+      "bytes": 1073,
+      "source": "licenses/dependencies/nano-gemm-codegen-0.2.1/LICENSE",
+      "provenance": "upstream-at-package-vcs-commit",
+      "url": "https://raw.githubusercontent.com/sarah-ek/nano-gemm/d5f1cd77f0af31fb90aa0d128a76e2366c5dabc7/LICENSE",
+      "commit": "d5f1cd77f0af31fb90aa0d128a76e2366c5dabc7",
+      "name": "nano-gemm-codegen",
+      "version": "0.2.1"
+    },
+    {
+      "target": "licenses/dependencies/nano-gemm-core-0.2.1/LICENSE",
+      "sha256": "310b7323adcc27fc94c45d1155b6c89c17986576d790f766a04c855662428a7c",
+      "bytes": 1073,
+      "source": "licenses/dependencies/nano-gemm-core-0.2.1/LICENSE",
+      "provenance": "upstream-at-package-vcs-commit",
+      "url": "https://raw.githubusercontent.com/sarah-ek/nano-gemm/d5f1cd77f0af31fb90aa0d128a76e2366c5dabc7/LICENSE",
+      "commit": "d5f1cd77f0af31fb90aa0d128a76e2366c5dabc7",
+      "name": "nano-gemm-core",
+      "version": "0.2.1"
+    },
+    {
+      "target": "licenses/dependencies/nano-gemm-f32-0.2.1/LICENSE",
+      "sha256": "310b7323adcc27fc94c45d1155b6c89c17986576d790f766a04c855662428a7c",
+      "bytes": 1073,
+      "source": "licenses/dependencies/nano-gemm-f32-0.2.1/LICENSE",
+      "provenance": "upstream-at-package-vcs-commit",
+      "url": "https://raw.githubusercontent.com/sarah-ek/nano-gemm/d5f1cd77f0af31fb90aa0d128a76e2366c5dabc7/LICENSE",
+      "commit": "d5f1cd77f0af31fb90aa0d128a76e2366c5dabc7",
+      "name": "nano-gemm-f32",
+      "version": "0.2.1"
+    },
+    {
+      "target": "licenses/dependencies/nano-gemm-f64-0.2.1/LICENSE",
+      "sha256": "310b7323adcc27fc94c45d1155b6c89c17986576d790f766a04c855662428a7c",
+      "bytes": 1073,
+      "source": "licenses/dependencies/nano-gemm-f64-0.2.1/LICENSE",
+      "provenance": "upstream-at-package-vcs-commit",
+      "url": "https://raw.githubusercontent.com/sarah-ek/nano-gemm/d5f1cd77f0af31fb90aa0d128a76e2366c5dabc7/LICENSE",
+      "commit": "d5f1cd77f0af31fb90aa0d128a76e2366c5dabc7",
+      "name": "nano-gemm-f64",
+      "version": "0.2.1"
+    },
+    {
+      "target": "licenses/dependencies/pulp-wasm-simd-flag-0.1.1/LICENSE",
+      "sha256": "d64f878c89bd5f1e5ada7e4aad57690b122727cf5229b7b87ea1980c188da1d9",
+      "bytes": 1062,
+      "source": "licenses/dependencies/pulp-wasm-simd-flag-0.1.1/LICENSE",
+      "provenance": "upstream-at-package-vcs-commit",
+      "url": "https://raw.githubusercontent.com/sarah-quinones/pulp/5eb07fd7b68edf0a5e19f71737d315f72a510295/LICENSE",
+      "commit": "5eb07fd7b68edf0a5e19f71737d315f72a510295",
+      "name": "pulp-wasm-simd-flag",
+      "version": "0.1.1"
+    }
+  ]
+}

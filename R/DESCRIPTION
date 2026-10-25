@@ -1,0 +1,11 @@
+Package: eigentrail
+Type: Package
+Title: Checked Covariance Trajectories with TRACE
+Version: 0.1.0
+Authors@R: person("Gabriel", "Bontemps", role=c("aut", "cre"), email="gabriel@example.invalid")
+Description: Local covariance trajectory proposals and independent numerical checks.
+    Statistical statements remain conditional on declared sampling assumptions.
+License: MIT + file LICENSE
+Encoding: UTF-8
+SystemRequirements: Rust 1.99.0, C compiler, GNU make, R >= 4.5
+NeedsCompilation: yes

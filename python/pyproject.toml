@@ -1,0 +1,19 @@
+[build-system]
+requires = ["maturin==1.9.6"]
+build-backend = "maturin"
+
+[project]
+name = "eigentrail"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = ["numpy>=2.3,<3"]
+description = "TRACE covariance trajectories with independent numerical checking"
+license = "MIT"
+license-files = ["LICENSE"]
+
+[tool.maturin]
+manifest-path = "../crates/eigentrail-python/Cargo.toml"
+python-source = "."
+module-name = "eigentrail._eigentrail"
+include = [{ path = "eigentrail/_licenses/**/*", format = ["wheel", "sdist"] }]
+exclude = ["**/__pycache__/**", "**/*.pyc", "**/*.pyo"]

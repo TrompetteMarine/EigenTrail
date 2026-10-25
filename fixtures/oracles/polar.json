@@ -1,0 +1,24 @@
+{
+  "schema": "eigentrail.polar-oracle.v1",
+  "rotation": [
+    [
+      "3/5",
+      "-4/5"
+    ],
+    [
+      "4/5",
+      "3/5"
+    ]
+  ],
+  "tolerance": "1e-12",
+  "identity": [
+    [
+      "1",
+      "0"
+    ],
+    [
+      "0",
+      "1"
+    ]
+  ]
+}

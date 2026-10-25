@@ -1,0 +1,23 @@
+[workspace]
+members = ["crates/eigentrail-core", "crates/eigentrail-check", "crates/eigentrail-python", "crates/eigentrail-r"]
+default-members = ["crates/eigentrail-core", "crates/eigentrail-check"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+
+[workspace.dependencies]
+eigentrail-core = { path = "crates/eigentrail-core" }
+eigentrail-check = { path = "crates/eigentrail-check" }
+serde = { version = "=1.0.228", features = ["derive"] }
+serde_json = { version = "=1.0.145", features = ["raw_value"] }
+sha2 = "=0.10.9"
+faer = { version = "=0.24.4", default-features = false, features = ["std", "linalg"] }
+inari = { version = "=2.0.0", default-features = false }
+
+[profile.release]
+overflow-checks = true
+

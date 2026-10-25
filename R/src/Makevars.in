@@ -1,0 +1,7 @@
+CARGO_TARGET_DIR ?= $(CURDIR)/rust/target
+PKG_LIBS = -L$(CARGO_TARGET_DIR)/release -leigentrail_r -L$(R_HOME)/lib -lR @SYSTEM_LIBS@
+all: $(SHLIB)
+.PHONY: rust-build
+$(SHLIB): rust-build
+rust-build:
+	cd rust && cargo build --release --locked -p eigentrail-r

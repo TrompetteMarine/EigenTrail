@@ -1,0 +1,19 @@
+[package]
+name = "eigentrail-python"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "_eigentrail"
+crate-type = ["cdylib"]
+
+[dependencies]
+eigentrail-core.workspace = true
+eigentrail-check.workspace = true
+serde_json.workspace = true
+pyo3 = { version = "=0.30.1", features = ["extension-module"] }
+numpy = "=0.30.0"
+
+[build-dependencies]
+pyo3-build-config = "=0.30.1"

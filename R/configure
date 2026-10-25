@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+case "$(uname -s)" in
+  Darwin) eigentrail_system_libs='-liconv -framework Security -framework CoreFoundation' ;;
+  Linux) eigentrail_system_libs='-ldl -lpthread -lm' ;;
+  *) echo 'Unsupported native platform' >&2; exit 1 ;;
+esac
+sed "s/@SYSTEM_LIBS@/$eigentrail_system_libs/" src/Makevars.in > src/Makevars

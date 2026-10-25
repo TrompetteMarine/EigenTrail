@@ -1,0 +1,101 @@
+{
+  "schema": "eigentrail.resource-boundaries-oracle.v1",
+  "budgets": {
+    "A": 4096,
+    "B": 3145728,
+    "C_tight": 3145728,
+    "C_default": 536870912,
+    "E_trace": 3145728,
+    "E_history": 16777216
+  },
+  "wire": {
+    "A": {
+      "bytes": 4671,
+      "sha256": "b07dd909ab47ab620481bd2c27da933ccfcaa6655a9c122225485c88fe6500c2"
+    },
+    "B": {
+      "bytes": 1500602,
+      "sha256": "98573366d09cc30b9201fc8363bff91339100825ef430780cd8a841f554e8488"
+    },
+    "C_tight": {
+      "bytes": 218369,
+      "sha256": "dbb552f4479079bd3b923e8b3e89dcf4431ef56b4f6d2233b13feab2d99f9a5d"
+    },
+    "C_default": {
+      "bytes": 218371,
+      "sha256": "da000de7e7e0dcfb1283499dd6cd84711b32bcf479f8e1a164ce5640d360f00b"
+    },
+    "E_trace": {
+      "bytes": 587,
+      "sha256": "e9af999f566c4ea4645e388289d46eda31c82ff7a4165808d81a05b34023b555"
+    },
+    "E_history": {
+      "bytes": 897,
+      "sha256": "aeb39996212b460f3eeca193c582cd9856139a5204017778f0ee043253fb54aa"
+    }
+  },
+  "A": {
+    "features": 1,
+    "dates": 2,
+    "feature_name_bytes": 4096,
+    "outcome": "Resource",
+    "copy_before_refusal": false,
+    "measured_live_allocation_peak_at_most": 4096
+  },
+  "B": {
+    "features": 1,
+    "dates": 2,
+    "unknown_key": "zz_unknown",
+    "unknown_empty_arrays": 500000,
+    "unknown_array_wire_bytes": 1500001,
+    "outcomes": [
+      "Invalid",
+      "Resource"
+    ],
+    "measured_live_allocation_peak_at_most": 3145728
+  },
+  "C": {
+    "features": 1,
+    "dates": 2000,
+    "covariance": "1",
+    "radius": "0",
+    "K": "0",
+    "tight_outcome": "Resource",
+    "default_outcome": "Completed",
+    "output_retained_at_probe_stop": true,
+    "probe_underflows": 0,
+    "include_owned_request_and_codec_allocations": true,
+    "ledger_peak_at_least_independent_peak": "pending M2/M3; not implemented or passed here"
+  },
+  "D": {
+    "shape": [
+      10001,
+      1,
+      1
+    ],
+    "dtype": "float64",
+    "logical_payload_bytes": 80008,
+    "broadcast_backing_payload_bytes": 8,
+    "outcome": "Invalid",
+    "metadata_element_accesses": 0,
+    "also_refuse_before_elements": [
+      "known time/radius length mismatch",
+      "history query count above 10000"
+    ]
+  },
+  "E": {
+    "aggregate_exact_budget": "Accepted by input guard; typed/scientific checks still apply",
+    "aggregate_one_byte_over_budget": "Resource",
+    "history_budget_location": "observations.memory_bytes",
+    "reject": [
+      "negative/noninteger/string/overflow budget",
+      "duplicate budget key",
+      "escaped budget key",
+      "duplicate escaped budget key",
+      "malformed JSON",
+      "cancelled input inspection"
+    ],
+    "native_operations_per_language": 8
+  },
+  "scope": "Independent finite regression expectations and wire hashes. Caller-owned borrowed fixtures exist before measurement. Actual managed heap counts include owned input copies, decode, producer, checker, encode and retained output; exclude interpreter/RSS/allocator overhead. Passing these cases does not establish the global managed allocation cap or shared ledger."
+}

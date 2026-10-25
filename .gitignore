@@ -1,0 +1,13 @@
+/target/
+/.venv/
+/build/
+/dist/
+__pycache__/
+*.py[cod]
+*.so
+*.dylib
+*.o
+.DS_Store
+/eigentrail_*.tar.gz
+/eigentrail_*.tgz
+/*.Rcheck/
