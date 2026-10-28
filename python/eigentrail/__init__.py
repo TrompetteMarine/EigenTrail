@@ -7,6 +7,7 @@ from ._eigentrail import (track_json, check_json, track_covariances,
                          analyze_crossings_json, check_crossings_json,
                          analyze_transport_json, check_transport_json,
                          analyze_histories_json, check_histories_json,
+                         analyze_lineage_summary_json, check_lineage_summary_json,
                          analyze_common_frame_json, check_common_frame_json)
 
 def _unbits(value):
@@ -62,4 +63,5 @@ __all__ = ['track','track_history','track_json','check_json','track_covariances'
            'analyze_crossings_json','check_crossings_json',
            'analyze_transport_json','check_transport_json',
            'analyze_histories_json','check_histories_json',
+           'analyze_lineage_summary_json','check_lineage_summary_json',
            'analyze_common_frame_json','check_common_frame_json']

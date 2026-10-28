@@ -11,6 +11,7 @@ pub const MAX_INPUT_BYTES: usize = resources::DEFAULT_BYTES / 2;
 pub enum RequestKind {
     Trace,
     History,
+    LineageSummary,
     Transport,
 }
 
@@ -82,6 +83,7 @@ fn inspect_with_poll(
     let shape = match kind {
         RequestKind::Trace => scan.trace()?,
         RequestKind::History => scan.history()?,
+        RequestKind::LineageSummary => scan.lineage_summary()?,
         RequestKind::Transport => scan.transport()?,
     };
     if scan.peek()?.is_some() {
@@ -399,6 +401,28 @@ impl<R: Read> Scanner<'_, R> {
             }
         }
         Ok(observations)
+    }
+
+    fn lineage_summary(&mut self) -> Result<Shape> {
+        let mut seen = 0;
+        let mut history = None;
+        let mut delta = 0.;
+        self.expect(b'{')?;
+        loop {
+            match self.field(&[b"schema", b"history", b"delta"], &mut seen)? {
+                1 => history = Some(self.history()?),
+                2 => delta = self.finite()?,
+                _ => self.value(1)?,
+            }
+            if self.take(b'}')? {
+                break;
+            }
+            self.expect(b',')?;
+        }
+        if seen != 7 || delta <= 0. {
+            return invalid("complete lineage-summary with finite positive delta required");
+        }
+        history.ok_or_else(|| Error::Invalid("lineage-summary history required".into()))
     }
 
     fn finite(&mut self) -> Result<f64> {

@@ -1,6 +1,7 @@
 //! Fallible owned decoding of package schemas from borrowed JSON fragments.
 use crate::continuous_queries as continuous;
 use crate::jump_queries as jq;
+use crate::lineage_summary as ls;
 use crate::transport_workflow as tw;
 use crate::{
     common_frame::*,
@@ -764,6 +765,108 @@ impl DecodeOwned for QueryState {
                 "Bounds" => Ok(Self::Bounds {
                     summaries: r.required(1, cancel)?,
                     trace: r.required(2, cancel)?,
+                }),
+                "UnresolvedAnchor" => {
+                    r.only(&[0])?;
+                    Ok(Self::UnresolvedAnchor)
+                }
+                "InconsistentOuterBounds" => {
+                    r.only(&[0])?;
+                    Ok(Self::InconsistentOuterBounds)
+                }
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
+
+record!(ls::Request; schema:String, history:HistoryRequest, delta:f64;);
+record!(ls::Report; schema:String, request_hash:String, history:HistoryReport,
+    rows:Vec<ls::Row>, completed:bool, managed_reservation:usize, resource_qualification:String;);
+record!(ls::Row; configuration:usize, query:usize, time:f64, state:ls::RowState;);
+impl DecodeOwned for ls::InfoLevel {
+    fn from_raw(raw: &RawValue, _: &Cancellation) -> Result<Self> {
+        match raw.get() {
+            "\"Line\"" => Ok(Self::Line),
+            "\"ProperSubspace\"" => Ok(Self::ProperSubspace),
+            "\"WholeSpace\"" => Ok(Self::WholeSpace),
+            _ => Err(invalid()),
+        }
+    }
+}
+impl DecodeOwned for ls::Motion {
+    fn from_raw(raw: &RawValue, _: &Cancellation) -> Result<Self> {
+        match raw.get() {
+            "\"WithinTolerance\"" => Ok(Self::WithinTolerance),
+            "\"BeyondTolerance\"" => Ok(Self::BeyondTolerance),
+            "\"Unresolved\"" => Ok(Self::Unresolved),
+            _ => Err(invalid()),
+        }
+    }
+}
+impl DecodeOwned for ls::Target {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let r = Record::<6>::parse(
+                raw,
+                &["kind", "start", "end", "origins", "persistent", "axis"],
+                cancel,
+            )?;
+            match r.tag(0)? {
+                "OrderedBlock" => {
+                    r.only(&[0, 1, 2, 3, 4])?;
+                    Ok(Self::OrderedBlock {
+                        start: r.required(1, cancel)?,
+                        end: r.required(2, cancel)?,
+                        origins: r.required(3, cancel)?,
+                        persistent: r.required(4, cancel)?,
+                    })
+                }
+                "AnchorAxis" => {
+                    r.only(&[0, 5])?;
+                    Ok(Self::AnchorAxis {
+                        axis: r.required(5, cancel)?,
+                    })
+                }
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
+impl DecodeOwned for ls::RowState {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let r = Record::<12>::parse(
+                raw,
+                &[
+                    "kind",
+                    "target",
+                    "information_level",
+                    "block_dimension",
+                    "ambient_dimension",
+                    "strength",
+                    "share",
+                    "rank",
+                    "projector_error",
+                    "reference_displacement",
+                    "motion",
+                    "accuracy_target_attained",
+                ],
+                cancel,
+            )?;
+            match r.tag(0)? {
+                "Bounds" => Ok(Self::Bounds {
+                    target: r.required(1, cancel)?,
+                    information_level: r.required(2, cancel)?,
+                    block_dimension: r.required(3, cancel)?,
+                    ambient_dimension: r.required(4, cancel)?,
+                    strength: r.required(5, cancel)?,
+                    share: r.required(6, cancel)?,
+                    rank: r.required(7, cancel)?,
+                    projector_error: r.required(8, cancel)?,
+                    reference_displacement: r.required(9, cancel)?,
+                    motion: r.required(10, cancel)?,
+                    accuracy_target_attained: r.required(11, cancel)?,
                 }),
                 "UnresolvedAnchor" => {
                     r.only(&[0])?;

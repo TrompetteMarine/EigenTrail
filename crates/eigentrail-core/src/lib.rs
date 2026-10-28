@@ -11,6 +11,7 @@ pub mod families;
 pub mod histories;
 pub mod jump_queries;
 pub mod jumps;
+pub mod lineage_summary;
 pub mod numerics;
 pub mod resources;
 pub mod scalar;

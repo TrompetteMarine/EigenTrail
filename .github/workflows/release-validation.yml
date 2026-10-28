@@ -117,6 +117,7 @@ jobs:
           "$RUNNER_TEMP/eigentrail-wheel/bin/python" -m pip install --no-index --find-links "$RUNNER_TEMP/eigentrail-wheelhouse" "${wheels[0]}"
           "$RUNNER_TEMP/eigentrail-wheel/bin/python" -I scripts/release_smoke.py --cli "$RUNNER_TEMP/eigentrail-cli/bin/eigentrail-check" --out "$RUNNER_TEMP/eigentrail-smoke-wheel"
           "$RUNNER_TEMP/eigentrail-wheel/bin/python" -I examples/gaussian-history.py
+          "$RUNNER_TEMP/eigentrail-wheel/bin/python" -I examples/lineage-summary.py
       - name: Build and install source distribution outside checkout
         env:
           CARGO_NET_OFFLINE: 'true'

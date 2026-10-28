@@ -70,7 +70,8 @@ Missing observations are rejected. An unresolved association is a scientific
 result, and does not force an arbitrary eigenvector identity.
 
 See the [Python/R quickstart](docs/quickstart.md),
-[Gaussian calibration guide](docs/gaussian-calibration.md), [API guide](docs/api.md),
+[Gaussian calibration guide](docs/gaussian-calibration.md),
+[checked lineage summaries](docs/lineage-summary.md), [API guide](docs/api.md),
 and [canonical report format](docs/serialization.md).
 
 ## Examples
@@ -80,11 +81,15 @@ python examples/track_rotation.py
 python examples/continuous-history.py
 python examples/track_history.py
 python examples/gaussian-history.py
+python examples/lineage-summary.py
 ```
 
 Further examples cover [jumps](examples/jump-history.py),
 [initialized transport](examples/initialized-transport.py), and
 [conditional crossings](examples/transverse-crossing.py).
+
+Optional [Lean proofs](docs/formal/lineage/README.md) check three scalar continuity
+and rank implications; ordinary package installation does not require Lean.
 
 ## Test and build
 

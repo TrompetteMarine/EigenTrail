@@ -448,6 +448,38 @@ fn check_histories_json(request: &str, report: &str) -> extendr_api::Result<bool
     })
 }
 #[extendr]
+fn analyze_lineage_summary_json(request: &str) -> extendr_api::Result<String> {
+    let limit = preflight_json_inputs(request, &[], RequestKind::LineageSummary)?;
+    let operation = Operation::new(limit).map_err(fail)?;
+    let request_text = copy_json_text(&operation, request)?;
+    with_interrupt(operation, move |cancel| {
+        let request: lineage_summary::Request =
+            serialization::decode_in(request_text.as_bytes(), &cancel)?;
+        drop(request_text);
+        let report = lineage_summary::analyze(&request, &cancel)?;
+        eigentrail_check::lineage_summary::check(&request, &report, &cancel)?;
+        String::from_utf8(serialization::encode_with_cancel(&report, &cancel)?)
+            .map_err(|_| core::Error::Invalid("UTF-8".into()))
+    })
+}
+#[extendr]
+fn check_lineage_summary_json(request: &str, report: &str) -> extendr_api::Result<bool> {
+    let limit = preflight_json_inputs(request, &[report], RequestKind::LineageSummary)?;
+    let operation = Operation::new(limit).map_err(fail)?;
+    let request_text = copy_json_text(&operation, request)?;
+    let report_text = copy_json_text(&operation, report)?;
+    with_interrupt(operation, move |cancel| {
+        let request: lineage_summary::Request =
+            serialization::decode_in(request_text.as_bytes(), &cancel)?;
+        drop(request_text);
+        let report: lineage_summary::Report =
+            serialization::decode_in(report_text.as_bytes(), &cancel)?;
+        drop(report_text);
+        eigentrail_check::lineage_summary::check(&request, &report, &cancel)?;
+        Ok(true)
+    })
+}
+#[extendr]
 fn analyze_common_frame_json(request: &str, model: &str) -> extendr_api::Result<String> {
     let limit = preflight_json_inputs(request, &[model], RequestKind::Trace)?;
     let operation = Operation::new(limit).map_err(fail)?;
@@ -485,4 +517,4 @@ fn check_common_frame_json(request: &str, model: &str, report: &str) -> extendr_
         Ok(true)
     })
 }
-extendr_module! {mod eigentrail;fn track_json;fn check_json;fn track_covariances;fn track_history_covariances;fn analyze_jumps_json;fn check_jumps_json;fn analyze_crossings_json;fn check_crossings_json;fn analyze_transport_json;fn check_transport_json;fn analyze_histories_json;fn check_histories_json;fn analyze_common_frame_json;fn check_common_frame_json;}
+extendr_module! {mod eigentrail;fn track_json;fn check_json;fn track_covariances;fn track_history_covariances;fn analyze_jumps_json;fn check_jumps_json;fn analyze_crossings_json;fn check_crossings_json;fn analyze_transport_json;fn check_transport_json;fn analyze_histories_json;fn check_histories_json;fn analyze_common_frame_json;fn check_common_frame_json;fn analyze_lineage_summary_json;fn check_lineage_summary_json;}

@@ -16,6 +16,11 @@ Trace records use `eigentrail.trace.v1`. Histories use their explicit supported
 for jumps, crossings and transport declare their own schema fields. Preserve the
 original canonical request/report pair for the corresponding check route.
 
+`eigentrail.lineage-summary.v1` wraps a complete v2 history request and a finite
+positive `delta`. Its report embeds the checked history and ordered summary rows.
+The outer hash binds the whole request, including `delta`; the inner history
+retains its own request hash. All numerical values use the same canonical bits.
+
 Python's `track` and `track_history` convenience methods decode these finite values
 for presentation. Use the `*_json` interfaces for exact byte-preserving replay;
 ordinary `json.dumps` on a decoded presentation dictionary is not that wire format.

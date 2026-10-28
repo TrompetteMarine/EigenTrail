@@ -500,6 +500,38 @@ fn check_histories_json(py: Python<'_>, request: &str, report: &str) -> PyResult
     })
 }
 #[pyfunction]
+fn analyze_lineage_summary_json(py: Python<'_>, request: &str) -> PyResult<String> {
+    let limit = preflight_json_inputs(py, request, &[], RequestKind::LineageSummary)?;
+    let operation = Operation::new(limit).map_err(py_error)?;
+    let request_text = copy_json_text(py, &operation, request)?;
+    with_interrupt(py, operation, move |cancel| {
+        let request: lineage_summary::Request =
+            serialization::decode_in(request_text.as_bytes(), &cancel)?;
+        drop(request_text);
+        let report = lineage_summary::analyze(&request, &cancel)?;
+        eigentrail_check::lineage_summary::check(&request, &report, &cancel)?;
+        String::from_utf8(serialization::encode_with_cancel(&report, &cancel)?)
+            .map_err(|_| Error::Invalid("UTF-8".into()))
+    })
+}
+#[pyfunction]
+fn check_lineage_summary_json(py: Python<'_>, request: &str, report: &str) -> PyResult<bool> {
+    let limit = preflight_json_inputs(py, request, &[report], RequestKind::LineageSummary)?;
+    let operation = Operation::new(limit).map_err(py_error)?;
+    let request_text = copy_json_text(py, &operation, request)?;
+    let report_text = copy_json_text(py, &operation, report)?;
+    with_interrupt(py, operation, move |cancel| {
+        let request: lineage_summary::Request =
+            serialization::decode_in(request_text.as_bytes(), &cancel)?;
+        drop(request_text);
+        let report: lineage_summary::Report =
+            serialization::decode_in(report_text.as_bytes(), &cancel)?;
+        drop(report_text);
+        eigentrail_check::lineage_summary::check(&request, &report, &cancel)?;
+        Ok(true)
+    })
+}
+#[pyfunction]
 fn analyze_common_frame_json(py: Python<'_>, request: &str, model: &str) -> PyResult<String> {
     let limit = preflight_json_inputs(py, request, &[model], RequestKind::Trace)?;
     let operation = Operation::new(limit).map_err(py_error)?;
@@ -556,6 +588,8 @@ fn _eigentrail(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(check_crossings_json, m)?)?;
     m.add_function(wrap_pyfunction!(analyze_histories_json, m)?)?;
     m.add_function(wrap_pyfunction!(check_histories_json, m)?)?;
+    m.add_function(wrap_pyfunction!(analyze_lineage_summary_json, m)?)?;
+    m.add_function(wrap_pyfunction!(check_lineage_summary_json, m)?)?;
     m.add_function(wrap_pyfunction!(analyze_common_frame_json, m)?)?;
     m.add_function(wrap_pyfunction!(check_common_frame_json, m)?)?;
     Ok(())

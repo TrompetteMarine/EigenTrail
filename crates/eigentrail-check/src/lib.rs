@@ -12,6 +12,7 @@ pub mod evidence;
 pub mod families;
 mod jump_queries;
 pub mod jumps;
+pub mod lineage_summary;
 pub mod transport;
 use eigentrail_core::{
     resources::{

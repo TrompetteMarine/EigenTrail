@@ -26,6 +26,7 @@ the native array routes returning canonical JSON rather than decoded dictionarie
 |---|---|---|
 | `track_json` | `check_json` | request |
 | `analyze_histories_json` | `check_histories_json` | request |
+| `analyze_lineage_summary_json` | `check_lineage_summary_json` | request |
 | `analyze_common_frame_json` | `check_common_frame_json` | request, model |
 | `analyze_jumps_json` | `check_jumps_json` | request, model |
 | `analyze_crossings_json` | `check_crossings_json` | request, window |
@@ -47,10 +48,14 @@ eigentrail-check check examples/requests/rotation-request.json report.json
 Analysis commands refuse an existing output file. Checking runs locally without
 network access. Other commands pair `analyze-histories`/`check-histories`,
 `analyze-common-frame`/`check-common-frame`, `analyze-jumps`/`check-jumps`,
-`analyze-crossings`/`check-crossings`, and `analyze-transport`/`check-transport`.
+`analyze-crossings`/`check-crossings`, `analyze-transport`/`check-transport`, and
+`analyze-lineage-summary`/`check-lineage-summary`.
 Common-frame/jump commands take REQUEST MODEL REPORT; crossings take
 REQUEST WINDOW REPORT; the remaining commands take REQUEST REPORT.
 Use `--help` and `--version` for discovery.
+
+The [lineage summary guide](lineage-summary.md) explains the checked row table,
+strict displacement tolerance, accuracy flags and separate history feasibility.
 
 ## Scientific scope
 

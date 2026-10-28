@@ -11,6 +11,8 @@
 \alias{check_transport_json}
 \alias{analyze_histories_json}
 \alias{check_histories_json}
+\alias{analyze_lineage_summary_json}
+\alias{check_lineage_summary_json}
 \alias{analyze_common_frame_json}
 \alias{check_common_frame_json}
 \title{Local covariance trajectories under declared TRACE assumptions}
@@ -28,6 +30,8 @@ analyze_transport_json(request)
 check_transport_json(request, assessment)
 analyze_histories_json(request)
 check_histories_json(request, report)
+analyze_lineage_summary_json(request)
+check_lineage_summary_json(request, report)
 analyze_common_frame_json(request, model)
 check_common_frame_json(request, model, report)
 }
@@ -43,7 +47,9 @@ date, with positive total. NULL selects the continuous model. Supplied weights
 declare one fixed eigenframe diagonalizing the entire covariance path.}
 \item{request}{Canonical eigentrail.trace.v1 request JSON; history functions accept
 eigentrail.histories.v1 and eigentrail.histories.v2. The initialized transport
-functions accept eigentrail.transport.v1 geometry requests.}
+functions accept eigentrail.transport.v1 geometry requests. The lineage summary
+functions accept eigentrail.lineage-summary.v1 with history (a v2 request)
+and a finite positive delta (projector-motion tolerance).}
 \item{report}{Canonical report JSON to check.}
 \item{window}{Canonical crossing window JSON with block, centre, secant,
 attachments, bracket, curvature and exact_collision_assumed. Indices are zero-based;
@@ -117,6 +123,15 @@ existence of one PSD path in the common-frame family. Explicit coordinate-diagon
 affine witnesses are checked as exact supplied matrices, with original and widened
 feasibility reported separately. Non-diagonal explicit common-frame witnesses remain
 UnsupportedModel. A widened witness does not enlarge the original query enclosures.
+
+The lineage summary route presents continuous or common-frame history bounds as
+flat rows. It retains the checked nested history, including separate feasibility.
+Ordered-block origins are outer block indices, not latent labels; common-frame
+axes rely on the supplied global premise. Whole-space output is unresolved for
+directions. Motion WithinTolerance requires an upper displacement bound strictly
+below delta; BeyondTolerance requires a lower bound strictly above it. Motion
+and requested projector accuracy are separate fields. A fixed common-frame axis
+can have zero motion while its orientation accuracy remains insufficient.
 
 The standalone common-frame route conditions on a supplied common eigenframe
 and verifies a simple weighted anchor before returning persistent axis labels,

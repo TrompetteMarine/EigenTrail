@@ -100,7 +100,7 @@ fn read(path: &str, remaining: &mut usize, operation: &Operation) -> Result<Mana
 }
 fn execute() -> Result<()> {
     let args = std::env::args().collect::<Vec<_>>();
-    let usage = "usage: eigentrail-check track|check|analyze-histories|check-histories REQUEST REPORT, or analyze-jumps|check-jumps|analyze-common-frame|check-common-frame REQUEST MODEL REPORT, or analyze-crossings|check-crossings REQUEST WINDOW REPORT, or analyze-transport|check-transport REQUEST REPORT";
+    let usage = "usage: eigentrail-check track|check|analyze-histories|check-histories|analyze-lineage-summary|check-lineage-summary REQUEST REPORT, or analyze-jumps|check-jumps|analyze-common-frame|check-common-frame REQUEST MODEL REPORT, or analyze-crossings|check-crossings REQUEST WINDOW REPORT, or analyze-transport|check-transport REQUEST REPORT";
     if args.len() == 2 {
         match args[1].as_str() {
             "-h" | "--help" => {
@@ -118,8 +118,14 @@ fn execute() -> Result<()> {
     }
     let arity = match args.get(1).map(String::as_str) {
         Some(
-            "track" | "check" | "analyze-histories" | "check-histories" | "analyze-transport"
-            | "check-transport",
+            "track"
+            | "check"
+            | "analyze-histories"
+            | "check-histories"
+            | "analyze-transport"
+            | "check-transport"
+            | "analyze-lineage-summary"
+            | "check-lineage-summary",
         ) => 4,
         Some(
             "analyze-jumps"
@@ -138,8 +144,14 @@ fn execute() -> Result<()> {
         matches!(args[1].as_str(), "analyze-histories" | "check-histories") && args.len() == 4;
     let transport =
         matches!(args[1].as_str(), "analyze-transport" | "check-transport") && args.len() == 4;
+    let summary = matches!(
+        args[1].as_str(),
+        "analyze-lineage-summary" | "check-lineage-summary"
+    );
     let cancel = resources::Cancellation::default();
-    let kind = if transport {
+    let kind = if summary {
+        RequestKind::LineageSummary
+    } else if transport {
         RequestKind::Transport
     } else if histories {
         RequestKind::History
@@ -149,6 +161,21 @@ fn execute() -> Result<()> {
     let (operation, request_bytes, mut remaining) = read_request(&args[2], kind, &cancel)?;
     let _control = operation.external(64 * 1024)?;
     operation.run(|| {
+    if summary {
+        let request: lineage_summary::Request = serialization::decode_in(&request_bytes, &cancel)?;
+        drop(request_bytes);
+        if args[1] == "analyze-lineage-summary" {
+            let report = lineage_summary::analyze(&request, &cancel)?;
+            eigentrail_check::lineage_summary::check(&request, &report, &cancel)?;
+            write_new(&args[3], &serialization::encode_with_cancel(&report, &cancel)?)?;
+        } else {
+            let report: lineage_summary::Report =
+                serialization::decode_in(&read(&args[3], &mut remaining, &operation)?, &cancel)?;
+            eigentrail_check::lineage_summary::check(&request, &report, &cancel)?;
+        }
+        println!("checked lineage summary; associations are outer information and model assumptions remain explicit");
+        return Ok(());
+    }
     if transport {
         let request: transport_workflow::TransportRequest = serialization::decode_in(&request_bytes, &cancel)?;
         drop(request_bytes);

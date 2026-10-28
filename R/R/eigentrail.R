@@ -58,3 +58,9 @@ check_common_frame_json <- function(request, model, report) .checked(.Call(wrap_
 analyze_transport_json <- function(request) .checked(.Call(wrap__analyze_transport_json, request))
 #' @export
 check_transport_json <- function(request, assessment) .checked(.Call(wrap__check_transport_json, request, assessment))
+
+#' Summarize checked continuous/common-frame histories with separate motion and accuracy
+#' @export
+analyze_lineage_summary_json <- function(request) .checked(.Call(wrap__analyze_lineage_summary_json, request))
+#' @export
+check_lineage_summary_json <- function(request, report) .checked(.Call(wrap__check_lineage_summary_json, request, report))

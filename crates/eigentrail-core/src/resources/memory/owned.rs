@@ -204,3 +204,33 @@ impl HeapBytes for jump_queries::State {
         }
     }
 }
+
+fields!(lineage_summary::Request; schema,history);
+fields!(lineage_summary::Report; schema,request_hash,history,rows,resource_qualification);
+fields!(lineage_summary::Row; state);
+zero!(lineage_summary::InfoLevel, lineage_summary::Motion);
+impl HeapBytes for lineage_summary::Target {
+    fn heap_bytes(&self) -> Result<usize> {
+        match self {
+            Self::OrderedBlock { origins, .. } => origins.heap_bytes(),
+            Self::AnchorAxis { .. } => Ok(0),
+        }
+    }
+}
+impl HeapBytes for lineage_summary::RowState {
+    fn heap_bytes(&self) -> Result<usize> {
+        match self {
+            Self::Bounds {
+                target,
+                share,
+                reference_displacement,
+                ..
+            } => sum(&[
+                target.heap_bytes()?,
+                share.heap_bytes()?,
+                reference_displacement.heap_bytes()?,
+            ]),
+            Self::UnresolvedAnchor | Self::InconsistentOuterBounds => Ok(0),
+        }
+    }
+}
