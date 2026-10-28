@@ -69,7 +69,8 @@ Python arrays use `(dates, features, features)`; R arrays use
 Missing observations are rejected. An unresolved association is a scientific
 result, and does not force an arbitrary eigenvector identity.
 
-See the [Python/R quickstart](docs/quickstart.md), [API guide](docs/api.md),
+See the [Python/R quickstart](docs/quickstart.md),
+[Gaussian calibration guide](docs/gaussian-calibration.md), [API guide](docs/api.md),
 and [canonical report format](docs/serialization.md).
 
 ## Examples
@@ -78,6 +79,7 @@ and [canonical report format](docs/serialization.md).
 python examples/track_rotation.py
 python examples/continuous-history.py
 python examples/track_history.py
+python examples/gaussian-history.py
 ```
 
 Further examples cover [jumps](examples/jump-history.py),
