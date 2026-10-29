@@ -40,13 +40,24 @@ case "$(uname -s)" in
   Linux) eigentrail_system_libs='-ldl -lpthread -lm' ;;
   *) echo 'Unsupported native platform' >&2; exit 1 ;;
 esac
+# Unpack bundled first-party sources before Cargo discovers the R workspace.
+if [ ! -f src/rust/Cargo.toml ]; then
+    if [ ! -f src/rust/workspace.tar.xz ]; then
+        echo 'Incomplete EigenTrail source package. Reinstall the complete R package from GitHub.' >&2
+        exit 1
+    fi
+    tar -xf src/rust/workspace.tar.xz -C src/rust || {
+        echo 'Cannot unpack EigenTrail sources; tar with xz support is required.' >&2
+        exit 1
+    }
+fi
 # Keep the source package free of hidden build configuration directories.
 if [ -f src/rust/cargo-config.toml ]; then
     mkdir -p src/rust/.cargo
     cp src/rust/cargo-config.toml src/rust/.cargo/config.toml
 fi
 if [ ! -f src/rust/vendor.tar.xz ] || [ ! -f src/rust/.cargo/config.toml ]; then
-    echo 'Missing bundled Rust sources. Install a source package prepared with scripts/stage_r.py --vendor-workspace.' >&2
+    echo 'Incomplete bundled Rust dependencies. Reinstall the complete EigenTrail R package from GitHub.' >&2
     exit 1
 fi
 if [ ! -d src/rust/vendor ]; then

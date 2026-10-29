@@ -11,3 +11,8 @@ __pycache__/
 /eigentrail_*.tar.gz
 /eigentrail_*.tgz
 /*.Rcheck/
+
+/R/src/Makevars
+/R/src/rust/*
+!/R/src/rust/workspace.tar.xz
+!/R/src/rust/vendor.tar.xz

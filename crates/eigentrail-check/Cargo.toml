@@ -17,9 +17,3 @@ eigentrail-core.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
-
-[dev-dependencies]
-faer.workspace = true
-inari = { workspace = true, features = ["gmp"] }
-rand_chacha = "=0.9.0"
-

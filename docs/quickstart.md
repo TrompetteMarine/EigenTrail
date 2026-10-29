@@ -1,8 +1,8 @@
 # Python and R quickstart
 
-Install from the repository as described in the [README](../README.md). The
-ordinary analysis interface needs covariance matrices, observation times,
-conditional covariance-error radii, and a global covariance regularity bound.
+[Install EigenTrail](installation.md), then supply covariance matrices,
+observation times, covariance-error radii, and a global regularity bound for the
+population covariance path. All measurements must use fixed coordinates and units.
 
 ## Python
 
@@ -11,52 +11,80 @@ import numpy as np
 import eigentrail
 
 covariances = np.array([[[0.75, 0.0], [0.0, 0.25]]] * 2, dtype=np.float64)
-times = [0.0, 1.0]
-report = eigentrail.track(covariances, times, radii=[2.0**-20] * 2, lipschitz=0.0)
-assert report["completed"]
+report = eigentrail.track(
+    covariances, times=[0.0, 1.0],
+    radii=[2.0**-20] * 2, lipschitz=0.0,
+)
 print("Leading eigenvalue:", report["eigensystems"][0]["values"][0])
 print("Leading projector bound:", report["segments"][0]["tubes"][0]["bound"])
+print("Completed:", report["completed"])
 ```
 
-The leading eigenvalue is 0.75 and the bound is below 0.00001 for this synthetic
-constant path. This example supplies its error and regularity premises.
-Python requires float64 arrays; strided arrays are supported. Convenience methods
-return dictionaries with decoded numerical values.
+This supplied constant path has leading eigenvalue 0.75 and a leading-projector
+bound below 0.00001. The error radii and `lipschitz=0.0` describe this example's
+premises. Repeated estimated matrices alone would not establish constant
+population covariance.
+
+Python accepts NumPy `float64` arrays with shape `(dates, features, features)`.
+Strided arrays are supported. Convenience methods return dictionaries with
+ordinary decoded numerical values.
 
 ## R
 
 ```r
 library(eigentrail)
 covariances <- array(rep(c(0.75, 0.0, 0.0, 0.25), 2), dim = c(2, 2, 2))
-times <- c(0.0, 1.0)
-report <- track(covariances, times, radii = rep(2^-20, 2), lipschitz = 0.0)
-stopifnot(grepl('"completed":true', report, fixed = TRUE))
-cat("Checked TRACE JSON:", nchar(report), "characters\n")
+report <- track(covariances, times = c(0.0, 1.0),
+                radii = rep(2^-20, 2), lipschitz = 0.0)
+cat(report, "\n")
 ```
 
-R expects double arrays and returns canonical JSON text. Use the JSON methods in
-either language to preserve exact certificates for later independent checking.
+R accepts double arrays with shape `(features, features, dates)` and returns
+canonical JSON text. Finite numerical values are encoded as `f64:` bit strings;
+see [serialization](serialization.md) before processing that JSON yourself.
 
-## Continuous histories
+## Query a continuous history
 
-Call `track_history(covariances, times, radii, lipschitz, query_times)` for
-between-date block summaries and local/reference displacement. Optional
-`common_frame_weights` declares one common eigenframe over the entire path.
-A simple weighted anchor does not itself justify that premise.
+Python:
 
-Returned bounds and lineage alternatives are outer information. Arbitrary
-choices from marginal intervals need not form a complete history. A checked
-witness has its own feasibility status. See the [API guide](api.md).
+```python
+history = eigentrail.track_history(
+    covariances, times=[0.0, 1.0], radii=[2.0**-20] * 2,
+    lipschitz=0.0, query_times=[0.0, 0.5, 1.0],
+)
+configuration = history["configurations"][0]
+print(configuration["feasibility"]["kind"])
+print(configuration["continuous_workflow"][0]["queries"])
+```
 
-## Errors and resources
+R, using the R array above:
 
-Rust validation and numerical/resource refusals raise Python `ValueError`;
-argument/type conversion can raise `TypeError`. Native interruption raises
-`KeyboardInterrupt`. R raises `eigentrail_error` with a `kind` field.
+```r
+history <- track_history(covariances, times = c(0.0, 1.0),
+    radii = rep(2^-20, 2), lipschitz = 0.0, query_times = c(0.0, 0.5, 1.0))
+```
 
-The default managed allocation policy is 512 MiB per analysis, shared across
-producer, checker, working buffers and retained output. Caller-owned arrays,
-interpreter memory, allocator overhead and total process RSS are separate.
-The 256-feature and 10,000-date ceilings are independent: their largest joint
-stack does not fit the default budget and is rejected before copying.
-Cancellation or exhaustion never yields a completed certificate.
+The query results bound block strength, variance share, rank and displacement.
+Adding query times does not add covariance observations. Returned intervals and
+association alternatives are outer bounds; arbitrary choices from them need not
+form one realizable complete path. Witness feasibility is reported separately.
+
+Optional `common_frame_weights` selects a model with one fixed eigenframe over
+the entire path. Supply it only when that premise is justified. See the
+[API guide](api.md) and [lineage summary guide](lineage-summary.md).
+
+## Errors and resource limits
+
+Inputs must be finite; observation times must be strictly increasing. Missing
+values are rejected. Python native validation/resource errors raise `ValueError`,
+conversion errors may raise `TypeError`, and interruption raises
+`KeyboardInterrupt`. R raises an `eigentrail_error` condition with a `kind` field.
+Scientific ambiguity is returned in the report, rather than as an invalid-input
+error.
+
+The default requested managed-memory budget is 512 MiB per analysis, shared by
+the producer, checker and retained output. Caller-owned arrays, interpreter
+memory, allocator overhead and total process RSS are separate. Read the report's
+`resource_qualification` for the scope of that budget and cancellation handling. The independent ceilings of 256 features and 10,000
+dates do not promise that their largest combination fits the budget. Cancellation
+and budget exhaustion do not produce completed certificates.

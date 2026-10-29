@@ -1,47 +1,34 @@
 # EigenTrail
 
 EigenTrail tracks covariance eigenvalues and eigenspaces over time with the TRACE
-method. It returns checked uncertainty bounds, persistent associations and
-continuous-history summaries through Python, R and Rust.
+method. Python, R and Rust interfaces return numerically checked uncertainty
+bounds, persistent associations and continuous-history summaries.
 
-## Install
+## Install from GitHub
 
-Requires Rust **1.99.0** and a native C/C++ toolchain for source builds.
-Python requires **CPython 3.14** and **NumPy >=2.3,<3**. From this repository:
+Source installation requires **Rust 1.99.0** and native C/C++ build tools.
+Supported platforms are macOS ARM64 and GNU/Linux x86-64 with
+Haswell/x86-64-v3 CPU and operating-system instruction support.
+On Linux, first set `export RUSTFLAGS="-C target-cpu=haswell"`.
+
+For **CPython 3.14**:
 
 ```sh
 python3.14 -m venv .venv
 source .venv/bin/activate
-python -m pip install ./python
+python -m pip install "eigentrail @ git+https://github.com/TrompetteMarine/EigenTrail.git#subdirectory=python"
 ```
 
-For R (R 4.5 or later, Rust and GNU make installed), first
-[build the vendored source package](docs/packaging.md#build-the-r-source-package),
-then install the resulting archive:
+For **R 4.5 or later**, with GNU make and tar with xz support installed:
 
-```sh
-R CMD INSTALL eigentrail_0.1.0.tar.gz
+```r
+install.packages("remotes")
+remotes::install_github("TrompetteMarine/EigenTrail", subdir = "R", upgrade = "never")
 ```
 
-For the standalone command-line checker:
-
-```sh
-cargo install --locked --path crates/eigentrail-check
-eigentrail-check --help
-```
-
-Native macOS ARM64 and hosted Linux x86-64 package checks
-[pass](https://github.com/TrompetteMarine/EigenTrail/actions/runs/40231849932).
-Linux requires Haswell/x86-64-v3 and appropriate OS instruction support; execution
-on the minimum CPU remains pending. Packages are not yet published to PyPI, CRAN
-or crates.io.
-
-Linux builds from this checkout and the staged Python/R source packages select
-the Haswell CPU target. Cargo registry users must set
-`RUSTFLAGS="-C target-cpu=haswell"` for their consuming builds and checker
-installation; Cargo ignores configuration bundled inside a dependency. See the
-[Linux source instructions](docs/packaging.md#linux-source-builds).
-Linux binary wheels remain behind a separate qualification gate.
+For Rust and the command-line interface, see [installation](docs/installation.md).
+Current distribution is through GitHub source; EigenTrail is not yet available
+from PyPI, CRAN or crates.io.
 
 ## Track a covariance path
 
@@ -60,53 +47,22 @@ print(report["eigensystems"][0]["values"])
 print(report["segments"][0]["tubes"][0]["bound"])
 ```
 
-This synthetic constant path has eigenvalues 0.75 and 0.25; its leading-projector
-bound is below 0.00001. `radii` and `lipschitz` are supplied uncertainty and global
-regularity assumptions. The package does not infer those assumptions from slopes.
+This synthetic constant path has eigenvalues 0.75 and 0.25. Its leading-projector
+error bound is below 0.00001 under the supplied error radii and global regularity
+bound. Those are assumptions about the covariance path; observed slopes do not
+establish them. [Gaussian calibration](docs/gaussian-calibration.md) is available
+when its observation model applies.
 
 Python arrays use `(dates, features, features)`; R arrays use
-`(features, features, dates)`. Keep units and measurement coordinates fixed.
-Missing observations are rejected. An unresolved association is a scientific
-result, and does not force an arbitrary eigenvector identity.
+`(features, features, dates)`. Keep feature units and measurement coordinates
+fixed. Missing values are rejected. Near ties, EigenTrail can return a separated
+subspace or an unresolved association instead of forcing an eigenvector identity.
 
-See the [Python/R quickstart](docs/quickstart.md),
-[Gaussian calibration guide](docs/gaussian-calibration.md),
-[checked lineage summaries](docs/lineage-summary.md), [API guide](docs/api.md),
-and [canonical report format](docs/serialization.md).
+Continue with the [quickstart](docs/quickstart.md), [API guide](docs/api.md),
+[lineage summaries](docs/lineage-summary.md), or [JSON format](docs/serialization.md).
+Runnable examples are in [examples](examples/).
 
-## Examples
-
-```sh
-python examples/track_rotation.py
-python examples/continuous-history.py
-python examples/track_history.py
-python examples/gaussian-history.py
-python examples/lineage-summary.py
-```
-
-Further examples cover [jumps](examples/jump-history.py),
-[initialized transport](examples/initialized-transport.py), and
-[conditional crossings](examples/transverse-crossing.py).
-
-Optional [Lean proofs](docs/formal/lineage/README.md) check three scalar continuity
-and rank implications; ordinary package installation does not require Lean.
-
-## Test and build
-
-```sh
-cargo test --release --locked
-cargo fmt --all -- --check
-cargo clippy --locked --lib --bins -- -D warnings
-```
-
-Tests retain independent numerical expectations and require a C compiler and GNU
-make for their development-only GMP/MPFR oracle. Production builds do not enable
-that oracle. Python/R source distributions are built with the small helpers in
-[packaging instructions](docs/packaging.md).
-
-First-party code is [MIT licensed](LICENSE). Required dependency licenses and
-[third-party notices](THIRD_PARTY_NOTICES.md) accompany source and native packages.
-
+First-party code is [MIT licensed](LICENSE). Dependency licenses and
+[third-party notices](THIRD_PARTY_NOTICES.md) accompany the package.
+Report problems through [GitHub issues](https://github.com/TrompetteMarine/EigenTrail/issues).
 Maintainer: [Gabriel Bontemps](mailto:gbontemps@protonmail.com).
-See [build and publication instructions](docs/packaging.md) for local checks and
-the remaining registry setup steps.

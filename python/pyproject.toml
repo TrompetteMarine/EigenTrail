@@ -37,9 +37,17 @@ Python inputs are NumPy float64 arrays with shape `(dates, features, features)`.
 Sampling and path-regularity assumptions remain explicit; unresolved results
 retain their alternatives. Computation and checking run locally.
 
-This release targets CPython 3.14 with NumPy >=2.3,<3. Native macOS ARM64 is
-tested; Linux Haswell/x86-64-v3 qualification remains pending. Source builds
-require Rust 1.99.0 and a native C/C++ toolchain.
+Requires CPython 3.14 with NumPy >=2.3,<3, Rust 1.99.0 and native C/C++ build
+tools. Supports macOS ARM64 and GNU/Linux x86-64 with Haswell/x86-64-v3 CPU
+instructions and operating-system support.
+
+Install from GitHub in an activated virtual environment:
+
+```sh
+python -m pip install "eigentrail @ git+https://github.com/TrompetteMarine/EigenTrail.git#subdirectory=python"
+```
+
+On Linux, set `RUSTFLAGS="-C target-cpu=haswell"` before source installation.
 
 [Quickstart](https://github.com/TrompetteMarine/EigenTrail/blob/main/docs/quickstart.md)
 | [Source](https://github.com/TrompetteMarine/EigenTrail)

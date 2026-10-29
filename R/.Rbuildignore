@@ -1,0 +1,7 @@
+^src/Makevars$
+^src/rust/\.cargo(/|$)
+^src/rust/\.cargo-home(/|$)
+^src/rust/target(/|$)
+^src/rust/vendor(/|$)
+^src/rust/crates(/|$)
+^src/rust/(Cargo\.toml|Cargo\.lock|cargo-config\.toml|README\.md|LICENSE)$

@@ -1,86 +1,93 @@
 # Read covariance histories as lineage summaries
 
-The lineage summary route presents checked continuous or common-frame histories
-as one ordered table. It retains the full checked history beside the table, so
-the input assumptions, association alternatives and feasibility evidence remain
-available.
+Lineage summaries present checked continuous or common-frame histories as an
+ordered table. The report retains the full checked history, including assumptions,
+association alternatives and feasibility evidence.
 
-Run the represented constant-path example after installing EigenTrail:
+## Run an example
+
+After [installation](installation.md), run from a source checkout:
 
 ```sh
 python examples/lineage-summary.py
 ```
 
-The example uses exact supplied diagonal covariances and deterministic nodal
-envelopes. It samples no observations and makes no coverage estimate.
+This supplied constant-path example uses exact represented diagonal covariances
+and deterministic error envelopes. It generates no observations.
 
-For the CLI, create a new report and check it locally:
+For the CLI, choose a new report filename:
 
 ```sh
 eigentrail-check analyze-lineage-summary examples/requests/lineage-summary-request.json report.json
 eigentrail-check check-lineage-summary examples/requests/lineage-summary-request.json report.json
 ```
 
-Python exposes `analyze_lineage_summary_json(request_json)` and
-`check_lineage_summary_json(request_json, report_json)`. R exposes the same names:
+Python:
+
+```python
+from pathlib import Path
+from eigentrail import analyze_lineage_summary_json, check_lineage_summary_json
+
+request = Path("examples/requests/lineage-summary-request.json").read_text()
+report = analyze_lineage_summary_json(request)
+check_lineage_summary_json(request, report)
+```
+
+R:
 
 ```r
 library(eigentrail)
-request <- paste(readLines("examples/requests/lineage-summary-request.json"), collapse="\n")
+request <- paste(readLines("examples/requests/lineage-summary-request.json"), collapse = "\n")
 report <- analyze_lineage_summary_json(request)
-stopifnot(check_lineage_summary_json(request, report))
+check_lineage_summary_json(request, report)
 ```
 
 ## Request and rows
 
-The `eigentrail.lineage-summary.v1` request contains a complete
+An `eigentrail.lineage-summary.v1` request contains a complete
 `eigentrail.histories.v2` request in `history` and a finite positive `delta`.
-`delta` is the tolerated operator-norm change of a projector. Preserve fixed
-feature coordinates, units, calibration and declared path regularity.
+`delta` is the tolerated operator-norm projector displacement. Preserve fixed
+feature coordinates, units, calibration and global path regularity.
 
-`rows` preserves configuration order and the original query order, including
-duplicates. `configuration` and `query` are zero-based input indices. Each
-bounded row contains:
+Rows preserve configuration order and query order, including duplicate queries.
+`configuration` and `query` are zero-based input indices. Each bounded row has:
 
-| Field | Interpretation |
+| Field | Meaning |
 |---|---|
-| `target` | An ordered spectral block `[start,end)`, or a common-frame anchor axis |
+| `target` | Ordered spectral block `[start,end)`, or common-frame anchor axis |
 | `information_level` | `Line`, `ProperSubspace`, or `WholeSpace` |
-| `strength`, `share`, `rank` | Checked spectral mass, variance share and possible ordinary ranks |
-| `projector_error` | Checked uncertainty for the returned projector |
+| `strength`, `share`, `rank` | Spectral mass, variance share and possible ordinary ranks |
+| `projector_error` | Checked projector uncertainty |
 | `reference_displacement` | Motion relative to the first observation date |
 | `motion` | `WithinTolerance`, `BeyondTolerance`, or `Unresolved` |
-| `accuracy_target_attained` | A proper block meets the separate input projector-accuracy target |
+| `accuracy_target_attained` | A proper block meets the input projector-accuracy target |
 
-An unresolved anchor or inconsistent outer bounds remains an explicit row state.
-Undefined share or displacement quantities retain their tags. Requesting more
-query times supplies no additional covariance observations.
+Unresolved anchors and inconsistent outer bounds retain explicit row states.
+Undefined quantities retain their tags. More query times do not add observations.
 
-Motion uses strict margins: an upper displacement bound below `delta` gives
-`WithinTolerance`; a lower bound above it gives `BeyondTolerance`. Equality or
-overlap remains `Unresolved`. A whole-space projector is always unresolved for
+Motion uses strict bounds: upper displacement below `delta` gives
+`WithinTolerance`; lower displacement above it gives `BeyondTolerance`. Equality
+or overlap gives `Unresolved`. Whole-space projectors are always unresolved for
 directional motion, even though the identity matrix has zero projector error.
 
-A common-frame axis can have zero motion under the supplied global fixed-frame
-premise while its orientation remains too uncertain for the requested accuracy.
-Read `motion` and `accuracy_target_attained` separately. A simple anchor does
-not establish the common-frame premise.
+A common-frame axis may have zero motion under the supplied fixed-frame premise
+while its orientation remains too uncertain for the requested accuracy. Read
+`motion` and `accuracy_target_attained` separately. Anchor weights alone do not
+establish the common-frame premise.
 
 ## Association and feasibility
 
-For an `OrderedBlock`, `origins` names possible initial **spectral blocks**.
-These indices are not generating-channel identities. Its `persistent` flag
-describes the checked outer association; it does not produce a feasible complete
-history by itself. Internal directions of a tied block remain unlabelled.
+For `OrderedBlock`, `origins` lists possible initial spectral blocks, not hidden
+generating-channel identities. `persistent` describes the outer association; it
+does not establish a feasible complete history. Tied internal directions remain
+unlabelled.
 
-Inspect `history.configurations[c].feasibility` separately. An original witness,
-a widened witness and unresolved feasibility retain different meanings. A
-widened witness does not widen the original query enclosures. Arbitrary marginal
-row choices need not form one jointly realizable path.
+Read `history.configurations[c].feasibility` separately. Original witnesses,
+widened witnesses and unresolved feasibility have different scopes. A widened
+witness does not widen the original query enclosures, and arbitrary row choices
+need not form one realizable path.
 
-This route accepts continuous and common-frame configurations. Other model
-classes retain their existing dedicated APIs. Statistical calibration and path
-assumptions remain premises; successful numerical checking does not discover
-the sampling law or hidden ancestry. Keep the original canonical request/report
-strings for checking and decode copies only for display. See
-[serialization](serialization.md) and the [API guide](api.md).
+This route accepts continuous and common-frame configurations. Use the dedicated
+APIs for other models. A successful numerical check does not establish the
+sampling law or the path assumptions. Preserve canonical request/report strings
+for checking; see [serialization](serialization.md) and the [API guide](api.md).

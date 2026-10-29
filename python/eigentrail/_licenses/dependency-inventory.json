@@ -11,15 +11,6 @@
       "features": []
     },
     {
-      "name": "az",
-      "version": "1.3.0",
-      "license": "MIT/Apache-2.0",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://gitlab.com/tspiteri/az",
-      "features": []
-    },
-    {
       "name": "bitflags",
       "version": "2.13.2",
       "license": "MIT OR Apache-2.0",
@@ -404,28 +395,6 @@
       ]
     },
     {
-      "name": "getrandom",
-      "version": "0.3.4",
-      "license": "MIT OR Apache-2.0",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/rust-random/getrandom",
-      "features": [
-        "std"
-      ]
-    },
-    {
-      "name": "gmp-mpfr-sys",
-      "version": "1.7.1",
-      "license": "LGPL-3.0+",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://gitlab.com/tspiteri/gmp-mpfr-sys",
-      "features": [
-        "mpfr"
-      ]
-    },
-    {
       "name": "half",
       "version": "2.7.1",
       "license": "MIT OR Apache-2.0",
@@ -464,12 +433,7 @@
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
       "repository": "https://github.com/unageek/inari",
-      "features": [
-        "gmp",
-        "gmp-mpfr-sys",
-        "nom",
-        "rug"
-      ]
+      "features": []
     },
     {
       "name": "interpol",
@@ -547,17 +511,6 @@
       ]
     },
     {
-      "name": "minimal-lexical",
-      "version": "0.2.1",
-      "license": "MIT/Apache-2.0",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/Alexhuszagh/minimal-lexical",
-      "features": [
-        "std"
-      ]
-    },
-    {
       "name": "nano-gemm",
       "version": "0.2.2",
       "license": "MIT",
@@ -631,18 +584,6 @@
       "repository": "https://github.com/rust-ndarray/ndarray",
       "features": [
         "default",
-        "std"
-      ]
-    },
-    {
-      "name": "nom",
-      "version": "7.1.3",
-      "license": "MIT",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/Geal/nom",
-      "features": [
-        "alloc",
         "std"
       ]
     },
@@ -749,18 +690,6 @@
       "features": [
         "alloc",
         "default"
-      ]
-    },
-    {
-      "name": "ppv-lite86",
-      "version": "0.2.21",
-      "license": "MIT OR Apache-2.0",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/cryptocorrosion/cryptocorrosion",
-      "features": [
-        "simd",
-        "std"
       ]
     },
     {
@@ -886,38 +815,6 @@
       ]
     },
     {
-      "name": "r-efi",
-      "version": "5.3.0",
-      "license": "MIT OR Apache-2.0 OR LGPL-2.1-or-later",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/r-efi/r-efi",
-      "features": []
-    },
-    {
-      "name": "rand_chacha",
-      "version": "0.9.0",
-      "license": "MIT OR Apache-2.0",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/rust-random/rand",
-      "features": [
-        "default",
-        "std"
-      ]
-    },
-    {
-      "name": "rand_core",
-      "version": "0.9.5",
-      "license": "MIT OR Apache-2.0",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/rust-random/rand",
-      "features": [
-        "std"
-      ]
-    },
-    {
       "name": "raw-cpuid",
       "version": "11.6.0",
       "license": "MIT",
@@ -953,20 +850,6 @@
       "repository": "https://github.com/sarah-ek/reborrow/",
       "features": [
         "default"
-      ]
-    },
-    {
-      "name": "rug",
-      "version": "1.30.0",
-      "license": "LGPL-3.0+",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://gitlab.com/tspiteri/rug",
-      "features": [
-        "float",
-        "gmp-mpfr-sys",
-        "integer",
-        "rational"
       ]
     },
     {
@@ -1200,15 +1083,6 @@
       "features": []
     },
     {
-      "name": "wasip2",
-      "version": "1.0.4+wasi-0.2.12",
-      "license": "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/bytecodealliance/wasi-rs",
-      "features": []
-    },
-    {
       "name": "winapi-util",
       "version": "0.1.11",
       "license": "Unlicense OR MIT",
@@ -1236,26 +1110,13 @@
       "features": [
         "Win32",
         "Win32_Foundation",
-        "Win32_Globalization",
         "Win32_Storage",
         "Win32_Storage_FileSystem",
         "Win32_System",
-        "Win32_System_Com",
         "Win32_System_Console",
         "Win32_System_SystemInformation",
-        "Win32_UI",
-        "Win32_UI_Shell",
         "default"
       ]
-    },
-    {
-      "name": "wit-bindgen",
-      "version": "0.57.1",
-      "license": "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/bytecodealliance/wit-bindgen",
-      "features": []
     },
     {
       "name": "zerocopy",
@@ -1280,7 +1141,7 @@
       "features": []
     }
   ],
-  "workspace_features_scope": "includes development validation features; distinct from production graphs",
+  "workspace_features_scope": "Resolved public package workspace; each package manifest defines the selected installation dependencies.",
   "production_graphs": {
     "eigentrail-core": {
       "packages": {
@@ -2855,22 +2716,5 @@
       ]
     }
   },
-  "native": [
-    {
-      "name": "GMP",
-      "version": "6.3.0",
-      "role": "development/validation oracle only; absent from selected production normal/build graphs",
-      "linking": "static in oracle test builds via gmp-mpfr-sys 1.7.1",
-      "redistribution": "LGPL/GPL options; qualification of distributed artifacts remains required"
-    },
-    {
-      "name": "MPFR",
-      "version": "4.2.2",
-      "role": "development/validation oracle only; absent from selected production normal/build graphs",
-      "linking": "static in oracle test builds via gmp-mpfr-sys 1.7.1",
-      "redistribution": "LGPL-3.0-or-later; qualification of distributed artifacts remains required"
-    }
-  ],
-  "distribution_qualified": false,
-  "native_cpu_build_audit": "pending; Linux Haswell flags require execution on baseline runner"
+  "native": []
 }

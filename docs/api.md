@@ -1,28 +1,37 @@
 # API guide
 
-## Arrays
+## Covariance arrays
 
-Python exports `track(covariances, times, radii, lipschitz)` and
-`track_history(covariances, times, radii, lipschitz, query_times,
-common_frame_weights=None)`. R uses the same arguments, with `NULL` for optional
-weights. Arrays must be finite, times strictly increasing, and features expressed
-in fixed measurement coordinates. Input shapes and return types are in the
-[quickstart](quickstart.md).
+Python and R provide these convenience methods:
 
-`track` returns eigensystems, separated spectral tubes, checked association graphs
-and summaries. `track_history` additionally returns intermediate-time block
-strength/share/rank, local/reference displacement, lineage alternatives and
-separately checked witnesses. Default histories use no common-frame premise;
-providing weights explicitly selects that additional model.
+```text
+track(covariances, times, radii, lipschitz)
+track_history(covariances, times, radii, lipschitz, query_times,
+              common_frame_weights=None)
+```
 
-## Canonical JSON
+R uses `NULL` for absent weights. Python arrays are `float64` with shape
+`(dates, features, features)`; R arrays are double with shape
+`(features, features, dates)`. Values must be finite and observation times strictly
+increasing. Keep feature units and measurement coordinates fixed.
 
-The same checked JSON routes are exported in Python and R. Each analysis method
-returns canonical JSON; each check method validates the supplied input/report.
-Python additionally exposes `track_covariances` and `track_history_covariances`,
-the native array routes returning canonical JSON rather than decoded dictionaries.
+`track` returns eigensystems, separated spectral tubes, association graphs and
+summaries. `track_history` adds query-time block strength/share/rank, displacement,
+lineage alternatives and separate witness feasibility. The default is a
+continuous path; supplying `common_frame_weights` declares a fixed eigenframe for
+the entire path.
 
-| Analyze | Check | Input arguments before the report |
+Python convenience methods return decoded dictionaries; R returns canonical JSON.
+Python also exports `track_covariances` and `track_history_covariances` with the
+same arguments, returning canonical JSON. See the [quickstart](quickstart.md).
+
+## JSON interfaces
+
+These functions are available in both Python and R. Analyze functions return
+canonical JSON; check functions take the same inputs followed by the report and
+return `True` in Python or `TRUE` in R on success. Invalid reports raise errors.
+
+| Analyze | Check | Inputs before the report |
 |---|---|---|
 | `track_json` | `check_json` | request |
 | `analyze_histories_json` | `check_histories_json` | request |
@@ -32,58 +41,69 @@ the native array routes returning canonical JSON rather than decoded dictionarie
 | `analyze_crossings_json` | `check_crossings_json` | request, window |
 | `analyze_transport_json` | `check_transport_json` | request |
 
-The request interface supports conditional error envelopes or the Gaussian
-scatter calibration with declared degrees of freedom, mean/divisor conventions,
-corrections and event budgets. A covariance stack does not establish a sampling
-law. Inspect [request examples](../examples/requests/) or the Rust public types
-with `cargo doc --no-deps --open` for the full field definitions.
+Use [example requests](../examples/requests/) and the
+[canonical format](serialization.md) to construct input strings. Preserve the
+original request/report pair for later checking. The [Gaussian guide](gaussian-calibration.md)
+explains calibration from a declared observation model.
 
 ## Command line
+
+After [installing the CLI](installation.md#rust-and-command-line), run these from
+a source checkout, using a new output filename:
 
 ```sh
 eigentrail-check track examples/requests/rotation-request.json report.json
 eigentrail-check check examples/requests/rotation-request.json report.json
 ```
 
-Analysis commands refuse an existing output file. Checking runs locally without
-network access. Other commands pair `analyze-histories`/`check-histories`,
-`analyze-common-frame`/`check-common-frame`, `analyze-jumps`/`check-jumps`,
-`analyze-crossings`/`check-crossings`, `analyze-transport`/`check-transport`, and
-`analyze-lineage-summary`/`check-lineage-summary`.
-Common-frame/jump commands take REQUEST MODEL REPORT; crossings take
-REQUEST WINDOW REPORT; the remaining commands take REQUEST REPORT.
-Use `--help` and `--version` for discovery.
+Analysis commands refuse existing output files. All checking runs locally.
 
-The [lineage summary guide](lineage-summary.md) explains the checked row table,
-strict displacement tolerance, accuracy flags and separate history feasibility.
+| Analyze / check commands | Arguments |
+|---|---|
+| `track` / `check` | REQUEST REPORT |
+| `analyze-histories` / `check-histories` | REQUEST REPORT |
+| `analyze-lineage-summary` / `check-lineage-summary` | REQUEST REPORT |
+| `analyze-common-frame` / `check-common-frame` | REQUEST MODEL REPORT |
+| `analyze-jumps` / `check-jumps` | REQUEST MODEL REPORT |
+| `analyze-crossings` / `check-crossings` | REQUEST WINDOW REPORT |
+| `analyze-transport` / `check-transport` | REQUEST REPORT |
 
-## Scientific scope
+Use `eigentrail-check --help` for syntax and `--version` for the installed version.
 
-Every uncertainty statement is conditional on its declared calibration and
-regularity/model assumptions. Observed slopes do not certify global regularity.
-Near ties, separated blocks can remain informative while individual identities
-remain unresolved. Undefined shares and matching alternatives are retained.
+## Interpret results under the declared model
 
-Common-frame tracking assumes a fixed eigenframe; its persistent axes can change
-instantaneous PC rank. Crossings require an explicit exact-collision premise,
-curvature/regularity bounds and straddling attachments. Small observed gaps do not
-establish those premises. Jumps retain possible cells and half-open timing
-brackets; smooth interpolation does not cross a possible jump.
+Uncertainty bounds are conditional on calibration and path assumptions. Observed
+slopes do not certify a global regularity bound. Near ties, a separated block may
+remain informative while its individual directions remain unresolved. Undefined
+shares and association alternatives are retained explicitly.
 
-Initialized transport checks known exact-polar geometry, initialization, speeds
-and numerical errors. A covariance-history transport bridge additionally charges
-statistical and between-observation uncertainty. Finer internal geometry spacing
-does not create more covariance observations.
+A common-frame model assumes one fixed eigenframe; its axes may change ordinary
+PC rank. A crossing model needs the declared exact-collision and regularity
+premises with straddling attachments; a small observed gap does not establish
+them. Jump models retain candidate cells and half-open timing brackets, and do
+not interpolate smoothly across a possible jump.
 
-Marginal summaries, local matches and symbolic alternatives are not evidence of
-a realizable complete history. Original and widened witnesses retain separate
-scope. Conservative bounds can be uninformative at practical sample sizes;
-coverage and useful individual-mode accuracy are distinct properties.
+Initialized transport takes exact-polar geometry with initialization, speed and
+numerical-error bounds. Transport inferred from covariance observations also
+needs its covariance-history bridge, charging statistical and between-date
+uncertainty. Internal refinement does not add observations.
+
+Marginal intervals and association alternatives do not establish a jointly
+realizable history. Original and widened witnesses retain separate scopes.
+Conservative bounds can be uninformative; valid coverage and accurate recovery
+of an individual direction are different properties. The
+[lineage summary guide](lineage-summary.md) explains how to read motion, accuracy
+and feasibility separately.
 
 ## Rust
 
-`eigentrail_core::track(&TraceRequest)` produces a report and
-`eigentrail_check::check(&TraceRequest, &TraceReport)` independently reconstructs
-and verifies its decisions. The remaining public modules provide the JSON-route
-models above. Invalid input, cancellation and resource refusal are structured
-errors; scientific ambiguity remains structured report data.
+`eigentrail_core::track(&TraceRequest)` produces a `TraceReport`;
+`eigentrail_check::check(&TraceRequest, &TraceReport)` checks it independently.
+Public modules expose the additional models listed above. Use
+`eigentrail_core::serialization::{encode, decode}` for the wire format.
+
+Invalid input, resource refusal, numerical exhaustion and cancellation use
+`Error::{Invalid, Resource, Exhausted, Cancelled}`. Ordinary scientific ambiguity
+is report data. See [installation](installation.md) for Git dependencies and the
+[quickstart](quickstart.md#errors-and-resource-limits) for interface errors and
+memory limits.

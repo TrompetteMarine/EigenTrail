@@ -1,3 +1,6 @@
 # Bundled dependency notices are not EigenTrail source code.
 licenses/** linguist-vendored
 python/eigentrail/_licenses/** linguist-vendored
+
+R/inst/** linguist-vendored
+R/src/rust/** linguist-vendored

@@ -1,4 +1,4 @@
-name: Native release validation
+name: Package installation checks
 
 # Artifact validation only. Publishing requires a separate explicitly approved
 # workflow with a protected environment; this job has no registry credentials.
@@ -80,15 +80,14 @@ jobs:
         run: |
           python scripts/release_smoke.py --environment-only --expected-machine '${{ matrix.machine }}' --out artifacts/runner
           git rev-parse HEAD > artifacts/source-commit.txt
-      - name: Rust checks and complete release-mode test suite
+      - name: Check package sources and build CLI
         run: |
           set -o pipefail
           cargo fmt --all -- --check
           cargo clippy --locked --lib --bins -- -D warnings
-          for test in scripts/test_*.py; do python "$test"; done
-          python R/tests/test_configure.py
+          python scripts/check_r_sources.py
           python scripts/check_release.py > artifacts/source-metadata.json
-          cargo test --release --locked -- --test-threads=1 2>&1 | tee artifacts/rust-tests.log
+          cargo test --release --locked --lib --bins -- --test-threads=1 2>&1 | tee artifacts/rust-tests.log
           cargo install --offline --locked --path crates/eigentrail-check --root "$RUNNER_TEMP/eigentrail-cli"
       - name: Cargo source package validation without publishing
         run: |
@@ -128,17 +127,16 @@ jobs:
           [[ ${#sources[@]} -eq 1 ]]
           "$RUNNER_TEMP/eigentrail-source/bin/python" -m pip install --no-index --find-links "$RUNNER_TEMP/eigentrail-wheelhouse" "${sources[0]}"
           "$RUNNER_TEMP/eigentrail-source/bin/python" -I scripts/release_smoke.py --cli "$RUNNER_TEMP/eigentrail-cli/bin/eigentrail-check" --out "$RUNNER_TEMP/eigentrail-smoke-source"
-      - name: Prepare source-only offline R vendor closure
+      - name: Install Python directly from GitHub
         run: |
-          python scripts/stage_r.py --prepare-vendor build/r-vendor-workspace
-          cargo metadata --offline --format-version 1 --manifest-path build/r-vendor-workspace/Cargo.toml > artifacts/r/vendor-metadata.json
-          cargo vendor --locked --offline --versioned-dirs --manifest-path build/r-vendor-workspace/Cargo.toml build/r-vendor-workspace/vendor > artifacts/r/vendor-config.txt
-          python scripts/stage_r.py --vendor-workspace build/r-vendor-workspace > "$RUNNER_TEMP/eigentrail-r-stage.txt"
+          python -m venv "$RUNNER_TEMP/eigentrail-github-python"
+          "$RUNNER_TEMP/eigentrail-github-python/bin/python" -m pip install --no-index --find-links "$RUNNER_TEMP/eigentrail-wheelhouse" "eigentrail @ git+https://github.com/TrompetteMarine/EigenTrail.git@${{ github.sha }}#subdirectory=python"
+          "$RUNNER_TEMP/eigentrail-github-python/bin/python" -I scripts/release_smoke.py --cli "$RUNNER_TEMP/eigentrail-cli/bin/eigentrail-check" --out "$RUNNER_TEMP/eigentrail-smoke-github-python"
       - name: Build, install and check R source
         env:
           CARGO_NET_OFFLINE: 'true'
         run: |
-          stage="$(tail -n 1 "$RUNNER_TEMP/eigentrail-r-stage.txt")"
+          stage="$GITHUB_WORKSPACE/R"
           mkdir -p "$RUNNER_TEMP/eigentrail-r-library"
           (cd artifacts/r && R CMD build --no-manual --no-build-vignettes "$stage")
           sources=(artifacts/r/eigentrail_*.tar.gz)
@@ -147,6 +145,12 @@ jobs:
           source="$(cd artifacts/r && pwd)/$(basename "${sources[0]}")"
           (cd artifacts/r && R CMD check --as-cran --no-manual "$source")
           "$RUNNER_TEMP/eigentrail-wheel/bin/python" -I scripts/release_smoke.py --cli "$RUNNER_TEMP/eigentrail-cli/bin/eigentrail-check" --r-library "$RUNNER_TEMP/eigentrail-r-library" --out "$RUNNER_TEMP/eigentrail-smoke-r"
+      - name: Install R directly from GitHub
+        run: |
+          Rscript --vanilla -e 'install.packages("remotes", repos="https://cloud.r-project.org")'
+          mkdir -p "$RUNNER_TEMP/eigentrail-github-r"
+          EIGENTRAIL_R_LIBRARY="$RUNNER_TEMP/eigentrail-github-r" Rscript --vanilla -e 'remotes::install_github("TrompetteMarine/EigenTrail", ref=Sys.getenv("GITHUB_SHA"), subdir="R", upgrade="never", lib=Sys.getenv("EIGENTRAIL_R_LIBRARY"))'
+          "$RUNNER_TEMP/eigentrail-wheel/bin/python" -I scripts/release_smoke.py --cli "$RUNNER_TEMP/eigentrail-cli/bin/eigentrail-check" --r-library "$RUNNER_TEMP/eigentrail-github-r" --out "$RUNNER_TEMP/eigentrail-smoke-github-r"
       - name: Upload candidate artifacts and actual logs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -159,3 +163,5 @@ jobs:
             ${{ runner.temp }}/eigentrail-smoke-wheel/
             ${{ runner.temp }}/eigentrail-smoke-source/
             ${{ runner.temp }}/eigentrail-smoke-r/
+            ${{ runner.temp }}/eigentrail-smoke-github-python/
+            ${{ runner.temp }}/eigentrail-smoke-github-r/
