@@ -58,12 +58,10 @@ if [ ! -f src/rust/vendor.tar.xz ] || [ ! -f src/rust/.cargo/config.toml ]; then
     echo 'Incomplete bundled Rust dependencies. Reinstall the complete EigenTrail R package from GitHub.' >&2
     exit 1
 fi
-if [ ! -d src/rust/vendor ]; then
-    tar -xf src/rust/vendor.tar.xz -C src/rust || {
-        echo 'Cannot unpack bundled Rust sources; tar with xz support is required.' >&2
-        exit 1
-    }
-fi
+tar -xf src/rust/vendor.tar.xz -C src/rust || {
+    echo 'Cannot unpack bundled Rust sources; tar with xz support is required.' >&2
+    exit 1
+}
 escape_sed() { printf '%s' "$1" | sed 's/[\\&|]/\\&/g'; }
 sed -e "s|@SYSTEM_LIBS@|$(escape_sed "$eigentrail_system_libs")|" \
     -e "s|@CARGO@|$(escape_sed "$eigentrail_cargo")|" \
