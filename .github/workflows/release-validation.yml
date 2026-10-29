@@ -146,6 +146,8 @@ jobs:
           (cd artifacts/r && R CMD check --as-cran --no-manual "$source")
           "$RUNNER_TEMP/eigentrail-wheel/bin/python" -I scripts/release_smoke.py --cli "$RUNNER_TEMP/eigentrail-cli/bin/eigentrail-check" --r-library "$RUNNER_TEMP/eigentrail-r-library" --out "$RUNNER_TEMP/eigentrail-smoke-r"
       - name: Install R directly from GitHub
+        env:
+          GITHUB_PAT: ${{ github.token }}
         run: |
           Rscript --vanilla -e 'install.packages("remotes", repos="https://cloud.r-project.org")'
           mkdir -p "$RUNNER_TEMP/eigentrail-github-r"
