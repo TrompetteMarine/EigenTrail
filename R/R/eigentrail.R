@@ -22,14 +22,18 @@ track <- function(covariances, times, radii, lipschitz) {
 #' Track a continuous path at observation and query times
 #' @param query_times Finite double vector inside the observation domain.
 #' @param common_frame_weights Nonnegative double anchor weights, one per date.
+#' @param witness Optional double array matching covariances. Supplies one
+#'   candidate matrix per observation date with zero radius widening.
 #' @details Optional anchor weights select a declared common frame for the entire path.
 #' @export
 track_history <- function(covariances, times, radii, lipschitz, query_times,
-                          common_frame_weights=NULL) {
+                          common_frame_weights=NULL, witness=NULL) {
     report <- .checked(.Call(wrap__track_history_covariances, covariances, times,
-                            radii, lipschitz, query_times, common_frame_weights))
+                            radii, lipschitz, query_times, common_frame_weights,
+                            witness))
     attr(report,"caller_owned_payload_estimate_bytes") <- 8*(length(covariances)+
-        length(times)+length(radii)+length(query_times)+length(common_frame_weights))
+        length(times)+length(radii)+length(query_times)+length(common_frame_weights)+
+        length(witness))
     report
 }
 #' @export

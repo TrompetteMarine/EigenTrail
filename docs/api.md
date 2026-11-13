@@ -21,6 +21,11 @@ lineage alternatives and separate witness feasibility. The default is a
 continuous path; supplying `common_frame_weights` declares a fixed eigenframe for
 the entire path.
 
+In R, call `track_history(..., witness = candidate)` with a double array of the
+same shape as `covariances` to check one affine path under the supplied radii and
+regularity bound. Read the configuration's `feasibility` field for the result.
+With common-frame weights, explicit witness matrices must be coordinate-diagonal.
+
 Python convenience methods return decoded dictionaries; R returns canonical JSON.
 Python also exports `track_covariances` and `track_history_covariances` with the
 same arguments, returning canonical JSON. See the [quickstart](quickstart.md).
