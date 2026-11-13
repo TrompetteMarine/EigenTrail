@@ -85,7 +85,9 @@ def validate_history_witnesses(eigentrail, np):
     assert common['configurations'][0]['feasibility'] == {'kind': 'OriginalAffineWitness'}
     nondiagonal = candidate.copy(); nondiagonal[:, 0, 1] = nondiagonal[:, 1, 0] = RADIUS / 4
     assert eigentrail.track_history(*args, [1., 0.], witness=nondiagonal)['configurations'][0]['feasibility'] == {'kind': 'UnsupportedModel'}
-    for invalid in [candidate[0], candidate[:1], candidate.astype(np.float32)]:
+    nonfinite = candidate.copy(); nonfinite[0, 0, 0] = np.nan
+    asymmetric = candidate.copy(); asymmetric[0, 0, 1] = .125
+    for invalid in [candidate[0], candidate[:1], candidate.astype(np.float32), nonfinite, asymmetric]:
         try: eigentrail.track_history(*args, witness=invalid)
         except (ValueError, TypeError): pass
         else: raise AssertionError('Python accepted malformed witness')

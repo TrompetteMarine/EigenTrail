@@ -390,6 +390,7 @@ fn copy_covariances(
 }
 
 #[pyfunction(signature = (data, times, radii, lipschitz, query_times, common_frame_weights=None, *, witness=None))]
+#[allow(clippy::too_many_arguments)] // Preserve the public positional metadata arguments.
 fn track_history_covariances(
     py: Python<'_>,
     data: PyReadonlyArray3<'_, f64>,
@@ -402,12 +403,12 @@ fn track_history_covariances(
 ) -> PyResult<String> {
     let (m, p) = covariance_shape(&data)?;
     resources::preflight(p, m, resources::DEFAULT_BYTES).map_err(py_error)?;
-    if let Some(nodes) = &witness {
-        if covariance_shape(nodes)? != (m, p) {
-            return Err(py_error(Error::Invalid(
-                "witness shape must match the observation covariance array".into(),
-            )));
-        }
+    if let Some(nodes) = &witness
+        && covariance_shape(nodes)? != (m, p)
+    {
+        return Err(py_error(Error::Invalid(
+            "witness shape must match the observation covariance array".into(),
+        )));
     }
     check_metadata_length(times, m, "times")?;
     check_metadata_length(radii, m, "radii")?;
