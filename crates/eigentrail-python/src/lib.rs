@@ -389,7 +389,7 @@ fn copy_covariances(
     Ok(matrices)
 }
 
-#[pyfunction(signature = (data, times, radii, lipschitz, query_times, common_frame_weights=None))]
+#[pyfunction(signature = (data, times, radii, lipschitz, query_times, common_frame_weights=None, *, witness=None))]
 fn track_history_covariances(
     py: Python<'_>,
     data: PyReadonlyArray3<'_, f64>,
@@ -398,9 +398,17 @@ fn track_history_covariances(
     lipschitz: f64,
     query_times: &Bound<'_, PyAny>,
     common_frame_weights: Option<&Bound<'_, PyAny>>,
+    witness: Option<PyReadonlyArray3<'_, f64>>,
 ) -> PyResult<String> {
     let (m, p) = covariance_shape(&data)?;
     resources::preflight(p, m, resources::DEFAULT_BYTES).map_err(py_error)?;
+    if let Some(nodes) = &witness {
+        if covariance_shape(nodes)? != (m, p) {
+            return Err(py_error(Error::Invalid(
+                "witness shape must match the observation covariance array".into(),
+            )));
+        }
+    }
     check_metadata_length(times, m, "times")?;
     check_metadata_length(radii, m, "radii")?;
     if let Some(weights) = common_frame_weights {
@@ -436,6 +444,13 @@ fn track_history_covariances(
         let matrices = copy_covariances(py, &data, m, p)?;
         let observations =
             TraceRequest::try_conditional(times, matrices, radii, lipschitz).map_err(py_error)?;
+        let mut witnesses = memory::capacity(usize::from(witness.is_some())).map_err(py_error)?;
+        if let Some(nodes) = &witness {
+            witnesses.push(families::AffineWitness {
+                nodes: copy_covariances(py, nodes, m, p)?,
+                widening: 0.,
+            });
+        }
         let mut configurations = memory::capacity(1).map_err(py_error)?;
         configurations.push(families::Configuration {
             id: memory::text(if common_frame_weights.is_some() {
@@ -446,7 +461,7 @@ fn track_history_covariances(
             .map_err(py_error)?,
             lipschitz,
             class,
-            witnesses: Vec::new(),
+            witnesses,
         });
         Ok(families::HistoryRequest {
             schema: memory::text(if common_frame_weights.is_some() {

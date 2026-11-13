@@ -64,6 +64,33 @@ def validate_report(report):
             share = summary['share']['value']; assert share['lower'] <= truth <= share['upper']
 
 
+def validate_history_witnesses(eigentrail, np):
+    candidate = np.zeros((2, 4, 4), dtype=np.float64)[:, ::2, ::2]
+    candidate[:] = [[.75, 0.], [0., .25]]
+    assert not candidate.flags.c_contiguous
+    observed = candidate.copy(); observed[1, 0, 0] += RADIUS / 2
+    args = (observed, [0., 1.], [RADIUS, RADIUS], 0., [0., .5, 1.])
+    baseline = eigentrail.track_history(*args)
+    verified = eigentrail.track_history(*args, witness=candidate)
+    before = baseline['configurations'][0]; after = verified['configurations'][0]
+    assert before['feasibility'] == {'kind': 'Unresolved'}
+    assert after['feasibility'] == {'kind': 'OriginalAffineWitness'}
+    assert verified['caller_owned_payload_estimate_bytes'] == baseline['caller_owned_payload_estimate_bytes'] + candidate.nbytes
+    assert [q['state'] for q in before['continuous_workflow'][0]['queries']] == [q['state'] for q in after['continuous_workflow'][0]['queries']]
+    canonical = eigentrail.track_history_covariances(*args, witness=candidate)
+    assert decoded(json.loads(canonical)) == {key: value for key, value in verified.items() if key != 'caller_owned_payload_estimate_bytes'}
+    outside = candidate.copy(); outside[:, 0, 0] = 1.
+    assert eigentrail.track_history(*args, witness=outside)['configurations'][0]['feasibility'] == {'kind': 'Unresolved'}
+    common = eigentrail.track_history(*args, [1., 0.], witness=candidate)
+    assert common['configurations'][0]['feasibility'] == {'kind': 'OriginalAffineWitness'}
+    nondiagonal = candidate.copy(); nondiagonal[:, 0, 1] = nondiagonal[:, 1, 0] = RADIUS / 4
+    assert eigentrail.track_history(*args, [1., 0.], witness=nondiagonal)['configurations'][0]['feasibility'] == {'kind': 'UnsupportedModel'}
+    for invalid in [candidate[0], candidate[:1], candidate.astype(np.float32)]:
+        try: eigentrail.track_history(*args, witness=invalid)
+        except (ValueError, TypeError): pass
+        else: raise AssertionError('Python accepted malformed witness')
+
+
 def command(argv, cwd):
     result = subprocess.run(argv, cwd=cwd, capture_output=True, text=True)
     return {'argv': [str(item) for item in argv], 'exit_code': result.returncode, 'stdout': result.stdout, 'stderr': result.stderr}
@@ -133,6 +160,7 @@ def main():
     stack = np.zeros((2, 4, 4), dtype=np.float64)[:, ::2, ::2]; stack[:] = [[.75, 0.], [0., .25]]
     assert not stack.flags.c_contiguous
     assert eigentrail.track_covariances(stack, np.array([0., 1.]), np.array([RADIUS, RADIUS]), 0.) == output
+    validate_history_witnesses(eigentrail, np)
     bad = dict(report, completed=False); tampered = json.dumps(bad, sort_keys=True, separators=(',', ':'))
     try: eigentrail.check_json(request, tampered)
     except ValueError: pass
@@ -152,7 +180,7 @@ def main():
         (folder / 'probe.R').write_text(R_PROBE)
         result = command([args.rscript, '--vanilla', str(folder / 'probe.R'), str(folder), str(library)], folder)
         commands.append(result); assert result['exit_code'] == 0, result
-    result = {'status': 'passed', 'scope': 'One conditional constant covariance fixture; no statistical/platform certification.',
+    result = {'status': 'passed', 'scope': 'Conditional constant covariance and supplied-witness fixtures; no statistical/platform certification.',
         'paths': paths, 'commands': commands, 'canonical_report_sha256': hashlib.sha256(output.encode()).hexdigest()}
     (folder / 'result.json').write_text(json.dumps(result, indent=2) + '\n')
     print('Installed constant-path smoke passed:', folder)

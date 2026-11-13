@@ -28,18 +28,22 @@ def track(covariances, times, radii, lipschitz):
     return result
 
 def track_history(covariances, times, radii, lipschitz, query_times,
-                  common_frame_weights=None):
+                  common_frame_weights=None, *, witness=None):
     """Track a continuous covariance path at observation and query times.
 
     Supply conditional nodal radii and a global Lipschitz bound. Returned
     block summaries and lineage candidates are outer information on one
     exact whole-path family; arbitrary marginal choices need not form a path.
     Checked affine witnesses retain their separate feasibility status.
+    Optional witness supplies one candidate covariance per observation date,
+    checked against the original radii and regularity without widening them.
+    It establishes existence and leaves the outer query bounds unchanged.
 
     Supplying common_frame_weights selects the existing common-frame model
     and declares that one fixed eigenframe diagonalizes the entire path.
     Weights must be nonnegative with positive total. A simple anchor does not
     establish that premise; tied anchors retain unresolved labels.
+    Explicit common-frame witnesses must be diagonal in the input coordinates.
 
     Input arrays must be float64 with shape (dates, features, features);
     strided arrays are supported. Returns a checked history report with
@@ -47,14 +51,15 @@ def track_history(covariances, times, radii, lipschitz, query_times,
     """
     result = _unbits(json.loads(track_history_covariances(
         covariances, times, radii, lipschitz, query_times,
-        common_frame_weights)))
+        common_frame_weights, witness=witness)))
     configuration = result['configurations'][0]
     dates = len(configuration['continuous_conditional']['eigensystems'])
     workflow = ('continuous_workflow' if common_frame_weights is None
                 else 'common_frame_queries')
     queries = len(configuration[workflow][0]['queries'])
     result['caller_owned_payload_estimate_bytes'] = covariances.nbytes + 8*(
-        (2 if common_frame_weights is None else 3)*dates+queries)
+        (2 if common_frame_weights is None else 3)*dates+queries) + (
+        0 if witness is None else witness.nbytes)
     return result
 
 __all__ = ['track','track_history','track_json','check_json','track_covariances',
