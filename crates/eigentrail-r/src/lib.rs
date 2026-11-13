@@ -313,6 +313,7 @@ fn track_history_covariances(
     lipschitz: f64,
     query_times: Robj,
     common_frame_weights: Robj,
+    witness: Robj,
 ) -> extendr_api::Result<String> {
     let (p, m) = covariance_shape(&data)?;
     let input = data.as_real_slice().ok_or_else(|| {
@@ -343,6 +344,22 @@ fn track_history_covariances(
             "array/time/radius lengths".into(),
         ));
     }
+    let witness_nodes = if witness.is_null() {
+        None
+    } else {
+        if !matches!(covariance_shape(&witness), Ok(shape) if shape == (p, m)) {
+            return Err(fail(core::Error::Invalid(
+                "witness shape must match the observation covariance array".into(),
+            )));
+        }
+        let nodes = witness
+            .as_real_slice()
+            .ok_or_else(|| fail(core::Error::Invalid("double witness array required".into())))?;
+        if nodes.len() != input.len() {
+            return Err(fail(core::Error::Invalid("witness array length".into())));
+        }
+        Some(nodes)
+    };
     scalar::nonnegative(lipschitz, "global covariance regularity").map_err(fail)?;
     if t.iter().any(|t| !t.is_finite())
         || t.windows(2).any(|pair| pair[0] >= pair[1])
@@ -384,6 +401,13 @@ fn track_history_covariances(
             TraceRequest::try_conditional(copy_values(t)?, matrices, copy_values(r)?, lipschitz)
                 .map_err(fail)?;
         let query_times = copy_values(queries)?;
+        let mut witnesses = memory::capacity(usize::from(witness_nodes.is_some())).map_err(fail)?;
+        if let Some(nodes) = witness_nodes {
+            witnesses.push(families::AffineWitness {
+                nodes: copy_covariances(nodes, p, m)?,
+                widening: 0.,
+            });
+        }
         let mut configurations = memory::capacity(1).map_err(fail)?;
         configurations.push(families::Configuration {
             id: memory::text(if weights.is_some() {
@@ -394,7 +418,7 @@ fn track_history_covariances(
             .map_err(fail)?,
             lipschitz,
             class,
-            witnesses: Vec::new(),
+            witnesses,
         });
         Ok(families::HistoryRequest {
             schema: memory::text(if weights.is_some() {

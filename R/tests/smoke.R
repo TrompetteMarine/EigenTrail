@@ -15,6 +15,32 @@ stopifnot(is.character(history), length(history) == 1L,
           grepl("eigentrail.histories.v2", history, fixed = TRUE),
           grepl("continuous_workflow", history, fixed = TRUE))
 
+radius <- 2^-20
+candidate <- array(rep(c(0.75, 0, 0, 0.25), 2), dim = c(2, 2, 2))
+observed <- candidate
+observed[1, 1, 2] <- observed[1, 1, 2] + radius / 2
+baseline <- track_history(observed, c(0, 1), rep(radius, 2), 0, c(0, 0.5, 1))
+verified <- track_history(observed, c(0, 1), rep(radius, 2), 0, c(0, 0.5, 1),
+                          witness = candidate)
+stopifnot(grepl('"feasibility":{"kind":"Unresolved"}', baseline, fixed = TRUE),
+          grepl('"feasibility":{"kind":"OriginalAffineWitness"}', verified,
+                fixed = TRUE),
+          attr(verified, "caller_owned_payload_estimate_bytes") ==
+              attr(baseline, "caller_owned_payload_estimate_bytes") +
+              8 * length(candidate))
+outside <- candidate
+outside[1, 1, ] <- 1
+unresolved <- track_history(observed, c(0, 1), rep(radius, 2), 0, c(0.5),
+                            witness = outside)
+stopifnot(grepl('"feasibility":{"kind":"Unresolved"}', unresolved, fixed = TRUE))
+
+for (invalid_witness in list(candidate[, , 1], array(1L, dim(candidate)))) {
+    invalid <- tryCatch(track_history(observed, c(0, 1), rep(radius, 2), 0, c(0.5),
+                                      witness = invalid_witness),
+                        eigentrail_invalid = identity)
+    stopifnot(inherits(invalid, "eigentrail_invalid"))
+}
+
 invalid <- tryCatch(track(covariances, c(0, 0, 1), radii, 0),
                     eigentrail_error = identity)
 stopifnot(inherits(invalid, "eigentrail_error"))

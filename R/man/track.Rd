@@ -19,7 +19,7 @@
 \usage{
 track(covariances, times, radii, lipschitz)
 track_history(covariances, times, radii, lipschitz, query_times,
-              common_frame_weights = NULL)
+              common_frame_weights = NULL, witness = NULL)
 track_json(request)
 check_json(request, report)
 analyze_jumps_json(request, model)
@@ -45,6 +45,8 @@ and duplicates are preserved.}
 \item{common_frame_weights}{Optional nonnegative double anchor weights, one per
 date, with positive total. NULL selects the continuous model. Supplied weights
 declare one fixed eigenframe diagonalizing the entire covariance path.}
+\item{witness}{Optional double array with the same dimensions as covariances.
+Supplies a candidate covariance matrix at each observation date.}
 \item{request}{Canonical eigentrail.trace.v1 request JSON; history functions accept
 eigentrail.histories.v1 and eigentrail.histories.v2. The initialized transport
 functions accept eigentrail.transport.v1 geometry requests. The lineage summary
@@ -103,6 +105,9 @@ The track_history convenience route accepts an ordinary double array and constru
 one continuous configuration using eigentrail.histories.v2. It returns checked
 block strength, share, ordered-rank and displacement bounds, conservative lineage
 candidates and separately checked query values from one affine witness when verified.
+The optional witness array supplies one affine candidate for checking against the
+original radii and regularity bound. With common-frame weights, explicit witness
+matrices must be diagonal in the given coordinates to be checked.
 Marginal bounds and lineage reachability are outer information; arbitrary choices
 within them need not form one realizable path. Merge/split ambiguity does not create
 an individual identity. An unverified witness is unresolved, not proof of infeasibility.

@@ -73,6 +73,45 @@ Optional `common_frame_weights` selects a model with one fixed eigenframe over
 the entire path. Supply it only when that premise is justified. See the
 [API guide](api.md) and [lineage summary guide](lineage-summary.md).
 
+## Supply an affine witness
+
+A candidate supplies one PSD matrix per observation date. This example starts
+with slightly different observations and a declared constant population path:
+
+```python
+radius = 2.0**-20
+candidate = np.array([[[0.75, 0.0], [0.0, 0.25]]] * 2, dtype=np.float64)
+observed = candidate.copy()
+observed[1, 0, 0] += radius / 2
+baseline = eigentrail.track_history(observed, [0.0, 1.0], [radius] * 2,
+                                   0.0, [0.0, 0.5, 1.0])
+verified = eigentrail.track_history(observed, [0.0, 1.0], [radius] * 2,
+                                   0.0, [0.0, 0.5, 1.0], witness=candidate)
+assert baseline["configurations"][0]["feasibility"]["kind"] == "Unresolved"
+assert verified["configurations"][0]["feasibility"]["kind"] == "OriginalAffineWitness"
+```
+
+The same fixture in R:
+
+```r
+radius <- 2^-20
+candidate <- array(rep(c(0.75, 0, 0, 0.25), 2), dim = c(2, 2, 2))
+observed <- candidate
+observed[1, 1, 2] <- observed[1, 1, 2] + radius / 2
+baseline <- track_history(observed, c(0, 1), rep(radius, 2), 0, c(0, 0.5, 1))
+verified <- track_history(observed, c(0, 1), rep(radius, 2), 0, c(0, 0.5, 1),
+                          witness = candidate)
+stopifnot(grepl('"feasibility":{"kind":"Unresolved"}', baseline, fixed = TRUE),
+          grepl('"feasibility":{"kind":"OriginalAffineWitness"}', verified,
+                fixed = TRUE))
+```
+
+The candidate proves existence of a shared affine history under the declared
+nodal radii and regularity bound. It does not identify a unique population path,
+resolve ambiguous labels, or change the original outer query bounds. A candidate
+outside a nodal ball remains unresolved. The JSON route separately supports
+explicitly widened families, which retain their own scope.
+
 ## Errors and resource limits
 
 Inputs must be finite; observation times must be strictly increasing. Missing
