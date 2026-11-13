@@ -1,6 +1,24 @@
 """Local TRACE analysis. Covariances have shape (dates, features, features)."""
 import json
+import platform
 import struct
+import sys
+
+if sys.platform.startswith('linux'):
+    if platform.machine().lower() != 'x86_64':
+        raise ImportError('EigenTrail supports Linux x86_64 with Haswell CPU instructions and kernel AVX support.')
+    # Rust 1.99 target-cpu=haswell; Linux calls SSE3 pni, CMPXCHG16B cx16 and LZCNT abm.
+    _haswell_flags = set('avx avx2 bmi1 bmi2 cx16 f16c fma fxsr abm movbe pclmulqdq popcnt rdrand sse sse2 pni sse4_1 sse4_2 ssse3 xsave xsaveopt'.split())
+    try:
+        with open('/proc/cpuinfo', encoding='ascii') as _cpuinfo:
+            _cpu_flags = [set(line.partition(':')[2].split()) for line in _cpuinfo
+                          if line.partition(':')[0].strip() == 'flags']
+    except (OSError, UnicodeError) as _error:
+        raise ImportError('EigenTrail requires readable /proc/cpuinfo to verify Linux CPU and kernel support before loading native code.') from _error
+    # shortcut: absent kernel flags also refuse capable hosts; use baseline-safe dispatch to broaden support.
+    if not _cpu_flags or any(not _haswell_flags <= flags for flags in _cpu_flags):
+        raise ImportError('EigenTrail requires Haswell CPU instructions and kernel AVX support on every Linux CPU; /proc/cpuinfo does not confirm the required features.')
+
 from ._eigentrail import (track_json, check_json, track_covariances,
                          track_history_covariances,
                          analyze_jumps_json, check_jumps_json,
