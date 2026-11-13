@@ -4,6 +4,11 @@ name: Package installation checks
 # workflow with a protected environment; this job has no registry credentials.
 on:
   workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact staged commit to qualify
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -16,7 +21,7 @@ jobs:
   native:
     name: ${{ matrix.os }} / ${{ matrix.machine }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 90
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -49,6 +54,12 @@ jobs:
       run:
         shell: bash
     steps:
+      - name: Require the exact staged workflow commit
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$GITHUB_SHA" == "$EXPECTED_SHA" ]]
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
@@ -85,8 +96,10 @@ jobs:
           set -o pipefail
           cargo fmt --all -- --check
           cargo clippy --locked --lib --bins -- -D warnings
+          cargo clippy --locked -p eigentrail-python --lib -- -D warnings
           python scripts/check_r_sources.py
           python scripts/check_release.py > artifacts/source-metadata.json
+          python scripts/test_python_cpu_guard.py
           cargo test --release --locked --lib --bins -- --test-threads=1 2>&1 | tee artifacts/rust-tests.log
           cargo install --offline --locked --path crates/eigentrail-check --root "$RUNNER_TEMP/eigentrail-cli"
       - name: Cargo source package validation without publishing
@@ -153,6 +166,19 @@ jobs:
           mkdir -p "$RUNNER_TEMP/eigentrail-github-r"
           EIGENTRAIL_R_LIBRARY="$RUNNER_TEMP/eigentrail-github-r" Rscript --vanilla -e 'remotes::install_github("TrompetteMarine/EigenTrail", ref=Sys.getenv("GITHUB_SHA"), subdir="R", upgrade="never", lib=Sys.getenv("EIGENTRAIL_R_LIBRARY"))'
           "$RUNNER_TEMP/eigentrail-wheel/bin/python" -I scripts/release_smoke.py --cli "$RUNNER_TEMP/eigentrail-cli/bin/eigentrail-check" --r-library "$RUNNER_TEMP/eigentrail-github-r" --out "$RUNNER_TEMP/eigentrail-smoke-github-r"
+      - name: Record candidate artifact identities
+        run: |
+          git rev-parse 'HEAD^{tree}' > artifacts/source-tree.txt
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          root = Path('artifacts')
+          packages = sorted(p for p in root.rglob('*') if p.is_file() and
+                            (p.name.endswith('.whl') or p.name.endswith('.tar.gz')))
+          (root / 'SHA256SUMS').write_text(''.join(
+              f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(root)}\n'
+              for p in packages))
+          PY
       - name: Upload candidate artifacts and actual logs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

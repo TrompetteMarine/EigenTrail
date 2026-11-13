@@ -1,0 +1,88 @@
+name: Publish qualified Python release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing qualified GitHub release tag
+        required: true
+        type: string
+      expected_sha:
+        description: Exact qualified release commit
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-pypi
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment:
+      name: pypi
+      url: https://pypi.org/p/eigentrail
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ inputs.tag }}
+      EXPECTED_SHA: ${{ inputs.expected_sha }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.expected_sha }}
+          persist-credentials: false
+      - name: Verify tag, release and qualified artifact manifest
+        run: |
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          git fetch origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+          [[ "$(git rev-parse "$RELEASE_TAG^{commit}")" == "$EXPECTED_SHA" ]]
+          [[ "$(git rev-parse HEAD)" == "$EXPECTED_SHA" ]]
+          gh release view "$RELEASE_TAG" --json isDraft,isPrerelease > release-state.json
+          gh release download "$RELEASE_TAG" --dir qualified
+          python - <<'PY'
+          import hashlib, json, os, shutil, subprocess, tomllib
+          from pathlib import Path
+          state = json.loads(Path('release-state.json').read_text())
+          assert not state['isDraft'] and not state['isPrerelease']
+          root = Path('qualified')
+          receipt = json.loads((root / 'release-receipt.json').read_text())
+          assert receipt['commit'] == os.environ['EXPECTED_SHA']
+          assert receipt['tree'] == subprocess.check_output(
+              ['git', 'rev-parse', 'HEAD^{tree}'], text=True).strip()
+          assert receipt['pypi_ready'] is True
+          assert receipt['qualification']['status'] == 'passed'
+          expected = receipt['artifacts']
+          manifest = {}
+          for line in (root / 'SHA256SUMS').read_text().splitlines():
+              digest, name = line.split('  ', 1)
+              assert name == Path(name).name and name not in manifest
+              manifest[name] = digest
+          assert manifest == {name: value['sha256'] for name, value in expected.items()}
+          assert {p.name for p in root.iterdir()} == set(expected) | {
+              'SHA256SUMS', 'release-receipt.json'}
+          for name, value in expected.items():
+              assert hashlib.sha256((root / name).read_bytes()).hexdigest() == value['sha256']
+              assert value['qualification'] == 'passed'
+          project = tomllib.loads(Path('python/pyproject.toml').read_text())['project']
+          assert os.environ['RELEASE_TAG'] == 'v' + project['version']
+          sources = [n for n in expected if n == f"eigentrail-{project['version']}.tar.gz"]
+          wheels = [n for n in expected if n.endswith('.whl') and '_arm64.whl' in n
+                    and '-cp314-cp314-macosx_14_0_' in n]
+          assert len(sources) == 1 and len(wheels) == 1
+          Path('dist').mkdir()
+          for name in sources + wheels:
+              shutil.copyfile(root / name, Path('dist') / name)
+          PY
+          python scripts/check_release.py --artifact dist/*.whl --artifact dist/*.tar.gz
+      - name: Publish exact qualified bytes through Trusted Publishing
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086
+        with:
+          packages-dir: dist/

@@ -7,7 +7,9 @@ Python and R provide these convenience methods:
 ```text
 track(covariances, times, radii, lipschitz)
 track_history(covariances, times, radii, lipschitz, query_times,
-              common_frame_weights=None)
+              common_frame_weights=None, *, witness=None)  # Python
+track_history(covariances, times, radii, lipschitz, query_times,
+              common_frame_weights=NULL, witness=NULL)     # R
 ```
 
 R uses `NULL` for absent weights. Python arrays are `float64` with shape
@@ -21,9 +23,15 @@ lineage alternatives and separate witness feasibility. The default is a
 continuous path; supplying `common_frame_weights` declares a fixed eigenframe for
 the entire path.
 
-In R, call `track_history(..., witness = candidate)` with a double array of the
-same shape as `covariances` to check one affine path under the supplied radii and
-regularity bound. Read the configuration's `feasibility` field for the result.
+Call `track_history(..., witness=candidate)` with an array of the same shape and
+numeric type as `covariances` to check one affine path under the original radii
+and global regularity bound. Python's `witness` argument is keyword-only; R uses
+`NULL` by default. Read the configuration's `feasibility` field for the result.
+One complete PSD knot tuple must pass every nodal and adjacent-step constraint.
+`OriginalAffineWitness` establishes existence under those supplied premises;
+an omitted or rejected candidate can leave `Unresolved`, without establishing
+infeasibility. A witness leaves the original outer query bounds unchanged and
+adds separately checked interpolant values. The array route never widens radii.
 With common-frame weights, explicit witness matrices must be coordinate-diagonal.
 
 Python convenience methods return decoded dictionaries; R returns canonical JSON.
