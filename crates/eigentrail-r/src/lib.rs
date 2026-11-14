@@ -294,6 +294,143 @@ fn copy_values(input: &[f64]) -> extendr_api::Result<Vec<f64>> {
     Ok(values)
 }
 
+// All target and sampling premises remain explicit caller declarations.
+#[allow(clippy::too_many_arguments)]
+#[extendr]
+fn window_envelope_json(
+    sample_times: Robj,
+    weights: Robj,
+    target_time: f64,
+    window_radius: f64,
+    lipschitz: f64,
+    target_mismatch_bound: f64,
+    target_description: &str,
+    assumptions: &str,
+) -> extendr_api::Result<String> {
+    let sample_times = sample_times.as_real_slice().ok_or_else(|| {
+        fail(core::Error::Invalid(
+            "double window sample times required".into(),
+        ))
+    })?;
+    let weights = weights.as_real_slice().ok_or_else(|| {
+        fail(core::Error::Invalid(
+            "double window weights required".into(),
+        ))
+    })?;
+    if !(1..=window::MAX_POINTS).contains(&sample_times.len())
+        || sample_times.len() != weights.len()
+    {
+        return Err(fail(core::Error::Invalid(
+            "equal window vectors with 1..=10000 entries required".into(),
+        )));
+    }
+    for text in [target_description, assumptions] {
+        if text.trim().is_empty() || text.len() > window::MAX_TEXT_BYTES {
+            return Err(fail(core::Error::Invalid(
+                "nonempty window target and assumptions of at most 4096 UTF-8 bytes required"
+                    .into(),
+            )));
+        }
+    }
+    let operation = Operation::new(resources::DEFAULT_BYTES).map_err(fail)?;
+    let request = prepare(&operation, || {
+        interrupt()?;
+        let request = window::WindowRequest {
+            sample_times: copy_values(sample_times)?,
+            weights: copy_values(weights)?,
+            target_time,
+            window_radius,
+            lipschitz,
+            target_mismatch_bound,
+            target_description: memory::text(target_description).map_err(fail)?,
+            assumptions: memory::text(assumptions).map_err(fail)?,
+        };
+        window::validate(&request).map_err(fail)?;
+        Ok(request)
+    })?;
+    with_interrupt(operation, move |cancel| {
+        String::from_utf8(eigentrail_check::window::encode_checked(&request, &cancel)?)
+            .map_err(|_| core::Error::Invalid("UTF-8".into()))
+    })
+}
+
+// R doubles represent every u32 exactly; reject truncation and saturation.
+fn positive_count(value: f64, name: &str) -> extendr_api::Result<u32> {
+    if !value.is_finite() || value < 1. || value > f64::from(u32::MAX) || value.fract() != 0. {
+        return Err(fail(core::Error::Invalid(format!(
+            "positive exact integer {name} no greater than 4294967295 required"
+        ))));
+    }
+    Ok(value as u32)
+}
+
+#[extendr]
+fn temporal_gaussian_json(
+    dimension: f64,
+    observations: f64,
+    windows: f64,
+    covariance_bound: f64,
+    correlation_bound: f64,
+    alpha: f64,
+    assumptions: &str,
+) -> extendr_api::Result<String> {
+    let dimension = positive_count(dimension, "dimension")?;
+    let observations = positive_count(observations, "observation count")?;
+    let windows = positive_count(windows, "window count")?;
+    if assumptions.trim().is_empty() || assumptions.len() > temporal::MAX_TEXT_BYTES {
+        return Err(fail(core::Error::Invalid(
+            "nonempty temporal assumptions of at most 4096 UTF-8 bytes required".into(),
+        )));
+    }
+    let operation = Operation::new(resources::DEFAULT_BYTES).map_err(fail)?;
+    let request = prepare(&operation, || {
+        interrupt()?;
+        let request = temporal::TemporalRequest {
+            dimension,
+            observations,
+            windows,
+            covariance_bound,
+            correlation_bound,
+            alpha,
+            assumptions: memory::text(assumptions).map_err(fail)?,
+        };
+        temporal::validate(&request).map_err(fail)?;
+        Ok(request)
+    })?;
+    with_interrupt(operation, move |cancel| {
+        String::from_utf8(eigentrail_check::temporal::encode_checked(
+            &request, &cancel,
+        )?)
+        .map_err(|_| core::Error::Invalid("UTF-8".into()))
+    })
+}
+
+#[extendr]
+fn spd_tube_geometry_json(
+    dimension: f64,
+    centre_floor: f64,
+    radius: f64,
+) -> extendr_api::Result<String> {
+    let dimension = positive_count(dimension, "dimension")?;
+    let operation = Operation::new(resources::DEFAULT_BYTES).map_err(fail)?;
+    let request = prepare(&operation, || {
+        interrupt()?;
+        let request = geometry::SpdTubeRequest {
+            dimension,
+            centre_floor,
+            radius,
+        };
+        geometry::validate_spd(&request).map_err(fail)?;
+        Ok(request)
+    })?;
+    with_interrupt(operation, move |cancel| {
+        String::from_utf8(eigentrail_check::geometry::encode_checked_spd(
+            &request, &cancel,
+        )?)
+        .map_err(|_| core::Error::Invalid("UTF-8".into()))
+    })
+}
+
 fn copy_covariances(input: &[f64], p: usize, m: usize) -> extendr_api::Result<Vec<Matrix>> {
     let mut matrices = memory::capacity(m).map_err(fail)?;
     for date in 0..m {
@@ -314,6 +451,65 @@ fn track_history_covariances(
     query_times: Robj,
     common_frame_weights: Robj,
     witness: Robj,
+) -> extendr_api::Result<String> {
+    track_history_arrays(
+        data,
+        times,
+        radii,
+        lipschitz,
+        query_times,
+        common_frame_weights,
+        witness,
+        None,
+    )
+}
+
+fn stability_tolerance(value: &Robj) -> extendr_api::Result<f64> {
+    let values = value
+        .as_real_slice()
+        .filter(|values| values.len() == 1)
+        .ok_or_else(|| {
+            fail(core::Error::Invalid(
+                "one double stability tolerance required".into(),
+            ))
+        })?;
+    stability::validate_tolerance(values[0]).map_err(fail)?;
+    Ok(values[0])
+}
+
+#[extendr]
+fn track_stability_covariances(
+    data: Robj,
+    times: Robj,
+    radii: Robj,
+    lipschitz: f64,
+    query_times: Robj,
+    tolerance: Robj,
+    witness: Robj,
+) -> extendr_api::Result<String> {
+    let tolerance = stability_tolerance(&tolerance)?;
+    track_history_arrays(
+        data,
+        times,
+        radii,
+        lipschitz,
+        query_times,
+        Robj::from(()),
+        witness,
+        Some(tolerance),
+    )
+}
+
+#[allow(clippy::too_many_arguments)] // Both registered routes share managed history construction.
+fn track_history_arrays(
+    data: Robj,
+    times: Robj,
+    radii: Robj,
+    lipschitz: f64,
+    query_times: Robj,
+    common_frame_weights: Robj,
+    witness: Robj,
+    stability_tolerance: Option<f64>,
 ) -> extendr_api::Result<String> {
     let (p, m) = covariance_shape(&data)?;
     let input = data.as_real_slice().ok_or_else(|| {
@@ -434,9 +630,30 @@ fn track_history_covariances(
     })?;
     with_interrupt(operation, move |cancel| {
         let report = families::analyze(&request, &cancel)?;
-        eigentrail_check::families::check(&request, &report, &cancel)?;
-        String::from_utf8(serialization::encode_with_cancel(&report, &cancel)?)
-            .map_err(|_| core::Error::Invalid("UTF-8".into()))
+        let encoded = if let Some(tolerance) = stability_tolerance {
+            eigentrail_check::stability::encode_checked(&request, &report, tolerance, &cancel)?
+        } else {
+            eigentrail_check::families::check(&request, &report, &cancel)?;
+            serialization::encode_with_cancel(&report, &cancel)?
+        };
+        String::from_utf8(encoded).map_err(|_| core::Error::Invalid("UTF-8".into()))
+    })
+}
+#[extendr]
+fn analyze_stability_json(request: &str, tolerance: Robj) -> extendr_api::Result<String> {
+    let tolerance = stability_tolerance(&tolerance)?;
+    let limit = preflight_json_inputs(request, &[], RequestKind::History)?;
+    let operation = Operation::new(limit).map_err(fail)?;
+    let request_text = copy_json_text(&operation, request)?;
+    with_interrupt(operation, move |cancel| {
+        let request: families::HistoryRequest =
+            serialization::decode_in(request_text.as_bytes(), &cancel)?;
+        drop(request_text);
+        let report = families::analyze(&request, &cancel)?;
+        String::from_utf8(eigentrail_check::stability::encode_checked(
+            &request, &report, tolerance, &cancel,
+        )?)
+        .map_err(|_| core::Error::Invalid("UTF-8".into()))
     })
 }
 #[extendr]
@@ -541,4 +758,4 @@ fn check_common_frame_json(request: &str, model: &str, report: &str) -> extendr_
         Ok(true)
     })
 }
-extendr_module! {mod eigentrail;fn track_json;fn check_json;fn track_covariances;fn track_history_covariances;fn analyze_jumps_json;fn check_jumps_json;fn analyze_crossings_json;fn check_crossings_json;fn analyze_transport_json;fn check_transport_json;fn analyze_histories_json;fn check_histories_json;fn analyze_common_frame_json;fn check_common_frame_json;fn analyze_lineage_summary_json;fn check_lineage_summary_json;}
+extendr_module! {mod eigentrail;fn window_envelope_json;fn temporal_gaussian_json;fn spd_tube_geometry_json;fn track_stability_covariances;fn analyze_stability_json;fn track_json;fn check_json;fn track_covariances;fn track_history_covariances;fn analyze_jumps_json;fn check_jumps_json;fn analyze_crossings_json;fn check_crossings_json;fn analyze_transport_json;fn check_transport_json;fn analyze_histories_json;fn check_histories_json;fn analyze_common_frame_json;fn check_common_frame_json;fn analyze_lineage_summary_json;fn check_lineage_summary_json;}

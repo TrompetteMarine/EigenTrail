@@ -5,6 +5,7 @@ import gzip
 import hashlib
 import io
 import tarfile
+import tempfile
 import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,6 +31,27 @@ def read_archive(path):
     return roots.pop(), files
 
 
+def check_member_sources(prefix, files, member, root=ROOT):
+    folder = root / member
+    source_manifest = (folder / 'Cargo.toml').read_bytes()
+    archived_manifest = files[prefix + '/' + member + '/Cargo.toml'][0]
+    relocated = source_manifest.replace(b'readme.workspace = true\n', b'readme = "README.md"\n')
+    assert archived_manifest in (source_manifest, relocated), 'Changed Cargo manifest: ' + member
+    if archived_manifest != source_manifest:
+        assert files[prefix + '/' + member + '/README.md'][0] == (root / 'README.md').read_bytes()
+    sources = list((folder / 'src').rglob('*.rs'))
+    assert sources, 'Missing Rust sources: ' + member
+    expected = {prefix + '/' + path.relative_to(root).as_posix() for path in sources}
+    actual = {name for name in files if name.startswith(prefix + '/' + member + '/src/') and name.endswith('.rs')}
+    assert actual == expected, 'Incomplete or extra Rust sources: ' + member
+    for name in ('build.rs', 'LICENSE'):
+        if (folder / name).is_file():
+            sources.append(folder / name)
+    for path in sources:
+        name = prefix + '/' + path.relative_to(root).as_posix()
+        assert name in files and files[name][0] == path.read_bytes(), 'Missing or changed source: ' + name
+
+
 def stage(source, destination):
     source, destination = source.resolve(), destination.resolve()
     assert source != destination and not destination.exists(), 'Refusing to overwrite a source archive'
@@ -51,6 +73,7 @@ def stage(source, destination):
     assert workspace['members'] == tomllib.loads((ROOT / 'Cargo.toml').read_text())['workspace']['members']
     for member in workspace['members']:
         assert prefix + '/' + member + '/Cargo.toml' in files, 'Incomplete workspace member: ' + member
+        check_member_sources(prefix, files, member)
     with destination.open('xb') as output, gzip.GzipFile(filename='', fileobj=output, mode='wb', mtime=0) as compressed:
         with tarfile.open(fileobj=compressed, mode='w') as archive:
             for name, (data, mode) in sorted(files.items()):
@@ -67,9 +90,41 @@ def stage(source, destination):
     print(destination, 'sha256', hashlib.sha256(destination.read_bytes()).hexdigest())
 
 
+def self_test():
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        folder = root / 'crates/example'
+        (folder / 'src').mkdir(parents=True)
+        (root / 'README.md').write_text('public readme')
+        for name, data in [('Cargo.toml', '[package]\nname="example"\nreadme.workspace = true\n'),
+                           ('src/lib.rs', 'pub fn example() {}\n'), ('build.rs', 'fn main() {}\n'),
+                           ('LICENSE', 'public license')]:
+            (folder / name).write_text(data)
+        files = {'example/' + p.relative_to(root).as_posix(): (p.read_bytes(), 0o644)
+                 for p in folder.rglob('*') if p.is_file()}
+        check_member_sources('example', files, 'crates/example', root)
+        for name in list(files):
+            missing = dict(files); del missing[name]
+            changed = dict(files); changed[name] = (b'altered', 0o644)
+            for invalid in (missing, changed):
+                try:
+                    check_member_sources('example', invalid, 'crates/example', root)
+                except (AssertionError, KeyError):
+                    pass
+                else:
+                    raise AssertionError('Source guard accepted missing/changed ' + name)
+    print('Source archive completeness/byte guards passed')
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('raw_archive', type=Path)
-    parser.add_argument('final_archive', type=Path)
+    parser.add_argument('raw_archive', type=Path, nargs='?')
+    parser.add_argument('final_archive', type=Path, nargs='?')
+    parser.add_argument('--self-test', action='store_true')
     args = parser.parse_args()
-    stage(args.raw_archive, args.final_archive)
+    if args.self_test:
+        self_test()
+    else:
+        if args.raw_archive is None or args.final_archive is None:
+            parser.error('raw_archive and final_archive are required')
+        stage(args.raw_archive, args.final_archive)
