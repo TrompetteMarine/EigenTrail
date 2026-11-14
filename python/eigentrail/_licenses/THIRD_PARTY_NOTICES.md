@@ -1,8 +1,8 @@
 # Third-party notices
 
 First-party EigenTrail code is MIT licensed. Dependencies retain their own
-licenses. Resolved packages are listed in [the dependency inventory](dependency-inventory.json);
-upstream notice URLs and source hashes are in [license sources](license-sources.json).
+licenses. Resolved packages are listed in [the dependency inventory](licenses/dependency-inventory.json);
+upstream notice URLs and source hashes are in [license sources](licenses/license-sources.json).
 License texts are retained under `licenses/`.
 
 Python and R packages include the applicable dependency licenses, first-party

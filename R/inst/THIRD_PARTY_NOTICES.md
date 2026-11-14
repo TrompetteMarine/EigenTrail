@@ -6,7 +6,7 @@ upstream notice URLs and source hashes are in [license sources](license-sources.
 License texts are retained under `licenses/`.
 
 Python and R packages include the applicable dependency licenses, first-party
-MIT text, and Rust 1.99.0 standard-library copyright/license collection. The
+MIT text, and the Rust 1.85.1 and 1.99.0 standard-library notices. The
 compiler is an installation prerequisite and is not bundled. The R package
 retains its license stub and full MIT text under `licenses/eigentrail/LICENSE`.
 

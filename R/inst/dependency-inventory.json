@@ -115,27 +115,27 @@
     },
     {
       "name": "eigentrail-check",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "license": "MIT",
       "license_file": null,
       "source": null,
-      "repository": null
+      "repository": "https://github.com/TrompetteMarine/EigenTrail"
     },
     {
       "name": "eigentrail-core",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "license": "MIT",
       "license_file": null,
       "source": null,
-      "repository": null
+      "repository": "https://github.com/TrompetteMarine/EigenTrail"
     },
     {
       "name": "eigentrail-r",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "license": "MIT",
       "license_file": null,
       "source": null,
-      "repository": null
+      "repository": "https://github.com/TrompetteMarine/EigenTrail"
     },
     {
       "name": "enum-as-inner",
@@ -326,8 +326,10 @@
       "version": "2.0.0",
       "license": "MIT",
       "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/unageek/inari"
+      "source": "path:backports/inari",
+      "repository": "https://github.com/unageek/inari",
+      "upstream_source": "registry+https://github.com/rust-lang/crates.io-index",
+      "backport_provenance": "inst/inari-r-backport.json"
     },
     {
       "name": "interpol",
@@ -768,13 +770,13 @@
           "0.1.3"
         ],
         "eigentrail-check": [
-          "0.2.0"
+          "0.2.1"
         ],
         "eigentrail-core": [
-          "0.2.0"
+          "0.2.1"
         ],
         "eigentrail-r": [
-          "0.2.0"
+          "0.2.1"
         ],
         "enum-as-inner": [
           "0.6.1"
@@ -952,9 +954,9 @@
         ]
       },
       "features": [
-        "eigentrail-r v0.2.0 (crates/eigentrail-r) ",
-        "eigentrail-check v0.2.0 (crates/eigentrail-check) ",
-        "eigentrail-core v0.2.0 (crates/eigentrail-core) ",
+        "eigentrail-r v0.2.1 (crates/eigentrail-r) ",
+        "eigentrail-check v0.2.1 (crates/eigentrail-check) ",
+        "eigentrail-core v0.2.1 (crates/eigentrail-core) ",
         "faer v0.24.4 linalg,std",
         "bytemuck v1.25.2 aarch64_simd,wasm_simd",
         "dyn-stack v0.13.2 alloc,core-error,std",
@@ -1086,7 +1088,7 @@
         "num-traits v0.2.19 i128,std (*)",
         "pulp v0.22.3 std,x86-v3 (*)",
         "reborrow v0.5.5 default",
-        "inari v2.0.0 ",
+        "inari v2.0.0 (backports/inari) ",
         "cfg-if v1.0.5 ",
         "forward_ref v1.0.0 ",
         "serde v1.0.228 default,derive,serde_derive,std",
@@ -1115,7 +1117,7 @@
         "serde v1.0.228 default,derive,serde_derive,std (*)",
         "serde_json v1.0.145 default,raw_value,std (*)",
         "sha2 v0.10.9 default,std (*)",
-        "eigentrail-core v0.2.0 (crates/eigentrail-core)  (*)",
+        "eigentrail-core v0.2.1 (crates/eigentrail-core)  (*)",
         "extendr-api v0.9.0 result_condition",
         "extendr-ffi v0.9.0 default",
         "extendr-macros v0.9.0 (proc-macro) ",
@@ -1136,7 +1138,14 @@
       ]
     }
   },
-  "native": [],
+  "native": [
+    {
+      "name": "C99 libm fma",
+      "version": "system",
+      "role": "baseline x86-64 fused directed operation",
+      "linking": "system C math library; not bundled"
+    }
+  ],
   "distribution_qualified": false,
   "native_cpu_build_audit": "pending; Linux Haswell flags require execution on baseline runner"
 }

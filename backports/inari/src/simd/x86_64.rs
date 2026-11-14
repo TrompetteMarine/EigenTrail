@@ -1,0 +1,177 @@
+use std::{arch::x86_64::*, mem::transmute};
+
+pub(crate) const HAS_MAXIMUM: bool = false;
+
+pub(crate) type F64X2 = __m128d;
+
+pub(crate) fn abs(x: F64X2) -> F64X2 {
+    // Drop sign bits.
+    unsafe { _mm_andnot_pd(splat(-0.0), x) }
+}
+
+/// `add_rn([x0, x1], [y0, y1]) = [x0 + y0, x1 + y1]` rounded to nearest.
+pub(crate) fn add_rn(x: F64X2, y: F64X2) -> F64X2 {
+    unsafe { _mm_add_pd(x, y) }
+}
+
+pub(crate) fn all(x: F64X2) -> bool {
+    bitmask(x) == 3
+}
+
+pub(crate) fn and(x: F64X2, y: F64X2) -> F64X2 {
+    unsafe { _mm_and_pd(x, y) }
+}
+
+pub(crate) fn any(x: F64X2) -> bool {
+    bitmask(x) != 0
+}
+
+pub(crate) fn bitmask(x: F64X2) -> u32 {
+    unsafe { _mm_movemask_pd(x) as u32 }
+}
+
+pub(crate) fn ceil(x: F64X2) -> F64X2 {
+    constant(extract0(x).ceil(), extract1(x).ceil())
+}
+
+pub(crate) fn constant(x: f64, y: f64) -> F64X2 {
+    unsafe { transmute([x, y]) }
+}
+
+pub(crate) fn eq(x: F64X2, y: F64X2) -> F64X2 {
+    unsafe { _mm_cmpeq_pd(x, y) }
+}
+
+pub(crate) fn extract(x: F64X2) -> [f64; 2] {
+    unsafe { transmute::<F64X2, [f64; 2]>(x) }
+}
+
+pub(crate) fn extract0(x: F64X2) -> f64 {
+    unsafe { transmute::<F64X2, [f64; 2]>(x)[0] }
+}
+
+// This is slower than extract0, which usually turns into a no-op.
+pub(crate) fn extract1(x: F64X2) -> f64 {
+    unsafe { transmute::<F64X2, [f64; 2]>(x)[1] }
+}
+
+pub(crate) fn floor(x: F64X2) -> F64X2 {
+    constant(extract0(x).floor(), extract1(x).floor())
+}
+
+pub(crate) fn ge(x: F64X2, y: F64X2) -> F64X2 {
+    unsafe { _mm_cmpge_pd(x, y) }
+}
+
+pub(crate) fn gt(x: F64X2, y: F64X2) -> F64X2 {
+    unsafe { _mm_cmpgt_pd(x, y) }
+}
+
+/// `hadd_rn([x0, x1], [y0, y1]) = [x0 + x1, y0 + y1]` rounded to nearest.
+pub(crate) fn hadd_rn(x: F64X2, y: F64X2) -> F64X2 {
+    unsafe { _mm_add_pd(_mm_unpacklo_pd(x, y), _mm_unpackhi_pd(x, y)) }
+}
+
+pub(crate) fn le(x: F64X2, y: F64X2) -> F64X2 {
+    unsafe { _mm_cmple_pd(x, y) }
+}
+
+pub(crate) fn lt(x: F64X2, y: F64X2) -> F64X2 {
+    unsafe { _mm_cmplt_pd(x, y) }
+}
+
+// The vector version of the `maximumNumber` operation defined in IEEE 754-2019,
+// which does not propagate NaNs.
+pub(crate) fn max(x: F64X2, y: F64X2) -> F64X2 {
+    unsafe { _mm_max_pd(x, y) }
+}
+
+// The vector version of the `maximum` operation defined in IEEE 754-2019,
+// which propagates NaNs.
+pub(crate) fn maximum(_x: F64X2, _y: F64X2) -> F64X2 {
+    unimplemented!()
+}
+
+pub(crate) fn min(x: F64X2, y: F64X2) -> F64X2 {
+    unsafe { _mm_min_pd(x, y) }
+}
+
+pub(crate) fn minimum(_x: F64X2, _y: F64X2) -> F64X2 {
+    unimplemented!()
+}
+
+pub(crate) fn neg(x: F64X2) -> F64X2 {
+    xor(splat(-0.0), x)
+}
+
+pub(crate) fn neg0(x: F64X2) -> F64X2 {
+    unsafe { xor(x, _mm_set_sd(-0.0)) }
+}
+
+pub(crate) fn or(x: F64X2, y: F64X2) -> F64X2 {
+    unsafe { _mm_or_pd(x, y) }
+}
+
+// This one is hard to implement correctly.
+// https://www.cockroachlabs.com/blog/rounding-implementations-in-go/
+pub(crate) fn round(x: F64X2) -> F64X2 {
+    constant(extract0(x).round(), extract1(x).round())
+}
+
+pub(crate) fn round_ties_even(x: F64X2) -> F64X2 {
+    constant(extract0(x).round_ties_even(), extract1(x).round_ties_even())
+}
+
+/// `shuffle02([x0, x1], [x2, x3]) = [x0, x2]`
+pub(crate) fn shuffle02(x: F64X2, y: F64X2) -> F64X2 {
+    unsafe { _mm_shuffle_pd(x, y, 0) }
+}
+
+/// `shuffle03([x0, x1], [x2, x3]) = [x0, x3]`
+pub(crate) fn shuffle03(x: F64X2, y: F64X2) -> F64X2 {
+    unsafe { _mm_shuffle_pd(x, y, 2) }
+}
+
+/// `shuffle13([x0, x1], [x2, x3]) = [x1, x3]`
+pub(crate) fn shuffle13(x: F64X2, y: F64X2) -> F64X2 {
+    unsafe { _mm_shuffle_pd(x, y, 3) }
+}
+
+pub(crate) fn splat(x: f64) -> F64X2 {
+    unsafe { transmute([x, x]) }
+}
+
+/// `sub_rn([x0, x1], [y0, y1]) = [x0 - y0, x1 - y1]` rounded to nearest.
+pub(crate) fn sub_rn(x: F64X2, y: F64X2) -> F64X2 {
+    unsafe { _mm_sub_pd(x, y) }
+}
+
+pub(crate) fn swap(x: F64X2) -> F64X2 {
+    shuffle12(x, x)
+}
+
+pub(crate) fn trunc(x: F64X2) -> F64X2 {
+    constant(extract0(x).trunc(), extract1(x).trunc())
+}
+
+/// `shuffle12([x0, x1], [x2, x3]) = [x1, x2]`
+fn shuffle12(x: F64X2, y: F64X2) -> F64X2 {
+    unsafe { _mm_shuffle_pd(x, y, 1) }
+}
+
+fn xor(x: F64X2, y: F64X2) -> F64X2 {
+    unsafe { _mm_xor_pd(x, y) }
+}
+
+cfg_if::cfg_if! {
+    if #[cfg(target_feature = "avx512f")] {
+        mod avx512f;
+        pub(crate) use avx512f::*;
+    } else if #[cfg(all(target_feature = "avx", target_feature = "fma"))] {
+        mod avx_fma;
+        pub(crate) use avx_fma::*;
+    } else {
+        mod sse2;
+        pub(crate) use sse2::*;
+    }
+}

@@ -91,19 +91,18 @@ pub fn verify_eigensystem(
     {
         return Err(Error::Invalid("ordered full eigensystem required".into()));
     }
-    if n > 16
-        && n <= 256
-        && let Some((tau, residual)) = normal_residuals(a, values, v, cancel)?
-    {
-        if tau.sup() >= 1. {
-            return Err(Error::Exhausted(
-                "orthogonality/polar gate unresolved".into(),
-            ));
+    if n > 16 && n <= 256 {
+        if let Some((tau, residual)) = normal_residuals(a, values, v, cancel)? {
+            if tau.sup() >= 1. {
+                return Err(Error::Exhausted(
+                    "orthogonality/polar gate unresolved".into(),
+                ));
+            }
+            let dv = tau / (point(1.) + (point(1.) - tau).sqrt());
+            let scale = values.iter().fold(0f64, |s, x| s.max(x.abs()));
+            let b = residual + point(scale) * dv * ((point(1.) + tau).sqrt() + point(1.));
+            return Ok((upper(point(4.) * b)?, upper(point(2.) * dv)?));
         }
-        let dv = tau / (point(1.) + (point(1.) - tau).sqrt());
-        let scale = values.iter().fold(0f64, |s, x| s.max(x.abs()));
-        let b = residual + point(scale) * dv * ((point(1.) + tau).sqrt() + point(1.));
-        return Ok((upper(point(4.) * b)?, upper(point(2.) * dv)?));
     }
     let mut ortho = point(0.);
     let mut resid = point(0.);

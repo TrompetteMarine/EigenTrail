@@ -1,10 +1,54 @@
 Package: eigentrail
 Type: Package
-Title: Checked Covariance Trajectories with TRACE
-Version: 0.2.0
-Authors@R: person("Gabriel", "Bontemps", role=c("aut", "cre"), email="gbontemps@protonmail.com")
-Description: Local covariance trajectory proposals and independent numerical checks.
-    Statistical statements remain conditional on declared sampling assumptions.
+Title: Checked Covariance Trajectories and Eigenspace Stability
+Version: 0.2.1
+Authors@R: c(
+    person("Gabriel", "Bontemps", role=c("aut", "cre"), email="gbontemps@protonmail.com"),
+    person("Aaron Trent", role="ctb", comment="generic-array"),
+    person("Aleksey Kladov", role="ctb", comment="once_cell"),
+    person("Alex Crichton", role="ctb", comment="cfg-if, libm and proc-macro2"),
+    person("Amanieu d'Antras", role="ctb", comment="libm"),
+    person("Andrew Gallant", role="ctb", comment="byteorder, memchr, same-file, walkdir and winapi-util"),
+    person("Andrew Hickman", role="ctb", comment="defer"),
+    person("Bart\u0142omiej Kami\u0144ski", role="ctb", comment="generic-array"),
+    person("Benjamin Fry", role="ctb", comment="enum-as-inner"),
+    person("Christopher Durham", role="ctb", comment="generativity"),
+    person("David Tolnay", role="ctb", comment="serde, syn and related Rust crates"),
+    person("Eira Fransham", role="ctb", comment="crunchy"),
+    person("Erick Tryzelaar", role="ctb", comment="serde, serde_core, serde_derive and serde_json"),
+    person("Fabian Freyer", role="ctb", comment="sysctl"),
+    person("Gerd Zellweger", role="ctb", comment="raw-cpuid"),
+    person("Hideyuki Tanaka", role="ctb", comment="interpol"),
+    person("Ivan Temchenko", role="ctb", comment="sysctl"),
+    person("Johannes Lundberg", role="ctb", comment="sysctl"),
+    person("Jorge Aparicio", role="ctb", comment="libm"),
+    person("Josh Stone", role="ctb", comment="autocfg"),
+    person("Kathryn Long", role="ctb", comment="half"),
+    person("Lokathor", role="ctb", comment="bytemuck and bytemuck_derive"),
+    person("Marvin L\u00f6bel", role="ctb", comment="lazy_static"),
+    person("Masashi Mizuno", role="ctb", comment="inari"),
+    person("Microsoft Corporation", role="cph", comment="windows-link and windows-sys"),
+    person("Paho Lurie-Gregg", role="ctb", comment="typenum"),
+    person("RustCrypto Developers", role="ctb", comment="block-buffer, cpufeatures, crypto-common, digest and sha2"),
+    person("Sean McArthur", role="ctb", comment="num_cpus"),
+    person("Sergio Benitez", role="ctb", comment="version_check"),
+    person("The Extendr contributors", role=c("ctb", "cph"), comment="extendr-api, extendr-ffi and extendr-macros"),
+    person("The Fuchsia Authors", role=c("ctb", "cph"), comment="zerocopy and zerocopy-derive"),
+    person("The Rust Project Developers", role="ctb", comment="bitflags, heck, libc, num-complex, num-traits and the standard library"),
+    person("Trevor Gross", role="ctb", comment="libm"),
+    person("Zakarum", role="ctb", comment="defer"),
+    person("bluss", role="ctb", comment="memchr"),
+    person("jtempest", role="ctb", comment="forward_ref"),
+    person("sarah", role="ctb", comment="dyn-stack, equator, gemm, nano-gemm, qd, reborrow and related Rust crates"),
+    person("sarah qui\u00f1ones", role="ctb", comment="dyn-stack-macros, faer, faer-traits, private-gemm-x86 and pulp"))
+Description: Tracks covariance eigenspaces with the TRACE (Trajectory Recognition
+    and Association of Covariance Eigenvectors) method. Produces independently
+    checked bounds on eigenvalue strengths, spectral projectors and their changes
+    through time. Supports conditional temporal Gaussian calibration, weighted
+    window error envelopes and geometry of positive-definite covariance tubes.
+    Results retain unresolved bounds and ambiguous associations. Statistical
+    statements remain conditional on sampling, dependence and regularity
+    assumptions supplied by the caller.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends: R (>= 4.5.0)
@@ -12,8 +56,7 @@ URL: https://github.com/TrompetteMarine/EigenTrail
 BugReports: https://github.com/TrompetteMarine/EigenTrail/issues
 Copyright: Gabriel Bontemps; authors and copyright holders of the bundled Rust
     dependencies, identified in inst/THIRD_PARTY_NOTICES.md and inst/licenses/.
-SystemRequirements: Cargo (>= 1.99.0), rustc (>= 1.99.0), C compiler,
-    GNU make, tar with xz support; macOS ARM64 or GNU/Linux x86-64-v3
-    (Haswell) with operating-system instruction support
+SystemRequirements: Cargo (>= 1.85.1), rustc (>= 1.85.1), C compiler,
+    GNU make, tar with xz support; macOS ARM64/x86-64 or GNU/Linux x86-64
 OS_type: unix
 NeedsCompilation: yes

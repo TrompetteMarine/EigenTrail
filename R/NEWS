@@ -1,0 +1,19 @@
+Changes in version 0.2.1
+
+* Support baseline x86-64 checked arithmetic on GNU/Linux and Intel macOS,
+  alongside macOS ARM64. The R package no longer requires AVX, FMA or Haswell
+  compiler flags.
+* Lower the source-build requirement to Cargo and rustc 1.85.1 or later.
+  Production Rust dependencies remain bundled for offline builds.
+* Expand synthetic R tests for canonical JSON producers and independent checkers,
+  including malformed-input and tampered-report rejection.
+* Clarify package metadata, dependency attribution and R installation guidance.
+  Mathematical premises, report contracts and unresolved outcomes are unchanged.
+
+# eigentrail 0.2.0
+
+* Add checked projector stability, weighted window envelopes, temporal Gaussian
+  calibration and conditional positive-definite covariance geometry.
+* Preserve history schemas, common-frame behavior and optional witness arguments.
+  Geometric stability retains its inclusive threshold; lineage motion retains
+  its strict threshold.

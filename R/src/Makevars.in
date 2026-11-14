@@ -6,7 +6,7 @@ export RUSTC
 export RUSTUP_AUTO_INSTALL = 0
 export CARGO_NET_OFFLINE = true
 export CARGO_BUILD_JOBS = 2
-export CARGO_HOME = $(CURDIR)/rust/.cargo-home
+export CARGO_HOME ?= $(CURDIR)/rust/.cargo-home
 PKG_LIBS = -L$(CARGO_TARGET_DIR)/release -leigentrail_r -L$(R_HOME)/lib -lR @SYSTEM_LIBS@
 .NOTPARALLEL:
 all: $(SHLIB)
