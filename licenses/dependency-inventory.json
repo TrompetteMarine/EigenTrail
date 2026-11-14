@@ -152,7 +152,7 @@
     },
     {
       "name": "eigentrail-check",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "license": "MIT",
       "license_file": null,
       "source": null,
@@ -161,7 +161,7 @@
     },
     {
       "name": "eigentrail-core",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "license": "MIT",
       "license_file": null,
       "source": null,
@@ -170,7 +170,7 @@
     },
     {
       "name": "eigentrail-python",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "license": "MIT",
       "license_file": null,
       "source": null,
@@ -179,7 +179,7 @@
     },
     {
       "name": "eigentrail-r",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "license": "MIT",
       "license_file": null,
       "source": null,
@@ -1179,7 +1179,7 @@
           "0.1.3"
         ],
         "eigentrail-core": [
-          "0.1.0"
+          "0.2.0"
         ],
         "enum-as-inner": [
           "0.6.1"
@@ -1341,7 +1341,7 @@
         ]
       },
       "features": [
-        "eigentrail-core v0.1.0 (crates/eigentrail-core) ",
+        "eigentrail-core v0.2.0 (crates/eigentrail-core) ",
         "faer v0.24.4 linalg,std",
         "bytemuck v1.25.2 aarch64_simd,wasm_simd",
         "dyn-stack v0.13.2 alloc,core-error,std",
@@ -1537,10 +1537,10 @@
           "0.1.3"
         ],
         "eigentrail-check": [
-          "0.1.0"
+          "0.2.0"
         ],
         "eigentrail-core": [
-          "0.1.0"
+          "0.2.0"
         ],
         "enum-as-inner": [
           "0.6.1"
@@ -1702,8 +1702,8 @@
         ]
       },
       "features": [
-        "eigentrail-check v0.1.0 (crates/eigentrail-check) ",
-        "eigentrail-core v0.1.0 (crates/eigentrail-core) ",
+        "eigentrail-check v0.2.0 (crates/eigentrail-check) ",
+        "eigentrail-core v0.2.0 (crates/eigentrail-core) ",
         "faer v0.24.4 linalg,std",
         "bytemuck v1.25.2 aarch64_simd,wasm_simd",
         "dyn-stack v0.13.2 alloc,core-error,std",
@@ -1902,13 +1902,13 @@
           "0.1.3"
         ],
         "eigentrail-check": [
-          "0.1.0"
+          "0.2.0"
         ],
         "eigentrail-core": [
-          "0.1.0"
+          "0.2.0"
         ],
         "eigentrail-python": [
-          "0.1.0"
+          "0.2.0"
         ],
         "enum-as-inner": [
           "0.6.1"
@@ -2107,9 +2107,9 @@
         ]
       },
       "features": [
-        "eigentrail-python v0.1.0 (crates/eigentrail-python) ",
-        "eigentrail-check v0.1.0 (crates/eigentrail-check) ",
-        "eigentrail-core v0.1.0 (crates/eigentrail-core) ",
+        "eigentrail-python v0.2.0 (crates/eigentrail-python) ",
+        "eigentrail-check v0.2.0 (crates/eigentrail-check) ",
+        "eigentrail-core v0.2.0 (crates/eigentrail-core) ",
         "faer v0.24.4 linalg,std",
         "bytemuck v1.25.2 aarch64_simd,wasm_simd",
         "dyn-stack v0.13.2 alloc,core-error,std",
@@ -2270,7 +2270,7 @@
         "serde v1.0.228 default,derive,serde_derive,std (*)",
         "serde_json v1.0.145 default,raw_value,std (*)",
         "sha2 v0.10.9 default,std (*)",
-        "eigentrail-core v0.1.0 (crates/eigentrail-core)  (*)",
+        "eigentrail-core v0.2.0 (crates/eigentrail-core)  (*)",
         "numpy v0.30.0 ",
         "libc v0.2.191 default,std",
         "ndarray v0.17.2 default,std",
@@ -2348,13 +2348,13 @@
           "0.1.3"
         ],
         "eigentrail-check": [
-          "0.1.0"
+          "0.2.0"
         ],
         "eigentrail-core": [
-          "0.1.0"
+          "0.2.0"
         ],
         "eigentrail-r": [
-          "0.1.0"
+          "0.2.0"
         ],
         "enum-as-inner": [
           "0.6.1"
@@ -2532,9 +2532,9 @@
         ]
       },
       "features": [
-        "eigentrail-r v0.1.0 (crates/eigentrail-r) ",
-        "eigentrail-check v0.1.0 (crates/eigentrail-check) ",
-        "eigentrail-core v0.1.0 (crates/eigentrail-core) ",
+        "eigentrail-r v0.2.0 (crates/eigentrail-r) ",
+        "eigentrail-check v0.2.0 (crates/eigentrail-check) ",
+        "eigentrail-core v0.2.0 (crates/eigentrail-core) ",
         "faer v0.24.4 linalg,std",
         "bytemuck v1.25.2 aarch64_simd,wasm_simd",
         "dyn-stack v0.13.2 alloc,core-error,std",
@@ -2695,7 +2695,7 @@
         "serde v1.0.228 default,derive,serde_derive,std (*)",
         "serde_json v1.0.145 default,raw_value,std (*)",
         "sha2 v0.10.9 default,std (*)",
-        "eigentrail-core v0.1.0 (crates/eigentrail-core)  (*)",
+        "eigentrail-core v0.2.0 (crates/eigentrail-core)  (*)",
         "extendr-api v0.9.0 result_condition",
         "extendr-ffi v0.9.0 default",
         "extendr-macros v0.9.0 (proc-macro) ",

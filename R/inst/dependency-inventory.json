@@ -952,9 +952,9 @@
         ]
       },
       "features": [
-        "eigentrail-r v0.2.0 (/Users/gabriel/Documents/These/EigenTrail/crates/eigentrail-r) ",
-        "eigentrail-check v0.2.0 (/Users/gabriel/Documents/These/EigenTrail/crates/eigentrail-check) ",
-        "eigentrail-core v0.2.0 (/Users/gabriel/Documents/These/EigenTrail/crates/eigentrail-core) ",
+        "eigentrail-r v0.2.0 (crates/eigentrail-r) ",
+        "eigentrail-check v0.2.0 (crates/eigentrail-check) ",
+        "eigentrail-core v0.2.0 (crates/eigentrail-core) ",
         "faer v0.24.4 linalg,std",
         "bytemuck v1.25.2 aarch64_simd,wasm_simd",
         "dyn-stack v0.13.2 alloc,core-error,std",
@@ -1115,7 +1115,7 @@
         "serde v1.0.228 default,derive,serde_derive,std (*)",
         "serde_json v1.0.145 default,raw_value,std (*)",
         "sha2 v0.10.9 default,std (*)",
-        "eigentrail-core v0.2.0 (/Users/gabriel/Documents/These/EigenTrail/crates/eigentrail-core)  (*)",
+        "eigentrail-core v0.2.0 (crates/eigentrail-core)  (*)",
         "extendr-api v0.9.0 result_condition",
         "extendr-ffi v0.9.0 default",
         "extendr-macros v0.9.0 (proc-macro) ",
