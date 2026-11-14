@@ -1,6 +1,6 @@
 # Install EigenTrail for R
 
-R package 0.2.1 supports macOS ARM64/Intel and GNU/Linux x86-64 with baseline
+R package 0.2.2 supports macOS ARM64/Intel and GNU/Linux x86-64 with baseline
 SSE2. It does not require AVX, FMA or Haswell build flags. Python and Rust 0.2.0
 retain their [separate requirements](installation.md).
 
@@ -13,17 +13,17 @@ installer does not download a Rust toolchain.
 
 ```r
 install.packages("remotes")
-remotes::install_github("TrompetteMarine/EigenTrail", ref = "v0.2.1",
+remotes::install_github("TrompetteMarine/EigenTrail", ref = "v0.2.2",
                         subdir = "R", upgrade = "never")
 library(eigentrail)
 ```
 
-Alternatively, download `eigentrail_0.2.1.tar.gz` and its checksum from the
-[R release](https://github.com/TrompetteMarine/EigenTrail/releases/tag/v0.2.1),
+Alternatively, download `eigentrail_0.2.2.tar.gz` and its checksum from the
+[R release](https://github.com/TrompetteMarine/EigenTrail/releases/tag/v0.2.2),
 verify the checksum, then run:
 
 ```sh
-R CMD INSTALL eigentrail_0.2.1.tar.gz
+R CMD INSTALL eigentrail_0.2.2.tar.gz
 ```
 
 Use the named R source asset rather than GitHub's repository snapshot archives.
@@ -32,7 +32,7 @@ Start R from a shell without the Python/Rust Haswell `RUSTFLAGS` setting.
 ## CRAN status
 
 CRAN publication is not yet confirmed. Use GitHub source until `eigentrail`
-0.2.1 or a later version is listed on CRAN. Once publication is confirmed:
+0.2.2 or a later version is listed on CRAN. Once publication is confirmed:
 
 ```r
 install.packages("eigentrail", repos = "https://cloud.r-project.org")

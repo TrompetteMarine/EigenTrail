@@ -3,9 +3,12 @@
 Install tagged source from GitHub using the commands below. Qualified package
 assets and the actual status of each registry channel are listed on the
 [Python/Rust 0.2.0 release](https://github.com/TrompetteMarine/EigenTrail/releases/tag/v0.2.0)
-and [R 0.2.1 release](https://github.com/TrompetteMarine/EigenTrail/releases/tag/v0.2.1).
+and [R 0.2.2 release](https://github.com/TrompetteMarine/EigenTrail/releases/tag/v0.2.2).
 Initial source installation needs Git and internet access to fetch source and
 build dependencies; analysis and checking run locally.
+
+Current source manifests use version 0.2.2. PyPI continues to distribute Python
+0.2.0, and the Python/Rust commands below pin that published release.
 
 ## Python and Rust prerequisites
 
@@ -64,13 +67,13 @@ prerequisites.
 
 ## R
 
-R 0.2.1 requires **R >=4.5**, **Cargo and rustc >=1.85.1**, a C compiler,
+R 0.2.2 requires **R >=4.5**, **Cargo and rustc >=1.85.1**, a C compiler,
 GNU make and tar with xz support. It supports macOS ARM64/Intel and GNU/Linux
 x86-64 with SSE2. Use a shell without the Python/Rust Haswell flags.
 
 ```r
 install.packages("remotes")
-remotes::install_github("TrompetteMarine/EigenTrail", ref = "v0.2.1",
+remotes::install_github("TrompetteMarine/EigenTrail", ref = "v0.2.2",
                         subdir = "R", upgrade = "never")
 library(eigentrail)
 ```
@@ -79,7 +82,7 @@ The R subtree includes the Rust sources needed for its native extension. No
 separate repository staging step is needed.
 
 For a qualified R source asset downloaded from the release page, install the
-built package with `R CMD INSTALL eigentrail_0.2.1.tar.gz`. GitHub's automatically
+built package with `R CMD INSTALL eigentrail_0.2.2.tar.gz`. GitHub's automatically
 generated repository snapshots are different files. R installation uses bundled
 Rust dependencies offline, but requires a compatible installed Rust toolchain.
 
