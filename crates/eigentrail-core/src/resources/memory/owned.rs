@@ -81,6 +81,14 @@ fields!(TraceRequest;schema,times,covariances,features,calibration,correction);
 fields!(TraceReport;schema,request_hash,eigensystems,radii,segments,summaries,calibration_scope,witness,resource_qualification);
 fields!(Segment;tubes,edges,association);
 fields!(Summary;share);
+fields!(window::WindowRequest;sample_times,weights,target_description,assumptions);
+zero!(window::WindowEnvelope);
+fields!(temporal::TemporalRequest;assumptions);
+zero!(
+    temporal::TemporalEnvelope,
+    geometry::SpdTubeRequest,
+    geometry::SpdTubeEnvelope
+);
 impl HeapBytes for Calibration {
     fn heap_bytes(&self) -> Result<usize> {
         match self {
@@ -169,6 +177,19 @@ fields!(continuous_queries::Origin;origins);
 fields!(continuous_queries::Query;centre,state);
 fields!(continuous_queries::BlockSummary;origins,share,local_displacement,reference_displacement);
 fields!(continuous_queries::QueryWitness;values,evaluation_errors);
+fields!(stability::Assessment;configurations);
+fields!(stability::ConfigurationAssessment;id,workflows);
+fields!(stability::WorkflowAssessment;queries);
+fields!(stability::QueryAssessment;state);
+zero!(stability::Decision, stability::BlockAssessment);
+impl HeapBytes for stability::QueryState {
+    fn heap_bytes(&self) -> Result<usize> {
+        match self {
+            Self::Bounds { blocks } => blocks.heap_bytes(),
+            Self::InconsistentOuterBounds => Ok(0),
+        }
+    }
+}
 impl HeapBytes for continuous_queries::QueryState {
     fn heap_bytes(&self) -> Result<usize> {
         match self {

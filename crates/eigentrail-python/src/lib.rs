@@ -314,6 +314,149 @@ fn copy_metadata(
     Ok(values)
 }
 
+fn copy_window_values(py: Python<'_>, input: &Bound<'_, PyAny>, name: &str) -> PyResult<Vec<f64>> {
+    if let Some(length) = metadata_length(input)? {
+        if !(1..=window::MAX_POINTS).contains(&length) {
+            return Err(py_error(Error::Invalid(
+                "window vectors require 1..=10000 entries".into(),
+            )));
+        }
+        return copy_metadata(py, input, length, name);
+    }
+    let mut values = Vec::new();
+    for item in input.try_iter()? {
+        py.check_signals()?;
+        if values.len() == window::MAX_POINTS {
+            return Err(py_error(Error::Invalid(
+                "window vectors require 1..=10000 entries".into(),
+            )));
+        }
+        memory::push(&mut values, item?.extract::<f64>()?).map_err(py_error)?;
+    }
+    if values.is_empty() {
+        return Err(py_error(Error::Invalid(
+            "window vectors require 1..=10000 entries".into(),
+        )));
+    }
+    Ok(values)
+}
+
+// Keep the observation contract explicit rather than deriving it from samples.
+#[allow(clippy::too_many_arguments)]
+#[pyfunction]
+fn window_envelope_json(
+    py: Python<'_>,
+    sample_times: &Bound<'_, PyAny>,
+    weights: &Bound<'_, PyAny>,
+    target_time: f64,
+    window_radius: f64,
+    lipschitz: f64,
+    target_mismatch_bound: f64,
+    target_description: &str,
+    assumptions: &str,
+) -> PyResult<String> {
+    for values in [sample_times, weights] {
+        if metadata_length(values)?.is_some_and(|n| !(1..=window::MAX_POINTS).contains(&n)) {
+            return Err(py_error(Error::Invalid(
+                "window vectors require 1..=10000 entries".into(),
+            )));
+        }
+    }
+    for text in [target_description, assumptions] {
+        if text.trim().is_empty() || text.len() > window::MAX_TEXT_BYTES {
+            return Err(py_error(Error::Invalid(
+                "nonempty window target and assumptions of at most 4096 UTF-8 bytes required"
+                    .into(),
+            )));
+        }
+    }
+    let operation = Operation::new(resources::DEFAULT_BYTES).map_err(py_error)?;
+    let request = prepare(&operation, || {
+        let request = window::WindowRequest {
+            sample_times: copy_window_values(py, sample_times, "sample time")?,
+            weights: copy_window_values(py, weights, "weight")?,
+            target_time,
+            window_radius,
+            lipschitz,
+            target_mismatch_bound,
+            target_description: memory::text(target_description).map_err(py_error)?,
+            assumptions: memory::text(assumptions).map_err(py_error)?,
+        };
+        window::validate(&request).map_err(py_error)?;
+        Ok(request)
+    })?;
+    with_interrupt(py, operation, move |cancel| {
+        String::from_utf8(eigentrail_check::window::encode_checked(&request, &cancel)?)
+            .map_err(|_| Error::Invalid("UTF-8".into()))
+    })
+}
+
+#[allow(clippy::too_many_arguments)]
+#[pyfunction]
+fn temporal_gaussian_json(
+    py: Python<'_>,
+    dimension: u32,
+    observations: u32,
+    windows: u32,
+    covariance_bound: f64,
+    correlation_bound: f64,
+    alpha: f64,
+    assumptions: &str,
+) -> PyResult<String> {
+    if assumptions.trim().is_empty() || assumptions.len() > temporal::MAX_TEXT_BYTES {
+        return Err(py_error(Error::Invalid(
+            "nonempty temporal assumptions of at most 4096 UTF-8 bytes required".into(),
+        )));
+    }
+    let operation = Operation::new(resources::DEFAULT_BYTES).map_err(py_error)?;
+    let request = prepare(&operation, || {
+        py.check_signals()?;
+        let request = temporal::TemporalRequest {
+            dimension,
+            observations,
+            windows,
+            covariance_bound,
+            correlation_bound,
+            alpha,
+            assumptions: memory::text(assumptions).map_err(py_error)?,
+        };
+        temporal::validate(&request).map_err(py_error)?;
+        Ok(request)
+    })?;
+    with_interrupt(py, operation, move |cancel| {
+        String::from_utf8(eigentrail_check::temporal::encode_checked(
+            &request, &cancel,
+        )?)
+        .map_err(|_| Error::Invalid("UTF-8".into()))
+    })
+}
+
+#[pyfunction]
+fn spd_tube_geometry_json(
+    py: Python<'_>,
+    dimension: u32,
+    centre_floor: f64,
+    radius: f64,
+) -> PyResult<String> {
+    let operation = Operation::new(resources::DEFAULT_BYTES).map_err(py_error)?;
+    let request = prepare(&operation, || {
+        py.check_signals()?;
+        let request = geometry::SpdTubeRequest {
+            dimension,
+            centre_floor,
+            radius,
+        };
+        geometry::validate_spd(&request).map_err(py_error)?;
+        Ok(request)
+    })?;
+    with_interrupt(py, operation, move |cancel| {
+        String::from_utf8(eigentrail_check::geometry::encode_checked_spd(
+            &request, &cancel,
+        )?)
+        .map_err(|_| Error::Invalid("UTF-8".into()))
+    })
+}
+
 fn copy_queries(
     py: Python<'_>,
     input: &Bound<'_, PyAny>,
@@ -401,6 +544,65 @@ fn track_history_covariances(
     common_frame_weights: Option<&Bound<'_, PyAny>>,
     witness: Option<PyReadonlyArray3<'_, f64>>,
 ) -> PyResult<String> {
+    track_history_arrays(
+        py,
+        data,
+        times,
+        radii,
+        lipschitz,
+        query_times,
+        common_frame_weights,
+        witness,
+        None,
+    )
+}
+
+#[pyfunction(signature = (data, times, radii, lipschitz, query_times, tolerance, common_frame_weights=None, *, witness=None))]
+#[allow(clippy::too_many_arguments)] // Keep the separate stability route compatible with array metadata.
+fn track_stability_covariances(
+    py: Python<'_>,
+    data: PyReadonlyArray3<'_, f64>,
+    times: &Bound<'_, PyAny>,
+    radii: &Bound<'_, PyAny>,
+    lipschitz: f64,
+    query_times: &Bound<'_, PyAny>,
+    tolerance: f64,
+    common_frame_weights: Option<&Bound<'_, PyAny>>,
+    witness: Option<PyReadonlyArray3<'_, f64>>,
+) -> PyResult<String> {
+    track_history_arrays(
+        py,
+        data,
+        times,
+        radii,
+        lipschitz,
+        query_times,
+        common_frame_weights,
+        witness,
+        Some(tolerance),
+    )
+}
+
+#[allow(clippy::too_many_arguments)] // Both public routes share the same managed input boundary.
+fn track_history_arrays(
+    py: Python<'_>,
+    data: PyReadonlyArray3<'_, f64>,
+    times: &Bound<'_, PyAny>,
+    radii: &Bound<'_, PyAny>,
+    lipschitz: f64,
+    query_times: &Bound<'_, PyAny>,
+    common_frame_weights: Option<&Bound<'_, PyAny>>,
+    witness: Option<PyReadonlyArray3<'_, f64>>,
+    stability_tolerance: Option<f64>,
+) -> PyResult<String> {
+    if let Some(tolerance) = stability_tolerance {
+        stability::validate_tolerance(tolerance).map_err(py_error)?;
+        if common_frame_weights.is_some() {
+            return Err(py_error(Error::Invalid(
+                "stability assessment requires the continuous history model".into(),
+            )));
+        }
+    }
     let (m, p) = covariance_shape(&data)?;
     resources::preflight(p, m, resources::DEFAULT_BYTES).map_err(py_error)?;
     if let Some(nodes) = &witness
@@ -478,9 +680,30 @@ fn track_history_covariances(
     })?;
     with_interrupt(py, operation, move |cancel| {
         let report = families::analyze(&request, &cancel)?;
-        eigentrail_check::families::check(&request, &report, &cancel)?;
-        String::from_utf8(serialization::encode_with_cancel(&report, &cancel)?)
-            .map_err(|_| Error::Invalid("UTF-8".into()))
+        let encoded = if let Some(tolerance) = stability_tolerance {
+            eigentrail_check::stability::encode_checked(&request, &report, tolerance, &cancel)?
+        } else {
+            eigentrail_check::families::check(&request, &report, &cancel)?;
+            serialization::encode_with_cancel(&report, &cancel)?
+        };
+        String::from_utf8(encoded).map_err(|_| Error::Invalid("UTF-8".into()))
+    })
+}
+#[pyfunction]
+fn analyze_stability_json(py: Python<'_>, request: &str, tolerance: f64) -> PyResult<String> {
+    stability::validate_tolerance(tolerance).map_err(py_error)?;
+    let limit = preflight_json_inputs(py, request, &[], RequestKind::History)?;
+    let operation = Operation::new(limit).map_err(py_error)?;
+    let request_text = copy_json_text(py, &operation, request)?;
+    with_interrupt(py, operation, move |cancel| {
+        let request: families::HistoryRequest =
+            serialization::decode_in(request_text.as_bytes(), &cancel)?;
+        drop(request_text);
+        let report = families::analyze(&request, &cancel)?;
+        String::from_utf8(eigentrail_check::stability::encode_checked(
+            &request, &report, tolerance, &cancel,
+        )?)
+        .map_err(|_| Error::Invalid("UTF-8".into()))
     })
 }
 #[pyfunction]
@@ -592,6 +815,11 @@ fn check_common_frame_json(
 }
 #[pymodule]
 fn _eigentrail(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(window_envelope_json, m)?)?;
+    m.add_function(wrap_pyfunction!(temporal_gaussian_json, m)?)?;
+    m.add_function(wrap_pyfunction!(spd_tube_geometry_json, m)?)?;
+    m.add_function(wrap_pyfunction!(track_stability_covariances, m)?)?;
+    m.add_function(wrap_pyfunction!(analyze_stability_json, m)?)?;
     m.add_function(wrap_pyfunction!(track_json, m)?)?;
     m.add_function(wrap_pyfunction!(check_json, m)?)?;
     m.add_function(wrap_pyfunction!(track_covariances, m)?)?;

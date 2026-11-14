@@ -10,10 +10,14 @@ pub mod curves;
 pub mod eigensystem;
 pub mod evidence;
 pub mod families;
+pub mod geometry;
 mod jump_queries;
 pub mod jumps;
 pub mod lineage_summary;
+pub mod stability;
+pub mod temporal;
 pub mod transport;
+pub mod window;
 use eigentrail_core::{
     resources::{
         Cancellation,

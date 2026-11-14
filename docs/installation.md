@@ -2,7 +2,7 @@
 
 Install tagged source from GitHub using the commands below. Qualified package
 assets and the actual status of each registry channel are listed on the
-[release page](https://github.com/TrompetteMarine/EigenTrail/releases/tag/v0.1.0).
+[release page](https://github.com/TrompetteMarine/EigenTrail/releases/tag/v0.2.0).
 Initial source installation needs Git and internet access to fetch source and
 build dependencies; analysis and checking run locally.
 
@@ -30,12 +30,22 @@ macOS ARM64.
 
 ## Python
 
+For production PyPI artifacts confirmed by the release's channel receipt:
+
+```sh
+python -m pip install --only-binary=eigentrail "eigentrail==0.2.0"
+```
+
+The qualified wheel targets CPython 3.14 on macOS ARM64. To request a separate
+source installation with the compiler prerequisites above, use
+`python -m pip install --no-binary=eigentrail "eigentrail==0.2.0"`.
+
 Create a virtual environment and install directly from the Python subtree:
 
 ```sh
 python3.14 -m venv .venv
 source .venv/bin/activate
-python -m pip install "eigentrail @ git+https://github.com/TrompetteMarine/EigenTrail.git@v0.1.0#subdirectory=python"
+python -m pip install "eigentrail @ git+https://github.com/TrompetteMarine/EigenTrail.git@v0.2.0#subdirectory=python"
 python -c "import eigentrail; print('EigenTrail imported')"
 ```
 
@@ -48,7 +58,7 @@ Start R from the shell with the prerequisites above available:
 
 ```r
 install.packages("remotes")
-remotes::install_github("TrompetteMarine/EigenTrail", ref = "v0.1.0",
+remotes::install_github("TrompetteMarine/EigenTrail", ref = "v0.2.0",
                         subdir = "R", upgrade = "never")
 library(eigentrail)
 ```
@@ -57,13 +67,13 @@ The R subtree includes the Rust sources needed for its native extension. No
 separate repository staging step is needed.
 
 For a qualified R source asset downloaded from the release page, install the
-built package with `R CMD INSTALL eigentrail_0.1.0.tar.gz`. GitHub's automatically
+built package with `R CMD INSTALL eigentrail_0.2.0.tar.gz`. GitHub's automatically
 generated repository snapshots are different files. R installation uses bundled
 Rust dependencies offline, but requires a compatible installed Rust toolchain.
 
-Linux wheels requiring Haswell instructions are distributed only as explicitly
-qualified GitHub assets. A generic Linux wheel tag cannot select a compatible
-CPU. A macOS ARM64 wheel requires macOS 14 or later and CPython 3.14. Registry
+Linux binaries remain held pending their scientific replay. A generic Linux
+wheel tag cannot select a compatible CPU. A macOS ARM64 wheel requires macOS 14
+or later and CPython 3.14. Registry
 publication and a successful local build are separate qualification steps; check
 the release's channel receipt before choosing a registry installation route.
 Before loading native code, Python on Linux checks every CPU's kernel-visible
@@ -76,7 +86,7 @@ builds still require the declared host and compiler prerequisites.
 Install the command-line interface:
 
 ```sh
-cargo install --locked --git https://github.com/TrompetteMarine/EigenTrail.git --tag v0.1.0 eigentrail-check
+cargo install --locked --git https://github.com/TrompetteMarine/EigenTrail.git --tag v0.2.0 eigentrail-check
 eigentrail-check --help
 ```
 
@@ -85,8 +95,8 @@ To use the Rust libraries in an application, add these Git dependencies to its
 
 ```toml
 [dependencies]
-eigentrail-core = { git = "https://github.com/TrompetteMarine/EigenTrail.git", tag = "v0.1.0" }
-eigentrail-check = { git = "https://github.com/TrompetteMarine/EigenTrail.git", tag = "v0.1.0" }
+eigentrail-core = { git = "https://github.com/TrompetteMarine/EigenTrail.git", tag = "v0.2.0" }
+eigentrail-check = { git = "https://github.com/TrompetteMarine/EigenTrail.git", tag = "v0.2.0" }
 ```
 
 The core produces reports; the checker independently checks them. Retain your

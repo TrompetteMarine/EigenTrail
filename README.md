@@ -4,11 +4,16 @@ EigenTrail tracks covariance eigenvalues and eigenspaces over time with the TRAC
 method. Python, R and Rust interfaces return numerically checked uncertainty
 bounds, persistent associations and continuous-history summaries.
 
+Version 0.2.0 adds [window and temporal calibration, projector stability and
+SPD geometry](docs/curve-calibration.md), with explicit premises and unresolved
+outcomes. A small [composition example](examples/calibrated-window.py) is included.
+
 ## Install from GitHub
 
 Source installation requires **Rust 1.99.0** and native C/C++ build tools.
-Supported platforms are macOS ARM64 and GNU/Linux x86-64 with
-Haswell/x86-64-v3 CPU and operating-system instruction support.
+Native release qualification covers macOS ARM64. Linux source builds require
+GNU/Linux x86-64 with Haswell/x86-64-v3 CPU and operating-system instruction support;
+Linux binary publication remains held pending its scientific replay.
 On Linux, first set `export RUSTFLAGS="-C target-cpu=haswell"`.
 
 For **CPython 3.14**:
@@ -16,19 +21,19 @@ For **CPython 3.14**:
 ```sh
 python3.14 -m venv .venv
 source .venv/bin/activate
-python -m pip install "eigentrail @ git+https://github.com/TrompetteMarine/EigenTrail.git@v0.1.0#subdirectory=python"
+python -m pip install "eigentrail @ git+https://github.com/TrompetteMarine/EigenTrail.git@v0.2.0#subdirectory=python"
 ```
 
-For **R 4.5 or later**, with GNU make and tar with xz support installed:
+For **R 4.5.1** on the qualified native Mac, with GNU make and tar with xz support installed:
 
 ```r
 install.packages("remotes")
-remotes::install_github("TrompetteMarine/EigenTrail", ref = "v0.1.0",
+remotes::install_github("TrompetteMarine/EigenTrail", ref = "v0.2.0",
                         subdir = "R", upgrade = "never")
 ```
 
 For Rust and the command-line interface, see [installation](docs/installation.md).
-See the [release page](https://github.com/TrompetteMarine/EigenTrail/releases/tag/v0.1.0)
+See the [release page](https://github.com/TrompetteMarine/EigenTrail/releases/tag/v0.2.0)
 for qualified assets and the actual status of each registry channel.
 
 ## Track a covariance path

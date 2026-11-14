@@ -1,6 +1,8 @@
 \name{track}
 \alias{track}
 \alias{track_history}
+\alias{track_stability}
+\alias{window_envelope}
 \alias{track_json}
 \alias{check_json}
 \alias{analyze_jumps_json}
@@ -10,6 +12,7 @@
 \alias{analyze_transport_json}
 \alias{check_transport_json}
 \alias{analyze_histories_json}
+\alias{analyze_stability_json}
 \alias{check_histories_json}
 \alias{analyze_lineage_summary_json}
 \alias{check_lineage_summary_json}
@@ -20,6 +23,10 @@
 track(covariances, times, radii, lipschitz)
 track_history(covariances, times, radii, lipschitz, query_times,
               common_frame_weights = NULL, witness = NULL)
+track_stability(covariances, times, radii, lipschitz, query_times, tolerance,
+                witness = NULL)
+window_envelope(sample_times, weights, target_time, window_radius, lipschitz,
+                target_mismatch_bound, target_description, assumptions)
 track_json(request)
 check_json(request, report)
 analyze_jumps_json(request, model)
@@ -29,6 +36,7 @@ check_crossings_json(request, window, assessment)
 analyze_transport_json(request)
 check_transport_json(request, assessment)
 analyze_histories_json(request)
+analyze_stability_json(request, tolerance)
 check_histories_json(request, report)
 analyze_lineage_summary_json(request)
 check_lineage_summary_json(request, report)
@@ -40,8 +48,24 @@ check_common_frame_json(request, model, report)
 \item{times}{Strictly increasing finite double vector.}
 \item{radii}{One conditional nodal error bound per date.}
 \item{lipschitz}{Declared global covariance regularity bound.}
+\item{sample_times}{Finite double vector of window observation times; duplicates
+and unordered times are allowed, with 1 to 10000 entries.}
+\item{weights}{Finite nonnegative double vector, matching sample_times, with at
+least one positive entry. Raw weights are normalized in real arithmetic.}
+\item{target_time}{Finite scalar time of the desired instantaneous covariance.}
+\item{window_radius}{Finite nonnegative radius on the declared source event
+around the explicitly specified window target.}
+\item{target_mismatch_bound}{Finite nonnegative bound between that target and
+the normalized arithmetic average of within-time covariances.}
+\item{target_description}{Nonempty text specifying the estimator target,
+centring, divisor and filtering; at most 4096 UTF-8 bytes.}
+\item{assumptions}{Nonempty text stating the source-error event, fixed units and
+regularity assumptions; at most 4096 UTF-8 bytes.}
 \item{query_times}{Finite double vector inside the observation domain. Query order
 and duplicates are preserved.}
+\item{tolerance}{One finite double in [0, 1], chosen before inspecting the
+stability decisions. It measures operator norm distance between projectors in
+the fixed feature coordinates.}
 \item{common_frame_weights}{Optional nonnegative double anchor weights, one per
 date, with positive total. NULL selects the continuous model. Supplied weights
 declare one fixed eigenframe diagonalizing the entire covariance path.}
@@ -64,8 +88,9 @@ use weights and common_frame_assumed.}
 }
 \value{Canonical JSON for tracking, or TRUE after successful checking. Invalid,
 cancelled, exhausted and over-budget work raises a structured Rust error at the
-boundary. The caller-owned payload estimate is an attribute on track and
-track_history output.}
+boundary. Stability functions return an eigentrail.stability.v1 envelope with
+the complete checked history and its derived assessment. The caller-owned
+payload estimate is an attribute on track, track_history and track_stability output.}
 \description{Rust owns the scientific algorithms. Statistical coverage remains
 conditional on supplied sampling and regularity assumptions. No missing values,
 implicit repair, changing feature units or bootstrap calibration are accepted.}
@@ -73,6 +98,31 @@ implicit repair, changing feature units or bootstrap calibration are accepted.}
 jumps. It retains complete-path occupancy constraints and uncertain timing;
 it does not interpolate continuously through jumps or establish feasibility
 of every retained candidate. All path and sampling premises remain conditional.
+
+The window_envelope route returns eigentrail.window-envelope.v1 JSON containing
+the complete request and a checked envelope. Its total_radius is window_radius
+plus target_mismatch_bound plus lipschitz times the weighted mean absolute time
+offset. It can be supplied as a conditional TRACE radius without charging those
+same mismatch effects again through correction. The regularity bound is an
+operator-norm bound in fixed feature coordinates and must cover every connecting
+time interval, including extrapolation when target_time lies outside the support.
+This deterministic transfer creates no statistical calibration or simultaneous
+coverage event. Mean drift and serial dependence can change a sample-centred
+estimator's target even when every instantaneous covariance is constant.
+
+The stability route supports history v2 continuous configurations. It classifies
+each existing closed projector-displacement enclosure [lower, upper] as
+StableWithinTolerance when upper is at most tolerance, ChangedBeyondTolerance
+when lower exceeds tolerance, and Unresolved otherwise. Undefined comparisons
+remain Unresolved. Local and reference decisions have the same order as their
+source queries and blocks; the full history preserves intervals, undefined
+reasons, lineage, calibration scope and feasibility. Inconsistent outer bounds
+remain explicit. No extra numerical error is added to already checked bounds.
+Self-comparisons and full-dimensional projectors are trivially stable; full_space
+flags the latter. Stability of an eigenspace does not imply covariance equality,
+stable eigenvalues or unchanged time-series dynamics. No new statistical coverage
+is calibrated. Unsupported path classes are rejected rather than omitted.
+The optional witness retains the same zero-widening semantics as track_history.
 
 History v2 Jumps configurations return jump_workflow through the existing JSON
 history functions. Observation queries retain nodal bounds. Inside a retained
