@@ -48,10 +48,11 @@ impl State {
             }
         }
     }
+    #[allow(deprecated, reason = "Rust 1.85.1 predates the try_update rename")]
     fn release(&self, bytes: usize) {
         if self
             .live
-            .try_update(Ordering::Relaxed, Ordering::Relaxed, |n| {
+            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |n| {
                 n.checked_sub(bytes)
             })
             .is_err()

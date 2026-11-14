@@ -7,14 +7,16 @@ bounds, persistent associations and continuous-history summaries.
 Version 0.2.0 adds [window and temporal calibration, projector stability and
 SPD geometry](docs/curve-calibration.md), with explicit premises and unresolved
 outcomes. A small [composition example](examples/calibrated-window.py) is included.
+The R package's 0.2.1 update adds baseline x86-64 support and a lower Rust
+compiler minimum; Python and Rust remain at 0.2.0.
 
 ## Install from GitHub
 
-Source installation requires **Rust 1.99.0** and native C/C++ build tools.
-Native release qualification covers macOS ARM64. Linux source builds require
-GNU/Linux x86-64 with Haswell/x86-64-v3 CPU and operating-system instruction support;
-Linux binary publication remains held pending its scientific replay.
-On Linux, first set `export RUSTFLAGS="-C target-cpu=haswell"`.
+Python and Rust 0.2.0 source installation requires **Rust 1.99.0** and native
+C/C++ build tools. The qualified Python wheel targets macOS ARM64. Their Linux
+source builds require Haswell/x86-64-v3 CPU and operating-system instruction
+support; set `export RUSTFLAGS="-C target-cpu=haswell"` for those builds only.
+Linux binary publication remains held.
 
 For **CPython 3.14**:
 
@@ -24,17 +26,21 @@ source .venv/bin/activate
 python -m pip install "eigentrail @ git+https://github.com/TrompetteMarine/EigenTrail.git@v0.2.0#subdirectory=python"
 ```
 
-For **R 4.5.1** on the qualified native Mac, with GNU make and tar with xz support installed:
+For **R 4.5 or later**, use Cargo and rustc **1.85.1 or later**, a C compiler,
+GNU make and tar with xz support. R supports macOS ARM64/Intel and GNU/Linux
+x86-64 with baseline SSE2; it needs no Haswell build flags:
 
 ```r
 install.packages("remotes")
-remotes::install_github("TrompetteMarine/EigenTrail", ref = "v0.2.0",
+remotes::install_github("TrompetteMarine/EigenTrail", ref = "v0.2.1",
                         subdir = "R", upgrade = "never")
 ```
 
-For Rust and the command-line interface, see [installation](docs/installation.md).
-See the [release page](https://github.com/TrompetteMarine/EigenTrail/releases/tag/v0.2.0)
-for qualified assets and the actual status of each registry channel.
+CRAN publication is not yet confirmed; use GitHub source until it is available.
+See [R installation](docs/r-installation.md) for source assets and the conditional
+CRAN route. For Python, Rust and the command-line interface, see
+[installation](docs/installation.md). Release receipts record qualified artifacts
+and the actual status of each distribution channel.
 
 ## Track a covariance path
 

@@ -98,20 +98,19 @@ pub fn inspect(a: &Matrix, e: &Eigensystem, cancel: &Cancellation) -> Result<(f6
             "checker: malformed or unordered eigensystem".into(),
         ));
     }
-    if p > 16
-        && p <= 256
-        && let Some((bound, correction)) = normal_bounds(a, e, cancel)?
-    {
-        if !e.backward.is_finite()
-            || !e.polar.is_finite()
-            || e.backward < bound
-            || e.polar < correction
-        {
-            return Err(Error::Invalid(
-                "checker: understated residual/polar bound".into(),
-            ));
+    if p > 16 && p <= 256 {
+        if let Some((bound, correction)) = normal_bounds(a, e, cancel)? {
+            if !e.backward.is_finite()
+                || !e.polar.is_finite()
+                || e.backward < bound
+                || e.polar < correction
+            {
+                return Err(Error::Invalid(
+                    "checker: understated residual/polar bound".into(),
+                ));
+            }
+            return Ok((bound, correction));
         }
-        return Ok((bound, correction));
     }
     let mut orth = point(0.);
     let mut residual = point(0.);

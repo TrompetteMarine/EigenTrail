@@ -1,0 +1,21 @@
+[package]
+name = "inari"
+version = "2.0.0"
+edition = "2021"
+rust-version = "1.85.1"
+authors = ["Masashi Mizuno", "Gabriel Bontemps"]
+license = "MIT"
+repository = "https://github.com/TrompetteMarine/EigenTrail"
+description = "R production-only Inari 2.0.0 backport for baseline x86-64"
+readme = "README.md"
+
+[workspace]
+
+[dependencies]
+cfg-if = "=1.0.5"
+forward_ref = "=1.0.0"
+
+[features]
+default = []
+gmp = []
+libm = []

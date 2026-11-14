@@ -2,31 +2,33 @@
 
 Install tagged source from GitHub using the commands below. Qualified package
 assets and the actual status of each registry channel are listed on the
-[release page](https://github.com/TrompetteMarine/EigenTrail/releases/tag/v0.2.0).
+[Python/Rust 0.2.0 release](https://github.com/TrompetteMarine/EigenTrail/releases/tag/v0.2.0)
+and [R 0.2.1 release](https://github.com/TrompetteMarine/EigenTrail/releases/tag/v0.2.1).
 Initial source installation needs Git and internet access to fetch source and
 build dependencies; analysis and checking run locally.
 
-## Prerequisites
+## Python and Rust prerequisites
 
 - Rust **1.99.0**, including `cargo`, and a native C/C++ toolchain.
 - macOS **ARM64**, or GNU/Linux **x86-64** with Haswell/x86-64-v3 instructions and
   operating-system support for them.
 - Python: **CPython 3.14**. Installation brings in NumPy **>=2.3,<3**.
-- R: **R 4.5 or later**, GNU make, and tar with xz support.
+
+R has [separate compiler and platform requirements](r-installation.md).
 
 On macOS, install the Xcode command-line tools if a compiler is missing. On Linux,
 install your distribution's C/C++ build tools and development headers for the
-Python or R interpreter you use.
+Python interpreter you use.
 
-Before any Linux source installation, set this in the shell used for the build:
+For Python and Rust source builds on Linux, set this in the build shell:
 
 ```sh
 export RUSTFLAGS="-C target-cpu=haswell"
 ```
 
 Keep that setting for later Rust builds of applications using EigenTrail. Use the
-Haswell target only on the declared Linux x86-64 platform; it does not apply to
-macOS ARM64.
+Haswell target only on the declared Linux x86-64 platform. The R package uses
+baseline x86-64 and needs no Haswell flags.
 
 ## Python
 
@@ -52,13 +54,23 @@ python -c "import eigentrail; print('EigenTrail imported')"
 The native Rust extension is compiled during installation. Keep the virtual
 environment activated when running your analyses.
 
+Linux binaries remain held pending their scientific replay. A generic Linux
+wheel tag cannot select a compatible CPU. The macOS ARM64 wheel requires macOS
+14 or later and CPython 3.14. Before loading native code, Python on Linux checks
+every CPU's kernel-visible Haswell flags in `/proc/cpuinfo`. Missing or unreadable
+flags raise `ImportError`; older kernels that omit flags can conservatively refuse
+a capable CPU. Source builds still require the declared host and compiler
+prerequisites.
+
 ## R
 
-Start R from the shell with the prerequisites above available:
+R 0.2.1 requires **R >=4.5**, **Cargo and rustc >=1.85.1**, a C compiler,
+GNU make and tar with xz support. It supports macOS ARM64/Intel and GNU/Linux
+x86-64 with SSE2. Use a shell without the Python/Rust Haswell flags.
 
 ```r
 install.packages("remotes")
-remotes::install_github("TrompetteMarine/EigenTrail", ref = "v0.2.0",
+remotes::install_github("TrompetteMarine/EigenTrail", ref = "v0.2.1",
                         subdir = "R", upgrade = "never")
 library(eigentrail)
 ```
@@ -67,19 +79,13 @@ The R subtree includes the Rust sources needed for its native extension. No
 separate repository staging step is needed.
 
 For a qualified R source asset downloaded from the release page, install the
-built package with `R CMD INSTALL eigentrail_0.2.0.tar.gz`. GitHub's automatically
+built package with `R CMD INSTALL eigentrail_0.2.1.tar.gz`. GitHub's automatically
 generated repository snapshots are different files. R installation uses bundled
 Rust dependencies offline, but requires a compatible installed Rust toolchain.
 
-Linux binaries remain held pending their scientific replay. A generic Linux
-wheel tag cannot select a compatible CPU. A macOS ARM64 wheel requires macOS 14
-or later and CPython 3.14. Registry
-publication and a successful local build are separate qualification steps; check
-the release's channel receipt before choosing a registry installation route.
-Before loading native code, Python on Linux checks every CPU's kernel-visible
-Haswell flags in `/proc/cpuinfo`. Missing or unreadable flags raise `ImportError`;
-older kernels that omit flags can conservatively refuse a capable CPU. Source
-builds still require the declared host and compiler prerequisites.
+CRAN publication is not yet confirmed. Until it is available, use the GitHub
+source routes above. See [R installation](r-installation.md) for the conditional
+CRAN command, checksums and platform scope.
 
 ## Rust and command line
 
@@ -120,9 +126,9 @@ Linux CPU target before reporting the error and platform in a
 
 An error before compilation usually concerns Git access, dependency download or
 the interpreter version. `cargo`/`rustc` missing or too old is a toolchain setup
-failure; package installation does not install Rust. An AVX/FMA build error on
-Linux requires the declared CPU and compiler flags, not a relaxed numerical
-check. An import or dynamic-loader error after installation requires checking
-the active environment, loaded package path and platform/ABI tag. Validation
+failure; package installation does not install Rust. An AVX/FMA build error for
+Python/Rust on Linux requires the declared CPU and compiler flags, not a relaxed
+numerical check. An import or dynamic-loader error requires checking the active
+environment, loaded package path and platform/ABI tag. Validation
 errors from `track_history` concern array dtype/shape or the stated contract;
 an ordinary `Unresolved` feasibility result is valid report data.

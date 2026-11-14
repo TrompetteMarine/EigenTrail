@@ -1,0 +1,36 @@
+{
+  "schema": "eigentrail.rust-copyright-provenance.v1",
+  "rust_version": "1.85.1",
+  "bytes": 20759,
+  "sha256": "252b04f034f7383e09401dc700c8b933e3e38818eaa8b2f09dd247542be92292",
+  "fetched_utc": "2026-11-14T15:30:50.144434+00:00",
+  "source_url": "https://github.com/rust-lang/rust/blob/1.85.1/COPYRIGHT",
+  "download_url": "https://raw.githubusercontent.com/rust-lang/rust/1.85.1/COPYRIGHT",
+  "api_url": "https://api.github.com/repos/rust-lang/rust/contents/COPYRIGHT?ref=1.85.1",
+  "git_blob_sha": "428a438a086e9e59938fdfdcb81ccd4d9b2ae41f",
+  "requested_library_html": {
+    "url": "https://doc.rust-lang.org/1.85.1/COPYRIGHT-library.html",
+    "http_status": 404
+  },
+  "format": "official upstream plaintext; this Rust version predates the separate standard-library HTML notice",
+  "installed_copy_identical": true,
+  "toolchain_channel_manifest_sha256": "7e97a1235ea88353e5b930cd19308477d1fcb854e1c69bd4f1a5140e087e54d2",
+  "rustc_distribution": {
+    "available": true,
+    "url": "https://static.rust-lang.org/dist/2025-03-18/rustc-1.85.1-aarch64-apple-darwin.tar.gz",
+    "hash": "de6c767b73773faf9b379590d2bc01ca2917e59e7f6142a1c4d6e946e26e83bb",
+    "xz_url": "https://static.rust-lang.org/dist/2025-03-18/rustc-1.85.1-aarch64-apple-darwin.tar.xz",
+    "xz_hash": "93a6fd55cf1a88bb50e133c5bdb629197b80ad0ccab128ce3a84902992786b4c",
+    "components": [],
+    "extensions": []
+  },
+  "rust_std_distribution": {
+    "available": true,
+    "url": "https://static.rust-lang.org/dist/2025-03-18/rust-std-1.85.1-aarch64-apple-darwin.tar.gz",
+    "hash": "5d2fd6b5c3c482750074b6ab04443b1ec41ca824fddc814aab6a1fbcf5cfb53a",
+    "xz_url": "https://static.rust-lang.org/dist/2025-03-18/rust-std-1.85.1-aarch64-apple-darwin.tar.xz",
+    "xz_hash": "a066d9b033f5fc74283ca86e38da8178c201e86b17113e184383904573734a67",
+    "components": [],
+    "extensions": []
+  }
+}

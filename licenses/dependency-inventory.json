@@ -7,8 +7,7 @@
       "license": "Apache-2.0 OR MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/cuviper/autocfg",
-      "features": []
+      "repository": "https://github.com/cuviper/autocfg"
     },
     {
       "name": "bitflags",
@@ -16,8 +15,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/bitflags/bitflags",
-      "features": []
+      "repository": "https://github.com/bitflags/bitflags"
     },
     {
       "name": "block-buffer",
@@ -25,8 +23,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/RustCrypto/utils",
-      "features": []
+      "repository": "https://github.com/RustCrypto/utils"
     },
     {
       "name": "bytemuck",
@@ -34,22 +31,7 @@
       "license": "Zlib OR Apache-2.0 OR MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/Lokathor/bytemuck",
-      "features": [
-        "aarch64_simd",
-        "bytemuck_derive",
-        "derive",
-        "wasm_simd"
-      ]
-    },
-    {
-      "name": "bytemuck_derive",
-      "version": "1.12.1",
-      "license": "Zlib OR Apache-2.0 OR MIT",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/Lokathor/bytemuck",
-      "features": []
+      "repository": "https://github.com/Lokathor/bytemuck"
     },
     {
       "name": "byteorder",
@@ -57,11 +39,7 @@
       "license": "Unlicense OR MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/BurntSushi/byteorder",
-      "features": [
-        "default",
-        "std"
-      ]
+      "repository": "https://github.com/BurntSushi/byteorder"
     },
     {
       "name": "cfg-if",
@@ -69,8 +47,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/rust-lang/cfg-if",
-      "features": []
+      "repository": "https://github.com/rust-lang/cfg-if"
     },
     {
       "name": "cpufeatures",
@@ -78,20 +55,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/RustCrypto/utils",
-      "features": []
-    },
-    {
-      "name": "crunchy",
-      "version": "0.2.4",
-      "license": "MIT",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/eira-fransham/crunchy",
-      "features": [
-        "default",
-        "limit_128"
-      ]
+      "repository": "https://github.com/RustCrypto/utils"
     },
     {
       "name": "crypto-common",
@@ -99,19 +63,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/RustCrypto/traits",
-      "features": [
-        "std"
-      ]
-    },
-    {
-      "name": "defer",
-      "version": "0.2.1",
-      "license": "MIT/Apache-2.0",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/andrewhickman/defer/",
-      "features": []
+      "repository": "https://github.com/RustCrypto/traits"
     },
     {
       "name": "digest",
@@ -119,14 +71,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/RustCrypto/traits",
-      "features": [
-        "alloc",
-        "block-buffer",
-        "core-api",
-        "default",
-        "std"
-      ]
+      "repository": "https://github.com/RustCrypto/traits"
     },
     {
       "name": "dyn-stack",
@@ -134,12 +79,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://codeberg.org/sarah-quinones/dyn-stack",
-      "features": [
-        "alloc",
-        "core-error",
-        "std"
-      ]
+      "repository": "https://codeberg.org/sarah-quinones/dyn-stack"
     },
     {
       "name": "dyn-stack-macros",
@@ -147,44 +87,39 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/kitegi/dynstack/",
-      "features": []
+      "repository": "https://github.com/kitegi/dynstack/"
     },
     {
       "name": "eigentrail-check",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "license": "MIT",
       "license_file": null,
       "source": null,
-      "repository": null,
-      "features": []
+      "repository": "https://github.com/TrompetteMarine/EigenTrail"
     },
     {
       "name": "eigentrail-core",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "license": "MIT",
       "license_file": null,
       "source": null,
-      "repository": null,
-      "features": []
+      "repository": "https://github.com/TrompetteMarine/EigenTrail"
     },
     {
       "name": "eigentrail-python",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "license": "MIT",
       "license_file": null,
       "source": null,
-      "repository": null,
-      "features": []
+      "repository": "https://github.com/TrompetteMarine/EigenTrail"
     },
     {
       "name": "eigentrail-r",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "license": "MIT",
       "license_file": null,
       "source": null,
-      "repository": null,
-      "features": []
+      "repository": "https://github.com/TrompetteMarine/EigenTrail"
     },
     {
       "name": "enum-as-inner",
@@ -192,8 +127,7 @@
       "license": "MIT/Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/bluejekyll/enum-as-inner",
-      "features": []
+      "repository": "https://github.com/bluejekyll/enum-as-inner"
     },
     {
       "name": "equator",
@@ -201,8 +135,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-ek/equator/",
-      "features": []
+      "repository": "https://github.com/sarah-ek/equator/"
     },
     {
       "name": "equator",
@@ -210,8 +143,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-ek/equator/",
-      "features": []
+      "repository": "https://github.com/sarah-ek/equator/"
     },
     {
       "name": "equator-macro",
@@ -219,8 +151,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-ek/equator/",
-      "features": []
+      "repository": "https://github.com/sarah-ek/equator/"
     },
     {
       "name": "equator-macro",
@@ -228,8 +159,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-ek/equator/",
-      "features": []
+      "repository": "https://github.com/sarah-ek/equator/"
     },
     {
       "name": "extendr-api",
@@ -237,10 +167,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/extendr/extendr",
-      "features": [
-        "result_condition"
-      ]
+      "repository": "https://github.com/extendr/extendr"
     },
     {
       "name": "extendr-ffi",
@@ -248,10 +175,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/extendr/extendr",
-      "features": [
-        "default"
-      ]
+      "repository": "https://github.com/extendr/extendr"
     },
     {
       "name": "extendr-macros",
@@ -259,8 +183,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/extendr/extendr",
-      "features": []
+      "repository": "https://github.com/extendr/extendr"
     },
     {
       "name": "faer",
@@ -268,11 +191,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://codeberg.org/sarah-quinones/faer",
-      "features": [
-        "linalg",
-        "std"
-      ]
+      "repository": "https://codeberg.org/sarah-quinones/faer"
     },
     {
       "name": "faer-traits",
@@ -280,10 +199,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://codeberg.org/sarah-quinones/faer",
-      "features": [
-        "std"
-      ]
+      "repository": "https://codeberg.org/sarah-quinones/faer"
     },
     {
       "name": "forward_ref",
@@ -291,8 +207,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/jtempest/forward_ref",
-      "features": []
+      "repository": "https://github.com/jtempest/forward_ref"
     },
     {
       "name": "gemm",
@@ -300,10 +215,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-ek/gemm/",
-      "features": [
-        "std"
-      ]
+      "repository": "https://github.com/sarah-ek/gemm/"
     },
     {
       "name": "gemm-c32",
@@ -311,10 +223,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-ek/gemm/",
-      "features": [
-        "std"
-      ]
+      "repository": "https://github.com/sarah-ek/gemm/"
     },
     {
       "name": "gemm-c64",
@@ -322,10 +231,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-ek/gemm/",
-      "features": [
-        "std"
-      ]
+      "repository": "https://github.com/sarah-ek/gemm/"
     },
     {
       "name": "gemm-common",
@@ -333,24 +239,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-ek/gemm/",
-      "features": [
-        "f16",
-        "half",
-        "std",
-        "sysctl"
-      ]
-    },
-    {
-      "name": "gemm-f16",
-      "version": "0.19.0",
-      "license": "MIT",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-ek/gemm/",
-      "features": [
-        "std"
-      ]
+      "repository": "https://github.com/sarah-ek/gemm/"
     },
     {
       "name": "gemm-f32",
@@ -358,10 +247,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-ek/gemm/",
-      "features": [
-        "std"
-      ]
+      "repository": "https://github.com/sarah-ek/gemm/"
     },
     {
       "name": "gemm-f64",
@@ -369,10 +255,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-ek/gemm/",
-      "features": [
-        "std"
-      ]
+      "repository": "https://github.com/sarah-ek/gemm/"
     },
     {
       "name": "generativity",
@@ -380,8 +263,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/CAD97/generativity",
-      "features": []
+      "repository": "https://github.com/CAD97/generativity"
     },
     {
       "name": "generic-array",
@@ -389,22 +271,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/fizyk20/generic-array.git",
-      "features": [
-        "more_lengths"
-      ]
-    },
-    {
-      "name": "half",
-      "version": "2.7.1",
-      "license": "MIT OR Apache-2.0",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/VoidStarKat/half-rs",
-      "features": [
-        "bytemuck",
-        "num-traits"
-      ]
+      "repository": "https://github.com/fizyk20/generic-array.git"
     },
     {
       "name": "heck",
@@ -412,19 +279,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/withoutboats/heck",
-      "features": []
-    },
-    {
-      "name": "hermit-abi",
-      "version": "0.5.3",
-      "license": "MIT OR Apache-2.0",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/hermit-os/hermit-rs",
-      "features": [
-        "default"
-      ]
+      "repository": "https://github.com/withoutboats/heck"
     },
     {
       "name": "inari",
@@ -432,17 +287,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/unageek/inari",
-      "features": []
-    },
-    {
-      "name": "interpol",
-      "version": "0.2.1",
-      "license": "MIT",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/tanakh/interpol",
-      "features": []
+      "repository": "https://github.com/unageek/inari"
     },
     {
       "name": "itoa",
@@ -450,8 +295,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/dtolnay/itoa",
-      "features": []
+      "repository": "https://github.com/dtolnay/itoa"
     },
     {
       "name": "lazy_static",
@@ -459,8 +303,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/rust-lang-nursery/lazy-static.rs",
-      "features": []
+      "repository": "https://github.com/rust-lang-nursery/lazy-static.rs"
     },
     {
       "name": "libc",
@@ -468,11 +311,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/rust-lang/libc",
-      "features": [
-        "default",
-        "std"
-      ]
+      "repository": "https://github.com/rust-lang/libc"
     },
     {
       "name": "libm",
@@ -480,11 +319,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/rust-lang/compiler-builtins",
-      "features": [
-        "arch",
-        "default"
-      ]
+      "repository": "https://github.com/rust-lang/compiler-builtins"
     },
     {
       "name": "matrixmultiply",
@@ -492,11 +327,7 @@
       "license": "MIT/Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/bluss/matrixmultiply/",
-      "features": [
-        "cgemm",
-        "std"
-      ]
+      "repository": "https://github.com/bluss/matrixmultiply/"
     },
     {
       "name": "memchr",
@@ -504,11 +335,7 @@
       "license": "Unlicense OR MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/BurntSushi/memchr",
-      "features": [
-        "alloc",
-        "std"
-      ]
+      "repository": "https://github.com/BurntSushi/memchr"
     },
     {
       "name": "nano-gemm",
@@ -516,10 +343,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-ek/nano-gemm/",
-      "features": [
-        "std"
-      ]
+      "repository": "https://github.com/sarah-ek/nano-gemm/"
     },
     {
       "name": "nano-gemm-c32",
@@ -527,8 +351,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-ek/nano-gemm/",
-      "features": []
+      "repository": "https://github.com/sarah-ek/nano-gemm/"
     },
     {
       "name": "nano-gemm-c64",
@@ -536,8 +359,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-ek/nano-gemm/",
-      "features": []
+      "repository": "https://github.com/sarah-ek/nano-gemm/"
     },
     {
       "name": "nano-gemm-codegen",
@@ -545,8 +367,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-ek/nano-gemm/",
-      "features": []
+      "repository": "https://github.com/sarah-ek/nano-gemm/"
     },
     {
       "name": "nano-gemm-core",
@@ -554,8 +375,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-ek/nano-gemm/",
-      "features": []
+      "repository": "https://github.com/sarah-ek/nano-gemm/"
     },
     {
       "name": "nano-gemm-f32",
@@ -563,8 +383,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-ek/nano-gemm/",
-      "features": []
+      "repository": "https://github.com/sarah-ek/nano-gemm/"
     },
     {
       "name": "nano-gemm-f64",
@@ -572,8 +391,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-ek/nano-gemm/",
-      "features": []
+      "repository": "https://github.com/sarah-ek/nano-gemm/"
     },
     {
       "name": "ndarray",
@@ -581,11 +399,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/rust-ndarray/ndarray",
-      "features": [
-        "default",
-        "std"
-      ]
+      "repository": "https://github.com/rust-ndarray/ndarray"
     },
     {
       "name": "num-complex",
@@ -593,12 +407,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/rust-num/num-complex",
-      "features": [
-        "bytemuck",
-        "default",
-        "std"
-      ]
+      "repository": "https://github.com/rust-num/num-complex"
     },
     {
       "name": "num-integer",
@@ -606,11 +415,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/rust-num/num-integer",
-      "features": [
-        "default",
-        "std"
-      ]
+      "repository": "https://github.com/rust-num/num-integer"
     },
     {
       "name": "num-traits",
@@ -618,22 +423,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/rust-num/num-traits",
-      "features": [
-        "default",
-        "i128",
-        "libm",
-        "std"
-      ]
-    },
-    {
-      "name": "num_cpus",
-      "version": "1.17.0",
-      "license": "MIT OR Apache-2.0",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/seanmonstar/num_cpus",
-      "features": []
+      "repository": "https://github.com/rust-num/num-traits"
     },
     {
       "name": "numpy",
@@ -641,8 +431,7 @@
       "license": "BSD-2-Clause",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/PyO3/rust-numpy",
-      "features": []
+      "repository": "https://github.com/PyO3/rust-numpy"
     },
     {
       "name": "once_cell",
@@ -650,13 +439,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/matklad/once_cell",
-      "features": [
-        "alloc",
-        "default",
-        "race",
-        "std"
-      ]
+      "repository": "https://github.com/matklad/once_cell"
     },
     {
       "name": "paste",
@@ -664,42 +447,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/dtolnay/paste",
-      "features": []
-    },
-    {
-      "name": "portable-atomic",
-      "version": "1.15.0",
-      "license": "Apache-2.0 OR MIT",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/taiki-e/portable-atomic",
-      "features": [
-        "default",
-        "fallback",
-        "require-cas"
-      ]
-    },
-    {
-      "name": "portable-atomic-util",
-      "version": "0.2.8",
-      "license": "Apache-2.0 OR MIT",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/taiki-e/portable-atomic-util",
-      "features": [
-        "alloc",
-        "default"
-      ]
-    },
-    {
-      "name": "private-gemm-x86",
-      "version": "0.1.22",
-      "license": "MIT",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-quinones/gemm-x64-v2/",
-      "features": []
+      "repository": "https://github.com/dtolnay/paste"
     },
     {
       "name": "proc-macro2",
@@ -707,11 +455,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/dtolnay/proc-macro2",
-      "features": [
-        "default",
-        "proc-macro"
-      ]
+      "repository": "https://github.com/dtolnay/proc-macro2"
     },
     {
       "name": "pulp",
@@ -719,11 +463,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-quinones/pulp/",
-      "features": [
-        "std",
-        "x86-v3"
-      ]
+      "repository": "https://github.com/sarah-quinones/pulp/"
     },
     {
       "name": "pulp-wasm-simd-flag",
@@ -731,8 +471,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-quinones/pulp/",
-      "features": []
+      "repository": "https://github.com/sarah-quinones/pulp/"
     },
     {
       "name": "pyo3",
@@ -740,13 +479,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/pyo3/pyo3",
-      "features": [
-        "default",
-        "extension-module",
-        "macros",
-        "pyo3-macros"
-      ]
+      "repository": "https://github.com/pyo3/pyo3"
     },
     {
       "name": "pyo3-build-config",
@@ -754,12 +487,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/pyo3/pyo3",
-      "features": [
-        "default",
-        "extension-module",
-        "resolve-config"
-      ]
+      "repository": "https://github.com/pyo3/pyo3"
     },
     {
       "name": "pyo3-ffi",
@@ -767,11 +495,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/pyo3/pyo3",
-      "features": [
-        "default",
-        "extension-module"
-      ]
+      "repository": "https://github.com/pyo3/pyo3"
     },
     {
       "name": "pyo3-macros",
@@ -779,8 +503,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/pyo3/pyo3",
-      "features": []
+      "repository": "https://github.com/pyo3/pyo3"
     },
     {
       "name": "pyo3-macros-backend",
@@ -788,8 +511,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/pyo3/pyo3",
-      "features": []
+      "repository": "https://github.com/pyo3/pyo3"
     },
     {
       "name": "qd",
@@ -797,10 +519,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-quinones/qd/",
-      "features": [
-        "std"
-      ]
+      "repository": "https://github.com/sarah-quinones/qd/"
     },
     {
       "name": "quote",
@@ -808,11 +527,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/dtolnay/quote",
-      "features": [
-        "default",
-        "proc-macro"
-      ]
+      "repository": "https://github.com/dtolnay/quote"
     },
     {
       "name": "raw-cpuid",
@@ -820,8 +535,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/gz/rust-cpuid",
-      "features": []
+      "repository": "https://github.com/gz/rust-cpuid"
     },
     {
       "name": "rawpointer",
@@ -829,8 +543,7 @@
       "license": "MIT/Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/bluss/rawpointer/",
-      "features": []
+      "repository": "https://github.com/bluss/rawpointer/"
     },
     {
       "name": "readonly",
@@ -838,8 +551,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/dtolnay/readonly",
-      "features": []
+      "repository": "https://github.com/dtolnay/readonly"
     },
     {
       "name": "reborrow",
@@ -847,10 +559,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/sarah-ek/reborrow/",
-      "features": [
-        "default"
-      ]
+      "repository": "https://github.com/sarah-ek/reborrow/"
     },
     {
       "name": "rustc-hash",
@@ -858,11 +567,7 @@
       "license": "Apache-2.0 OR MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/rust-lang/rustc-hash",
-      "features": [
-        "default",
-        "std"
-      ]
+      "repository": "https://github.com/rust-lang/rustc-hash"
     },
     {
       "name": "ryu",
@@ -870,17 +575,7 @@
       "license": "Apache-2.0 OR BSL-1.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/dtolnay/ryu",
-      "features": []
-    },
-    {
-      "name": "same-file",
-      "version": "1.0.6",
-      "license": "Unlicense/MIT",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/BurntSushi/same-file",
-      "features": []
+      "repository": "https://github.com/dtolnay/ryu"
     },
     {
       "name": "seq-macro",
@@ -888,8 +583,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/dtolnay/seq-macro",
-      "features": []
+      "repository": "https://github.com/dtolnay/seq-macro"
     },
     {
       "name": "serde",
@@ -897,13 +591,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/serde-rs/serde",
-      "features": [
-        "default",
-        "derive",
-        "serde_derive",
-        "std"
-      ]
+      "repository": "https://github.com/serde-rs/serde"
     },
     {
       "name": "serde_core",
@@ -911,11 +599,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/serde-rs/serde",
-      "features": [
-        "result",
-        "std"
-      ]
+      "repository": "https://github.com/serde-rs/serde"
     },
     {
       "name": "serde_derive",
@@ -923,10 +607,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/serde-rs/serde",
-      "features": [
-        "default"
-      ]
+      "repository": "https://github.com/serde-rs/serde"
     },
     {
       "name": "serde_json",
@@ -934,12 +615,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/serde-rs/json",
-      "features": [
-        "default",
-        "raw_value",
-        "std"
-      ]
+      "repository": "https://github.com/serde-rs/json"
     },
     {
       "name": "sha2",
@@ -947,29 +623,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/RustCrypto/hashes",
-      "features": [
-        "default",
-        "std"
-      ]
-    },
-    {
-      "name": "syn",
-      "version": "1.0.109",
-      "license": "MIT OR Apache-2.0",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/dtolnay/syn",
-      "features": [
-        "clone-impls",
-        "default",
-        "derive",
-        "full",
-        "parsing",
-        "printing",
-        "proc-macro",
-        "quote"
-      ]
+      "repository": "https://github.com/RustCrypto/hashes"
     },
     {
       "name": "syn",
@@ -977,17 +631,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/dtolnay/syn",
-      "features": [
-        "clone-impls",
-        "default",
-        "derive",
-        "extra-traits",
-        "full",
-        "parsing",
-        "printing",
-        "proc-macro"
-      ]
+      "repository": "https://github.com/dtolnay/syn"
     },
     {
       "name": "syn",
@@ -995,18 +639,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/dtolnay/syn",
-      "features": [
-        "clone-impls",
-        "default",
-        "derive",
-        "extra-traits",
-        "full",
-        "parsing",
-        "printing",
-        "proc-macro",
-        "visit-mut"
-      ]
+      "repository": "https://github.com/dtolnay/syn"
     },
     {
       "name": "sysctl",
@@ -1014,8 +647,7 @@
       "license": "MIT",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/johalun/sysctl-rs",
-      "features": []
+      "repository": "https://github.com/johalun/sysctl-rs"
     },
     {
       "name": "target-lexicon",
@@ -1023,10 +655,7 @@
       "license": "Apache-2.0 WITH LLVM-exception",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/bytecodealliance/target-lexicon",
-      "features": [
-        "default"
-      ]
+      "repository": "https://github.com/bytecodealliance/target-lexicon"
     },
     {
       "name": "thiserror",
@@ -1034,8 +663,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/dtolnay/thiserror",
-      "features": []
+      "repository": "https://github.com/dtolnay/thiserror"
     },
     {
       "name": "thiserror-impl",
@@ -1043,8 +671,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/dtolnay/thiserror",
-      "features": []
+      "repository": "https://github.com/dtolnay/thiserror"
     },
     {
       "name": "typenum",
@@ -1052,8 +679,7 @@
       "license": "MIT OR Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/paholg/typenum",
-      "features": []
+      "repository": "https://github.com/paholg/typenum"
     },
     {
       "name": "unicode-ident",
@@ -1061,8 +687,7 @@
       "license": "(MIT OR Apache-2.0) AND Unicode-3.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/dtolnay/unicode-ident",
-      "features": []
+      "repository": "https://github.com/dtolnay/unicode-ident"
     },
     {
       "name": "version_check",
@@ -1070,78 +695,10 @@
       "license": "MIT/Apache-2.0",
       "license_file": null,
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/SergioBenitez/version_check",
-      "features": []
-    },
-    {
-      "name": "walkdir",
-      "version": "2.5.0",
-      "license": "Unlicense/MIT",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/BurntSushi/walkdir",
-      "features": []
-    },
-    {
-      "name": "winapi-util",
-      "version": "0.1.11",
-      "license": "Unlicense OR MIT",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/BurntSushi/winapi-util",
-      "features": []
-    },
-    {
-      "name": "windows-link",
-      "version": "0.2.1",
-      "license": "MIT OR Apache-2.0",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/microsoft/windows-rs",
-      "features": []
-    },
-    {
-      "name": "windows-sys",
-      "version": "0.61.2",
-      "license": "MIT OR Apache-2.0",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/microsoft/windows-rs",
-      "features": [
-        "Win32",
-        "Win32_Foundation",
-        "Win32_Storage",
-        "Win32_Storage_FileSystem",
-        "Win32_System",
-        "Win32_System_Console",
-        "Win32_System_SystemInformation",
-        "default"
-      ]
-    },
-    {
-      "name": "zerocopy",
-      "version": "0.8.63",
-      "license": "BSD-2-Clause OR Apache-2.0 OR MIT",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/google/zerocopy",
-      "features": [
-        "derive",
-        "simd",
-        "zerocopy-derive"
-      ]
-    },
-    {
-      "name": "zerocopy-derive",
-      "version": "0.8.63",
-      "license": "BSD-2-Clause OR Apache-2.0 OR MIT",
-      "license_file": null,
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "repository": "https://github.com/google/zerocopy",
-      "features": []
+      "repository": "https://github.com/SergioBenitez/version_check"
     }
   ],
-  "workspace_features_scope": "Resolved public package workspace; each package manifest defines the selected installation dependencies.",
+  "workspace_features_scope": "Default production workspace graphs; the R source bundle records its separate portability backport in inst/dependency-inventory.json.",
   "production_graphs": {
     "eigentrail-core": {
       "packages": {
@@ -1179,7 +736,7 @@
           "0.1.3"
         ],
         "eigentrail-core": [
-          "0.2.0"
+          "0.2.1"
         ],
         "enum-as-inner": [
           "0.6.1"
@@ -1341,7 +898,7 @@
         ]
       },
       "features": [
-        "eigentrail-core v0.2.0 (crates/eigentrail-core) ",
+        "eigentrail-core v0.2.1 (crates/eigentrail-core) ",
         "faer v0.24.4 linalg,std",
         "bytemuck v1.25.2 aarch64_simd,wasm_simd",
         "dyn-stack v0.13.2 alloc,core-error,std",
@@ -1537,10 +1094,10 @@
           "0.1.3"
         ],
         "eigentrail-check": [
-          "0.2.0"
+          "0.2.1"
         ],
         "eigentrail-core": [
-          "0.2.0"
+          "0.2.1"
         ],
         "enum-as-inner": [
           "0.6.1"
@@ -1702,8 +1259,8 @@
         ]
       },
       "features": [
-        "eigentrail-check v0.2.0 (crates/eigentrail-check) ",
-        "eigentrail-core v0.2.0 (crates/eigentrail-core) ",
+        "eigentrail-check v0.2.1 (crates/eigentrail-check) ",
+        "eigentrail-core v0.2.1 (crates/eigentrail-core) ",
         "faer v0.24.4 linalg,std",
         "bytemuck v1.25.2 aarch64_simd,wasm_simd",
         "dyn-stack v0.13.2 alloc,core-error,std",
@@ -1902,13 +1459,13 @@
           "0.1.3"
         ],
         "eigentrail-check": [
-          "0.2.0"
+          "0.2.1"
         ],
         "eigentrail-core": [
-          "0.2.0"
+          "0.2.1"
         ],
         "eigentrail-python": [
-          "0.2.0"
+          "0.2.1"
         ],
         "enum-as-inner": [
           "0.6.1"
@@ -2107,9 +1664,9 @@
         ]
       },
       "features": [
-        "eigentrail-python v0.2.0 (crates/eigentrail-python) ",
-        "eigentrail-check v0.2.0 (crates/eigentrail-check) ",
-        "eigentrail-core v0.2.0 (crates/eigentrail-core) ",
+        "eigentrail-python v0.2.1 (crates/eigentrail-python) ",
+        "eigentrail-check v0.2.1 (crates/eigentrail-check) ",
+        "eigentrail-core v0.2.1 (crates/eigentrail-core) ",
         "faer v0.24.4 linalg,std",
         "bytemuck v1.25.2 aarch64_simd,wasm_simd",
         "dyn-stack v0.13.2 alloc,core-error,std",
@@ -2270,7 +1827,7 @@
         "serde v1.0.228 default,derive,serde_derive,std (*)",
         "serde_json v1.0.145 default,raw_value,std (*)",
         "sha2 v0.10.9 default,std (*)",
-        "eigentrail-core v0.2.0 (crates/eigentrail-core)  (*)",
+        "eigentrail-core v0.2.1 (crates/eigentrail-core)  (*)",
         "numpy v0.30.0 ",
         "libc v0.2.191 default,std",
         "ndarray v0.17.2 default,std",
@@ -2348,13 +1905,13 @@
           "0.1.3"
         ],
         "eigentrail-check": [
-          "0.2.0"
+          "0.2.1"
         ],
         "eigentrail-core": [
-          "0.2.0"
+          "0.2.1"
         ],
         "eigentrail-r": [
-          "0.2.0"
+          "0.2.1"
         ],
         "enum-as-inner": [
           "0.6.1"
@@ -2532,9 +2089,9 @@
         ]
       },
       "features": [
-        "eigentrail-r v0.2.0 (crates/eigentrail-r) ",
-        "eigentrail-check v0.2.0 (crates/eigentrail-check) ",
-        "eigentrail-core v0.2.0 (crates/eigentrail-core) ",
+        "eigentrail-r v0.2.1 (crates/eigentrail-r) ",
+        "eigentrail-check v0.2.1 (crates/eigentrail-check) ",
+        "eigentrail-core v0.2.1 (crates/eigentrail-core) ",
         "faer v0.24.4 linalg,std",
         "bytemuck v1.25.2 aarch64_simd,wasm_simd",
         "dyn-stack v0.13.2 alloc,core-error,std",
@@ -2695,7 +2252,7 @@
         "serde v1.0.228 default,derive,serde_derive,std (*)",
         "serde_json v1.0.145 default,raw_value,std (*)",
         "sha2 v0.10.9 default,std (*)",
-        "eigentrail-core v0.2.0 (crates/eigentrail-core)  (*)",
+        "eigentrail-core v0.2.1 (crates/eigentrail-core)  (*)",
         "extendr-api v0.9.0 result_condition",
         "extendr-ffi v0.9.0 default",
         "extendr-macros v0.9.0 (proc-macro) ",
@@ -2716,5 +2273,7 @@
       ]
     }
   },
-  "native": []
+  "native": [],
+  "distribution_qualified": false,
+  "native_cpu_build_audit": "pending; Linux Haswell flags require execution on baseline runner"
 }

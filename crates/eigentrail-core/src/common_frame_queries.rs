@@ -79,8 +79,8 @@ fn validate_assessment(request: &TraceRequest, assessment: &CommonFrameAssessmen
     for &radius in radii {
         nonnegative(radius, "common-frame radius")?;
     }
-    if let CommonFrameAssessment::Resolved { report } = assessment
-        && (!report.frame.axis_error.is_finite()
+    if let CommonFrameAssessment::Resolved { report } = assessment {
+        if !report.frame.axis_error.is_finite()
             || !(0. ..=1.).contains(&report.frame.axis_error)
             || report.frame.possible_ranks.len() != request.times.len()
             || report.frame.possible_ranks.iter().any(|row| {
@@ -97,9 +97,10 @@ fn validate_assessment(request: &TraceRequest, assessment: &CommonFrameAssessmen
                             || !s.lower_closed
                             || !s.upper_closed
                     })
-            }))
-    {
-        return Err(Error::Invalid("common-frame labelled strengths".into()));
+            })
+        {
+            return Err(Error::Invalid("common-frame labelled strengths".into()));
+        }
     }
     Ok(())
 }

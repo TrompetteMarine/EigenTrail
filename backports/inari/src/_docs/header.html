@@ -1,0 +1,157 @@
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css"
+  integrity="sha384-vKruj+a13U8yHIkAyGgK1J3ArTLzrFGBbBc0tDp4ad/EyewESeXE/Iv67Aj8gKZ0"
+  crossorigin="anonymous"
+/>
+<style type="text/css">
+  /*
+   * Overrides
+   *  https://github.com/rust-lang/rust/blob/f342bea9d19f14616c6559312552e6d0ee529cfd/src/librustdoc/html/static/css/rustdoc.css#L646
+   */
+  .docblock > :not(.information):not(.more-examples-toggle) {
+    overflow-x: unset;
+  }
+
+  /*
+   * Overrides
+   *   https://github.com/rust-lang/rust/blob/f342bea9d19f14616c6559312552e6d0ee529cfd/src/librustdoc/html/static/css/rustdoc.css#L692
+   */
+  .docblock table {
+    border: unset;
+    border-bottom: 2px solid;
+    border-top: 2px solid;
+    display: table;
+    margin: 1em auto;
+    width: unset;
+  }
+
+  /*
+   * Overrides
+   *   https://github.com/rust-lang/rust/blob/f342bea9d19f14616c6559312552e6d0ee529cfd/src/librustdoc/html/static/css/rustdoc.css#L704
+   */
+  .docblock table th {
+    border: unset;
+    border-bottom: 1px solid;
+  }
+
+  .docblock table th[align="center"] {
+    text-align: center;
+  }
+
+  /*
+   * Overrides
+   *   https://github.com/rust-lang/rust/blob/f342bea9d19f14616c6559312552e6d0ee529cfd/src/librustdoc/html/static/css/rustdoc.css#L699
+   */
+  .docblock table td {
+    border: unset;
+    border-bottom: 1px dotted;
+  }
+
+  /*
+   * Overrides
+   *   https://github.com/rust-lang/rust/blob/f342bea9d19f14616c6559312552e6d0ee529cfd/src/librustdoc/html/static/css/rustdoc.css#L687
+   */
+  .docblock table td:first-child {
+    padding: 0.5em;
+  }
+
+  .katex {
+    /*
+     * Using a simple binary fraction seems to mitigate vertical misalignment of characters
+     * on Safari 14.1.1.
+     */
+    font-size: 1.0625em;
+  }
+
+  /*
+   * Make display maths horizontally scrollable.
+   * https://katex.org/docs/issues.html#css-customization
+   */
+  .katex-display {
+    overflow: auto hidden;
+  }
+</style>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js"
+  integrity="sha384-PwRUT/YqbnEjkZO0zZxNqcxACrXe+j766U2amXcgMg5457rve2Y7I6ZJSm2A0mS4"
+  crossorigin="anonymous"
+></script>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js"
+  integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
+  crossorigin="anonymous"
+></script>
+<script>
+  (function () {
+    "use strict";
+
+    document.addEventListener("DOMContentLoaded", function () {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false },
+        ],
+        macros: {
+          "\\bin": "{}_2",
+          "\\e": "\\mathrm{e}",
+          "\\for": "\\text{for }",
+          "\\hull": "\\operatorname{hull}",
+          "\\if": "\\text{if }",
+          "\\mag": "\\operatorname{mag}",
+          "\\mid": "\\operatorname{mid}",
+          "\\mig": "\\operatorname{mig}",
+          "\\otherwise": "\\text{otherwise}",
+          "\\powerset": "\\operatorname{\\mathcal{P}}",
+          "\\rad": "\\operatorname{rad}",
+          "\\Range": "\\operatorname{Range}",
+          "\\set": "{\\left\\{#1\\right\\}}", // enclose in {} to make it mathord
+          "\\setdiv": "/_\\mathrm{\\!set}",
+          "\\sgn": "\\operatorname{sgn}",
+          "\\wid": "\\operatorname{wid}",
+          // Sets
+          "\\D": "𝔻",
+          "\\DIF": "{𝔻𝕀𝔽}",
+          "\\DIR": "{𝔻𝕀\\overline ℝ}{}", // {} is for aligning superscripts
+          "\\F": "𝔽",
+          "\\IF": "{𝕀𝔽}",
+          "\\IR": "{𝕀\\overline ℝ}{}",
+          "\\R": "ℝ",
+          "\\XR": "{\\overline ℝ}{}",
+          "\\Z": "ℤ",
+          // Finite-precision
+          "\\addend": "{𝚊𝚍𝚍𝚎𝚗𝚍}",
+          "\\ff": "\\operatorname{𝚏}",
+          "\\ffloor": "\\operatorname{𝚏𝚕𝚘𝚘𝚛}",
+          "\\fhull": "\\operatorname{𝚑𝚞𝚕𝚕}",
+          "\\fldown": "\\operatorname{{𝚏𝚕}_\\bigtriangledown}",
+          "\\flup": "\\operatorname{{𝚏𝚕}_\\bigtriangleup}",
+          "\\fsqrt": "\\operatorname{𝚜𝚚𝚛𝚝}",
+          "\\numerator": "{𝚗𝚞𝚖𝚎𝚛𝚊𝚝𝚘𝚛}",
+          "\\rhs": "{𝚛𝚑𝚜}",
+          "\\self": "{𝚜𝚎𝚕𝚏}",
+          // Decorations
+          "\\com": "{𝚌𝚘𝚖}",
+          "\\dac": "{𝚍𝚊𝚌}",
+          "\\def": "{𝚍𝚎𝚏}",
+          "\\trv": "{𝚝𝚛𝚟}",
+          "\\ill": "{𝚒𝚕𝚕}",
+          // Character substitutions
+          "𝒄": "{\\boldsymbol{c}}",
+          "𝒇": "{\\boldsymbol{f}}",
+          "𝒙": "{\\boldsymbol{x}}",
+          "𝒚": "{\\boldsymbol{y}}",
+          "𝒛": "{\\boldsymbol{z}}",
+          "∅": "\\emptyset ",
+          "∧": "\\mathrel{\\land}", // logical AND
+          "∨": "\\mathrel{\\lor}", // logical OR
+          "′": "^\\prime ",
+          "∖": "{\\setminus}",
+        },
+        strict: true,
+      });
+    });
+  })();
+</script>

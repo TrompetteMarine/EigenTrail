@@ -69,7 +69,7 @@ jobs:
           architecture: ${{ matrix.python_arch }}
       - uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2.14.0
         with:
-          r-version: '4.5.1'
+          r-version: '4.6.2'
           use-public-rspm: false
       - name: Native build prerequisites
         run: |
@@ -149,6 +149,7 @@ jobs:
         env:
           CARGO_NET_OFFLINE: 'true'
         run: |
+          unset RUSTFLAGS CFLAGS CXXFLAGS PKG_CFLAGS PKG_CXXFLAGS
           stage="$GITHUB_WORKSPACE/R"
           mkdir -p "$RUNNER_TEMP/eigentrail-r-library"
           (cd artifacts/r && R CMD build --no-manual --no-build-vignettes "$stage")
@@ -162,6 +163,7 @@ jobs:
         env:
           GITHUB_PAT: ${{ github.token }}
         run: |
+          unset RUSTFLAGS CFLAGS CXXFLAGS PKG_CFLAGS PKG_CXXFLAGS
           Rscript --vanilla -e 'install.packages("remotes", repos="https://cloud.r-project.org")'
           mkdir -p "$RUNNER_TEMP/eigentrail-github-r"
           EIGENTRAIL_R_LIBRARY="$RUNNER_TEMP/eigentrail-github-r" Rscript --vanilla -e 'remotes::install_github("TrompetteMarine/EigenTrail", ref=Sys.getenv("GITHUB_SHA"), subdir="R", upgrade="never", lib=Sys.getenv("EIGENTRAIL_R_LIBRARY"))'
