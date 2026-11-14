@@ -7,8 +7,10 @@ bounds, persistent associations and continuous-history summaries.
 Version 0.2.0 adds [window and temporal calibration, projector stability and
 SPD geometry](docs/curve-calibration.md), with explicit premises and unresolved
 outcomes. A small [composition example](examples/calibrated-window.py) is included.
-The R package's 0.2.1 update adds baseline x86-64 support and a lower Rust
-compiler minimum; Python and Rust remain at 0.2.0.
+R 0.2.2 corrects build cleanup and linking for CRAN incoming checks, retaining
+the baseline x86-64 support and lower Rust compiler minimum added in R 0.2.1.
+Current source manifests use version 0.2.2; the published Python package and
+the pinned Python/Rust installation commands below remain at 0.2.0.
 
 ## Install from GitHub
 
@@ -32,7 +34,7 @@ x86-64 with baseline SSE2; it needs no Haswell build flags:
 
 ```r
 install.packages("remotes")
-remotes::install_github("TrompetteMarine/EigenTrail", ref = "v0.2.1",
+remotes::install_github("TrompetteMarine/EigenTrail", ref = "v0.2.2",
                         subdir = "R", upgrade = "never")
 ```
 

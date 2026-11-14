@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "eigentrail"
-version = "0.2.1"
+version = "0.2.2"
 requires-python = ">=3.14,<3.15"
 dependencies = ["numpy>=2.3,<3"]
 description = "TRACE covariance trajectories with independent numerical checking"
@@ -32,6 +32,9 @@ text = """
 EigenTrail tracks covariance eigenvalues and eigenspaces over time with the
 TRACE method. It provides uncertainty bounds, persistent associations and
 continuous-history summaries with an independent Rust numerical checker.
+
+Current repository source is versioned 0.2.2 for R packaging maintenance. PyPI
+continues to distribute Python 0.2.0; the command below pins that release.
 
 Python inputs are NumPy float64 arrays with shape `(dates, features, features)`.
 Sampling and path-regularity assumptions remain explicit; unresolved results

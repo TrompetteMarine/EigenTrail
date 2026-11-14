@@ -61,6 +61,22 @@ def run_process(command, cwd, env, stdout, stderr, timeout):
     return dict(exit_code=code, timed_out=timed_out, seconds=time.monotonic()-started)
 
 
+def package_build_environment(environment):
+    result = dict(environment)
+    for name in ('CARGO_TARGET_DIR', '_R_CHECK_COMPILED_CODE_USE_OBJECTS_SYMBOL_TABLES_'):
+        result.pop(name, None)
+    return result
+
+
+def compiled_code_diagnostic(row, result):
+    status = 'failed'
+    if not row['timed_out'] and result.is_file():
+        status = {0: 'clear', 42: 'issues_found'}.get(row['exit_code'], 'failed')
+    return dict(status=status, exit_code=row['exit_code'], timed_out=row['timed_out'],
+                result_sha256=digest(result) if result.is_file() else None,
+                environment={'_R_CHECK_COMPILED_CODE_USE_OBJECTS_SYMBOL_TABLES_': 'FALSE'})
+
+
 def qualify(package, runtime, output, cargo=None, rustc=None):
     package, output = package.resolve(), output.resolve()
     runtime = Path(os.path.abspath(runtime))
@@ -94,7 +110,7 @@ def qualify(package, runtime, output, cargo=None, rustc=None):
     try:
         output.mkdir(parents=True, exist_ok=False)
         logs, inputs, temporary = output / 'logs', output / 'inputs', output / 'tmp'
-        for path in (logs, inputs, temporary, output / 'cargo-home', output / 'cargo-target', output / 'library'):
+        for path in (logs, inputs, temporary, output / 'cargo-home', output / 'library'):
             path.mkdir()
         frozen = inputs / package.name
         shutil.copyfile(package, frozen)
@@ -117,22 +133,27 @@ def qualify(package, runtime, output, cargo=None, rustc=None):
         def save():
             receipt_path.write_text(json.dumps(receipt, indent=2) + '\n')
         save()
-        env = dict(os.environ, CARGO=str(cargo), RUSTC=str(rustc),
-                   CARGO_HOME=str(output / 'cargo-home'), CARGO_TARGET_DIR=str(output / 'cargo-target'),
+        env = package_build_environment(dict(os.environ, CARGO=str(cargo), RUSTC=str(rustc),
+                   CARGO_HOME=str(output / 'cargo-home'),
                    CARGO_BUILD_JOBS='2', CARGO_INCREMENTAL='0', CARGO_NET_OFFLINE='true',
                    RUSTUP_AUTO_INSTALL='0', MAKEFLAGS='-j2', OPENBLAS_NUM_THREADS='1',
                    OMP_NUM_THREADS='1', TMPDIR=str(temporary), R_LIBS_USER=str(output / 'library'),
                    R_LIBS_SITE='', R_ENVIRON_USER=os.devnull, R_PROFILE_USER=os.devnull,
-                   R_MAKEVARS_USER=os.devnull, LC_ALL='en_US.UTF-8' if sys.platform == 'darwin' else 'C')
+                   R_MAKEVARS_USER=os.devnull, LC_ALL='en_US.UTF-8' if sys.platform == 'darwin' else 'C'))
+        receipt['build_environment_policy'] = dict(
+            cargo_target='package default src/rust/target',
+            compiled_code_object_tables='R default',
+            removed_overrides=['CARGO_TARGET_DIR', '_R_CHECK_COMPILED_CODE_USE_OBJECTS_SYMBOL_TABLES_'])
+        save()
         env['PATH'] = os.pathsep.join(map(str, (cargo.parent, rustc.parent, runtime.parent))) + os.pathsep + env['PATH']
         started = time.monotonic()
-        def run(name, command):
+        def run(name, command, extra_env=None):
             print(name, flush=True)
             row = dict(name=name, command=[sanitize(str(arg)) for arg in command], completed=False)
             receipt['commands'].append(row)
             save()
             stdout, stderr = logs / (name + '.stdout.log'), logs / (name + '.stderr.log')
-            row.update(run_process(command, output, env, stdout, stderr,
+            row.update(run_process(command, output, dict(env, **(extra_env or {})), stdout, stderr,
                                    max(0.01, 3600 - (time.monotonic()-started))))
             row.update(completed=True, stdout_sha256=digest(stdout), stderr_sha256=digest(stderr))
             save()
@@ -155,7 +176,7 @@ def qualify(package, runtime, output, cargo=None, rustc=None):
             receipt['runtime']['R-session'] = sanitize(identity.strip())
             if row['exit_code'] != 0 or row['timed_out']:
                 raise RuntimeError('R session identity command failed')
-            _, row = run('check', [runtime, 'CMD', 'check', '--as-cran', '--no-manual', frozen])
+            _, check_row = run('check', [runtime, 'CMD', 'check', '--as-cran', '--no-manual', frozen])
             check_log = output / 'eigentrail.Rcheck/00check.log'
             receipt['check'] = check_status(check_log.read_text(errors='replace')) if check_log.exists() else None
             installed = output / 'eigentrail.Rcheck/eigentrail'
@@ -178,14 +199,38 @@ def qualify(package, runtime, output, cargo=None, rustc=None):
                 wrapper_paths.extend(path for path in (installed/folder).rglob('*') if path.is_file())
             receipt['installed_wrappers'] = {str(path.relative_to(output)): digest(path)
                                               for path in sorted(wrapper_paths) if path.is_file()}
+            diagnostic = None
+            if receipt['installed_native']:
+                diagnostic_source = inputs / 'unfiltered-compiled-code.R'
+                diagnostic_source.write_text('''args <- commandArgs(TRUE)
+stopifnot(length(args) == 2L,
+          identical(Sys.getenv("_R_CHECK_COMPILED_CODE_USE_OBJECTS_SYMBOL_TABLES_"), "FALSE"))
+result <- tools:::check_compiled_code(args[1L])
+saveRDS(result, args[2L])
+cat(format(result), sep="\\n")
+quit(save="no", status=if (length(result)) 42L else 0L)
+''')
+                diagnostic_result = inputs / 'unfiltered-compiled-code.rds'
+                _, diagnostic_row = run('unfiltered-compiled-code',
+                    [runtime, '--vanilla', '--slave', '-f', diagnostic_source,
+                     '--args', installed, diagnostic_result],
+                    {'_R_CHECK_COMPILED_CODE_USE_OBJECTS_SYMBOL_TABLES_': 'FALSE'})
+                diagnostic = compiled_code_diagnostic(diagnostic_row, diagnostic_result)
+                diagnostic.update(result_path=str(diagnostic_result.relative_to(output)),
+                                  script_sha256=digest(diagnostic_source),
+                                  native_sha256=[item['sha256'] for item in receipt['installed_native']])
+                receipt['compiled_code_unfiltered'] = diagnostic
             receipt['source_unchanged'] = digest(package) == digest(frozen) == original_hash
             checks = receipt['check']
-            if row['timed_out'] or row['exit_code'] != 0 or not checks or not receipt['source_unchanged']:
+            if check_row['timed_out'] or check_row['exit_code'] != 0 or not checks or not receipt['source_unchanged']:
                 receipt['status'] = 'failed'
             elif checks['errors'] or checks['warnings'] or not receipt['installed_native']:
                 receipt['status'] = 'failed'
+            elif not diagnostic or diagnostic['status'] == 'failed':
+                receipt['status'] = 'failed'
             else:
-                receipt['status'] = 'needs_review' if checks['notes'] else 'passed'
+                receipt['status'] = ('needs_review' if checks['notes'] or diagnostic['status'] == 'issues_found'
+                                     else 'passed')
         except Exception as error:
             receipt.update(status='failed', error=sanitize(type(error).__name__ + ': ' + str(error)))
         receipt['logs'] = {str(path.relative_to(output)): digest(path)
@@ -212,6 +257,28 @@ def self_test():
         raise AssertionError('unknown status accepted')
     with tempfile.TemporaryDirectory(prefix='eigentrail-cran-self-test-') as directory:
         root = Path(directory)
+        parent = dict(os.environ, _R_CHECK_COMPILED_CODE_USE_OBJECTS_SYMBOL_TABLES_='TRUE',
+                      CARGO_TARGET_DIR='/external/target',
+                      EIGENTRAIL_CRAN_ENV_SENTINEL='retained')
+        child = package_build_environment(parent)
+        defaults = run_process([sys.executable, '-c',
+            'import os; assert "_R_CHECK_COMPILED_CODE_USE_OBJECTS_SYMBOL_TABLES_" not in os.environ; '
+            'assert "CARGO_TARGET_DIR" not in os.environ; '
+            'assert os.environ["EIGENTRAIL_CRAN_ENV_SENTINEL"] == "retained"'], root, child,
+            root/'defaults.stdout', root/'defaults.stderr', 5)
+        assert defaults['exit_code'] == 0 and not defaults['timed_out']
+        assert parent['_R_CHECK_COMPILED_CODE_USE_OBJECTS_SYMBOL_TABLES_'] == 'TRUE'
+        assert parent['CARGO_TARGET_DIR'] == '/external/target'
+        diagnostic_result = root/'diagnostic.rds'
+        diagnostic_result.write_bytes(b'retained checker result')
+        row = dict(exit_code=42, timed_out=False)
+        diagnostic = compiled_code_diagnostic(row, diagnostic_result)
+        assert diagnostic['status'] == 'issues_found' and diagnostic['result_sha256'] == digest(diagnostic_result)
+        assert diagnostic['environment'] == {'_R_CHECK_COMPILED_CODE_USE_OBJECTS_SYMBOL_TABLES_': 'FALSE'}
+        assert compiled_code_diagnostic(dict(row, exit_code=0), diagnostic_result)['status'] == 'clear'
+        assert compiled_code_diagnostic(dict(row, exit_code=1), diagnostic_result)['status'] == 'failed'
+        assert compiled_code_diagnostic(dict(row, timed_out=True), diagnostic_result)['status'] == 'failed'
+        assert compiled_code_diagnostic(row, root/'missing.rds')['status'] == 'failed'
         failed = run_process([sys.executable, '-c', 'raise SystemExit(7)'], root, os.environ,
                              root/'failed.stdout', root/'failed.stderr', 5)
         assert failed['exit_code'] == 7 and not failed['timed_out']

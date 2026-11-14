@@ -7,7 +7,7 @@ export RUSTUP_AUTO_INSTALL=0
 case "$(uname -s):$(uname -m)" in
   Darwin:arm64|Darwin:aarch64|Darwin:x86_64)
     eigentrail_system_libs='-liconv -framework Security -framework CoreFoundation' ;;
-  Linux:x86_64) eigentrail_system_libs='-ldl -lpthread -lm' ;;
+  Linux:x86_64) eigentrail_system_libs='-ldl -lpthread -lm -Wl,--exclude-libs,libeigentrail_r.a -Wl,--gc-sections' ;;
   *) echo 'EigenTrail supports macOS ARM64/x86-64 or GNU/Linux x86-64.' >&2; exit 1 ;;
 esac
 

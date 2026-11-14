@@ -1,3 +1,12 @@
+Changes in version 0.2.2
+
+* Remove package-owned Rust build outputs after successful linking so incoming
+  checks do not inspect unused standard-library archive objects.
+* Restrict Rust archive exports and discard unused sections when linking on
+  GNU/Linux. Preserve Rust panic unwinding and existing worker error handling.
+* Keep numerical calculations, checked JSON contracts and public interfaces
+  unchanged. The published Python package remains at version 0.2.0.
+
 Changes in version 0.2.1
 
 * Support baseline x86-64 checked arithmetic on GNU/Linux and Intel macOS,

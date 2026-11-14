@@ -1,3 +1,4 @@
+EIGENTRAIL_EXTERNAL_TARGET := $(filter-out undefined,$(origin CARGO_TARGET_DIR))
 CARGO_TARGET_DIR ?= $(CURDIR)/rust/target
 CARGO = @CARGO@
 RUSTC = @RUSTC@
@@ -9,8 +10,13 @@ export CARGO_BUILD_JOBS = 2
 export CARGO_HOME ?= $(CURDIR)/rust/.cargo-home
 PKG_LIBS = -L$(CARGO_TARGET_DIR)/release -leigentrail_r -L$(R_HOME)/lib -lR @SYSTEM_LIBS@
 .NOTPARALLEL:
-all: $(SHLIB)
-.PHONY: rust-build
+all: $(SHLIB) rust-clean
+.PHONY: rust-build rust-clean
 $(SHLIB): rust-build
 rust-build:
 	cd rust && "$(CARGO)" build --lib --release --locked --offline -j 2 -p eigentrail-r
+rust-clean: $(SHLIB)
+ifeq ($(EIGENTRAIL_EXTERNAL_TARGET),)
+	# Remove package-owned release intermediates after linking, following extendr.
+	rm -rf "$(CURDIR)/rust/target"
+endif
