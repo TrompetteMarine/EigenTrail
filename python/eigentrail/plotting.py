@@ -188,7 +188,7 @@ def plot_window(result, from_date, to_date, *, subject=0):
             if i == 0:
                 ax.set_title('destination:\n' + b, fontsize=8)
             if j == 0:
-                ax.set_ylabel('source:\n' + a, fontsize=8)
+                ax.set_ylabel(a, fontsize=8)
             lw = pairs.get((a, b))
             if lw is None:
                 ax.text(0.5, 0.5, 'not in lens scope', ha='center', va='center',
@@ -219,7 +219,7 @@ def plot_window(result, from_date, to_date, *, subject=0):
     fig.suptitle('Subject %d window d%d (%s) -> d%d (%s)\n%s; graph range %s; outcome %s'
                  % (subject, from_date, dates[from_date], to_date, dates[to_date],
                     _mode_text(result), window['graph_range'], window['global_outcome']), fontsize=10)
-    fig.text(0.5, 0.01, 'Status: A agreement (solid); E exclusion (dotted); ? open (dashed); NA unavailable (dash-dot).\n'
+    fig.text(0.5, 0.01, 'Rows/columns: source/destination lens. A agreement (solid); E exclusion (dotted); ? open (dashed); NA unavailable (dash-dot).\n'
              'Left/right: source/destination human ranks. Edge angles are rounded displays (≈), in degrees.',
              ha='center', fontsize=8)
     fig._eigentrail_counts = dict(window['global_counts'])
