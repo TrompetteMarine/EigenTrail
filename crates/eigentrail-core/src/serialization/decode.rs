@@ -2,6 +2,7 @@
 use crate::continuous_queries as continuous;
 use crate::jump_queries as jq;
 use crate::lineage_summary as ls;
+use crate::rolling_lineage as rl;
 use crate::transport_workflow as tw;
 use crate::{
     common_frame::*,
@@ -332,6 +333,127 @@ fn hex4(bytes: &[u8], index: &mut usize) -> Result<u32> {
 }
 
 record!(Matrix; n:usize, data:Vec<f64>;);
+record!(rl::Request; schema:String, chart:rl::Chart, features:Vec<rl::Feature>, dates:Vec<rl::Date>,
+    subjects:Vec<rl::Subject>, lenses:Vec<rl::Lens>, representation:rl::Representation,
+    grouping:rl::Grouping, tolerance_deg:f64, uncertainty:rl::Uncertainty, scope:rl::Scope,
+    founders:Vec<rl::Founder>, projection:rl::Projection, limits:rl::Limits, precision:rl::Precision;);
+record!(rl::Chart; frame:String, coordinates:String;);
+record!(rl::Feature; id:String, unit:String;);
+record!(rl::Date; id:String, time:f64;);
+record!(rl::Subject; id:String, slots:Vec<rl::Slot>;);
+record!(rl::Representation; symmetry:String, correction:rl::Correction;);
+record!(rl::Grouping; rtol:f64;);
+record!(rl::Scope; lens_travel:Vec<[rl::Lens;2]>, rank_masks:Vec<rl::RankMask>, max_lag:usize,
+    missing:String, policy:String, certificate:String, direct_scope:String;);
+record!(rl::RankMask; lens:rl::Lens, ranks:Vec<[usize;2]>;);
+record!(rl::Founder; subject:usize, date:usize, lens:rl::Lens, rank:[usize;2], policies:Vec<rl::FounderPolicy>;);
+record!(rl::EdgeBlock; subject:usize, from_date:usize, to_date:usize, source_lens:rl::Lens, target_lens:rl::Lens;);
+record!(rl::Limits; max_candidates:usize, max_edge_records:usize, max_bytes:usize, chunk_records:usize;);
+record!(rl::Precision; format:String, angle_unit:String;);
+
+impl DecodeOwned for rl::Lens {
+    fn from_raw(raw: &RawValue, _: &Cancellation) -> Result<Self> {
+        match raw.get() {
+            "\"covariance\"" => Ok(Self::Covariance),
+            "\"precision\"" => Ok(Self::Precision),
+            "\"correlation\"" => Ok(Self::Correlation),
+            "\"partial\"" => Ok(Self::Partial),
+            _ => Err(invalid()),
+        }
+    }
+}
+impl DecodeOwned for [rl::Lens; 2] {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            Vec::<rl::Lens>::from_raw(raw, cancel)?
+                .try_into()
+                .map_err(|_| invalid())
+        })
+    }
+}
+impl DecodeOwned for rl::FounderPolicy {
+    fn from_raw(raw: &RawValue, _: &Cancellation) -> Result<Self> {
+        match raw.get() {
+            "\"resolved_line\"" => Ok(Self::ResolvedLine),
+            "\"outer_resolved\"" => Ok(Self::OuterResolved),
+            "\"outer_relaxed\"" => Ok(Self::OuterRelaxed),
+            "\"typed_block_graph\"" => Ok(Self::TypedBlockGraph),
+            _ => Err(invalid()),
+        }
+    }
+}
+impl DecodeOwned for rl::Correction {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        let fields = Record::<1>::parse(raw, &["kind"], cancel)?;
+        match fields.tag(0)? {
+            "none" => Ok(Self::None),
+            _ => Err(invalid()),
+        }
+    }
+}
+impl DecodeOwned for rl::Slot {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let fields = Record::<3>::parse(raw, &["tag", "covariance", "reason"], cancel)?;
+            match fields.tag(0)? {
+                "observed" => {
+                    fields.only(&[0, 1])?;
+                    Ok(Self::Observed {
+                        covariance: fields.required(1, cancel)?,
+                    })
+                }
+                "missing" => {
+                    fields.only(&[0, 2])?;
+                    Ok(Self::Missing {
+                        reason: fields.required(2, cancel)?,
+                    })
+                }
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
+impl DecodeOwned for rl::Uncertainty {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let fields =
+                Record::<4>::parse(raw, &["mode", "joint_event", "provider", "rho"], cancel)?;
+            match fields.tag(0)? {
+                "point" => {
+                    fields.only(&[0])?;
+                    Ok(Self::Point)
+                }
+                "conditional" => Ok(Self::Conditional {
+                    joint_event: fields.required(1, cancel)?,
+                    provider: fields.required(2, cancel)?,
+                    rho: fields.required(3, cancel)?,
+                }),
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
+impl DecodeOwned for rl::Projection {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let fields = Record::<2>::parse(raw, &["kind", "blocks"], cancel)?;
+            match fields.tag(0)? {
+                "counts" => {
+                    fields.only(&[0])?;
+                    Ok(Self::Counts)
+                }
+                "full" => {
+                    fields.only(&[0])?;
+                    Ok(Self::Full)
+                }
+                "selected_edges" => Ok(Self::SelectedEdges {
+                    blocks: fields.required(1, cancel)?,
+                }),
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
 record!(TraceRequest; schema:String, times:Vec<f64>, covariances:Vec<Matrix>, features:Vec<String>,
     lipschitz:f64, calibration:Calibration, correction:Vec<f64>, target:f64,
     numerical_allowance:f64, memory_bytes:usize;);
@@ -879,5 +1001,626 @@ impl DecodeOwned for ls::RowState {
                 _ => Err(invalid()),
             }
         })
+    }
+}
+
+// Append within serialization/decode.rs; production DecodeOwned only.
+use crate::rolling_lineage::report as rr;
+record!(rr::Report; schema:String, request_hash:String, protocol:rr::Protocol, scope:rr::ReportScope, chunks:Vec<rr::Chunk>, completion:rr::Completion, managed_reservation:usize, resource_qualification:String;);
+record!(rr::Protocol; method:String, arithmetic_recipe:String, backend:String, format:String, angle_unit:String;);
+record!(rr::ReportScope; horizon:[usize;2], graph_lag:usize, direct_scope:String, all_simple_bound:usize, graph_ceiling:usize, direct_ceiling:usize, direct_extra_ceiling:usize, work_ceiling:usize;);
+record!(rr::Chunk; index:usize, first_record:usize, prev_digest:String, records:rr::RecordBatch, digest:String;);
+record!(rr::DateEvidence; subject:usize, date:usize, root:Eigensystem, root_numerical_rho:f64, correlation:rr::FrameState, inverse:rr::InverseState, normalised_precision:rr::FrameState;);
+record!(rr::FrameProof; midpoint:Matrix, eigensystem:Eigensystem, matrix_error:f64, numerical_rho:f64;);
+record!(rr::ViewGroups; subject:usize, date:usize, lens:rl::Lens, reference:rr::Reference, spectrum:rr::SpectrumState, region:rr::RegionState, groups:Vec<rr::GroupRecord>;);
+record!(rr::GroupRecord; node:usize, rank:[usize;2], columns:[usize;2], grouping:rr::GroupingCause, multiplicity:rr::Multiplicity, information:rr::InformationLevel, angular_radius_deg:f64, spectral_sum:rr::Enclosure, covariance_share:rr::ShareState, eligible:bool;);
+record!(rr::EdgeRecord; ordinal:usize, source:usize, target:usize, edge_type:rr::EdgeType, smaller_side:rr::SmallerSide, point:rr::Enclosure, geometry:rr::Enclosure, method_bracket:rr::Enclosure, verdict:rr::Verdict;);
+record!(rr::Counts; candidates:usize, agreement:usize, exclusion:usize, open:usize, unavailable:usize;);
+record!(rr::CountsByKind; line:rr::Counts, equal_block:rr::Counts, containment:rr::Counts;);
+record!(rr::LensWindow; pair:[rl::Lens;2], counts:rr::Counts, outcome:rr::WindowOutcome;);
+record!(rr::WindowSummary; subject:usize, from_date:usize, to_date:usize, graph_range:[usize;2], global_counts:rr::Counts, global_outcome:rr::WindowOutcome, lens_pairs:Vec<rr::LensWindow>, complete:bool, candidate_digest:String;);
+impl DecodeOwned for rr::PackedDecisions {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let fields = Record::<2>::parse(raw, &["count", "hex"], cancel)?;
+            let result = Self {
+                count: fields.required(0, cancel)?,
+                hex: fields.required(1, cancel)?,
+            };
+            result.validate(cancel)?;
+            Ok(result)
+        })
+    }
+}
+record!(rr::CandidateBatch; stream:rr::CandidateStream, first:usize, decisions:rr::PackedDecisions, digest:String;);
+record!(rr::FamilyState; family:rr::BottleneckFamily, lower:rr::Bottleneck, upper:rr::Bottleneck, lower_parent:rr::Parent, upper_parent:rr::Parent, reach:rr::ReachState;);
+record!(rr::SelectedPath; query:usize, target:usize, family:rr::BottleneckFamily, side:rr::PathSide, nodes:Vec<usize>, slot_gaps:Vec<usize>, cost:f64;);
+record!(rr::SparseNormWitness; stream:rr::CandidateStream, ordinal:usize, kind:rr::NormKind, matrix:Matrix, entry_error:f64, eigensystem:Eigensystem;);
+impl DecodeOwned for rr::Verdict {
+    fn from_raw(raw: &RawValue, _: &Cancellation) -> Result<Self> {
+        match raw.get() {
+            "\"agreement\"" => Ok(Self::Agreement),
+            "\"exclusion\"" => Ok(Self::Exclusion),
+            "\"open\"" => Ok(Self::Open),
+            "\"unavailable\"" => Ok(Self::Unavailable),
+            _ => Err(invalid()),
+        }
+    }
+}
+impl DecodeOwned for rr::CandidateStream {
+    fn from_raw(raw: &RawValue, _: &Cancellation) -> Result<Self> {
+        match raw.get() {
+            "\"graph\"" => Ok(Self::Graph),
+            "\"direct\"" => Ok(Self::Direct),
+            _ => Err(invalid()),
+        }
+    }
+}
+impl DecodeOwned for rr::Reference {
+    fn from_raw(raw: &RawValue, _: &Cancellation) -> Result<Self> {
+        match raw.get() {
+            "\"root\"" => Ok(Self::Root),
+            "\"correlation\"" => Ok(Self::Correlation),
+            "\"normalised_precision\"" => Ok(Self::NormalisedPrecision),
+            _ => Err(invalid()),
+        }
+    }
+}
+impl DecodeOwned for rr::EdgeType {
+    fn from_raw(raw: &RawValue, _: &Cancellation) -> Result<Self> {
+        match raw.get() {
+            "\"line_line\"" => Ok(Self::LineLine),
+            "\"equal_block\"" => Ok(Self::EqualBlock),
+            "\"containment\"" => Ok(Self::Containment),
+            _ => Err(invalid()),
+        }
+    }
+}
+impl DecodeOwned for rr::SmallerSide {
+    fn from_raw(raw: &RawValue, _: &Cancellation) -> Result<Self> {
+        match raw.get() {
+            "\"none\"" => Ok(Self::None),
+            "\"source\"" => Ok(Self::Source),
+            "\"target\"" => Ok(Self::Target),
+            _ => Err(invalid()),
+        }
+    }
+}
+impl DecodeOwned for rr::GroupingCause {
+    fn from_raw(raw: &RawValue, _: &Cancellation) -> Result<Self> {
+        match raw.get() {
+            "\"simple\"" => Ok(Self::Simple),
+            "\"numerical\"" => Ok(Self::Numerical),
+            "\"region\"" => Ok(Self::Region),
+            "\"numerical_and_region\"" => Ok(Self::NumericalAndRegion),
+            "\"unsupported\"" => Ok(Self::Unsupported),
+            _ => Err(invalid()),
+        }
+    }
+}
+impl DecodeOwned for rr::InformationLevel {
+    fn from_raw(raw: &RawValue, _: &Cancellation) -> Result<Self> {
+        match raw.get() {
+            "\"line\"" => Ok(Self::Line),
+            "\"proper_subspace\"" => Ok(Self::ProperSubspace),
+            "\"whole_space\"" => Ok(Self::WholeSpace),
+            _ => Err(invalid()),
+        }
+    }
+}
+impl DecodeOwned for rr::BottleneckFamily {
+    fn from_raw(raw: &RawValue, _: &Cancellation) -> Result<Self> {
+        match raw.get() {
+            "\"line_only\"" => Ok(Self::LineOnly),
+            "\"typed_block_graph\"" => Ok(Self::TypedBlockGraph),
+            "\"relaxed_internal_lines\"" => Ok(Self::RelaxedInternalLines),
+            _ => Err(invalid()),
+        }
+    }
+}
+impl DecodeOwned for rr::PathSide {
+    fn from_raw(raw: &RawValue, _: &Cancellation) -> Result<Self> {
+        match raw.get() {
+            "\"lower\"" => Ok(Self::Lower),
+            "\"upper\"" => Ok(Self::Upper),
+            _ => Err(invalid()),
+        }
+    }
+}
+impl DecodeOwned for rr::WindowOutcome {
+    fn from_raw(raw: &RawValue, _: &Cancellation) -> Result<Self> {
+        match raw.get() {
+            "\"agreement\"" => Ok(Self::Agreement),
+            "\"complete_break\"" => Ok(Self::CompleteBreak),
+            "\"open\"" => Ok(Self::Open),
+            "\"unavailable\"" => Ok(Self::Unavailable),
+            _ => Err(invalid()),
+        }
+    }
+}
+impl DecodeOwned for rr::Reason {
+    fn from_raw(raw: &RawValue, _: &Cancellation) -> Result<Self> {
+        match raw.get() {
+            "\"missing_date\"" => Ok(Self::MissingDate),
+            "\"excluded_rank\"" => Ok(Self::ExcludedRank),
+            "\"unresolved_internal_line\"" => Ok(Self::UnresolvedInternalLine),
+            "\"unresolved_separation\"" => Ok(Self::UnresolvedSeparation),
+            "\"unsupported_transfer\"" => Ok(Self::UnsupportedTransfer),
+            "\"normalisation_unresolved\"" => Ok(Self::NormalisationUnresolved),
+            "\"numerical_unresolved\"" => Ok(Self::NumericalUnresolved),
+            "\"source_unavailable\"" => Ok(Self::SourceUnavailable),
+            "\"out_of_scope\"" => Ok(Self::OutOfScope),
+            "\"no_candidates\"" => Ok(Self::NoCandidates),
+            "\"resource_limit\"" => Ok(Self::ResourceLimit),
+            "\"cancelled\"" => Ok(Self::Cancelled),
+            _ => Err(invalid()),
+        }
+    }
+}
+impl DecodeOwned for rr::NormKind {
+    fn from_raw(raw: &RawValue, _: &Cancellation) -> Result<Self> {
+        match raw.get() {
+            "\"difference\"" => Ok(Self::Difference),
+            "\"gram\"" => Ok(Self::Gram),
+            _ => Err(invalid()),
+        }
+    }
+}
+record!(rr::Completion; status:rr::CompletionStatus, chunks:usize, records:usize, terminal_digest:String,
+    graph_digest:String, direct_digest:String, graph_counts:rr::Counts, direct_counts:rr::Counts,
+    graph_kind_counts:rr::CountsByKind, direct_kind_counts:rr::CountsByKind;);
+impl DecodeOwned for rr::CompletionStatus {
+    fn from_raw(raw: &RawValue, _: &Cancellation) -> Result<Self> {
+        match raw.get() {
+            "\"complete\"" => Ok(Self::Complete),
+            _ => Err(invalid()),
+        }
+    }
+}
+impl DecodeOwned for rr::FrameState {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let fields = Record::<3>::parse(raw, &["kind", "proof", "reason"], cancel)?;
+            match fields.tag(0)? {
+                "not_requested" => {
+                    fields.only(&[0])?;
+                    Ok(Self::NotRequested)
+                }
+                "available" => {
+                    fields.only(&[0, 1])?;
+                    Ok(Self::Available {
+                        proof: fields.required(1, cancel)?,
+                    })
+                }
+                "unavailable" => {
+                    fields.only(&[0, 2])?;
+                    Ok(Self::Unavailable {
+                        reason: fields.required(2, cancel)?,
+                    })
+                }
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
+impl DecodeOwned for rr::InverseState {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let fields = Record::<4>::parse(
+                raw,
+                &["kind", "midpoint", "operator_error", "reason"],
+                cancel,
+            )?;
+            match fields.tag(0)? {
+                "not_requested" => {
+                    fields.only(&[0])?;
+                    Ok(Self::NotRequested)
+                }
+                "available" => {
+                    fields.only(&[0, 1, 2])?;
+                    Ok(Self::Available {
+                        midpoint: fields.required(1, cancel)?,
+                        operator_error: fields.required(2, cancel)?,
+                    })
+                }
+                "unavailable" => {
+                    fields.only(&[0, 3])?;
+                    Ok(Self::Unavailable {
+                        reason: fields.required(3, cancel)?,
+                    })
+                }
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
+impl DecodeOwned for rr::SpectrumState {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let fields = Record::<3>::parse(raw, &["kind", "intervals", "reason"], cancel)?;
+            match fields.tag(0)? {
+                "available" => {
+                    fields.only(&[0, 1])?;
+                    Ok(Self::Available {
+                        intervals: fields.required(1, cancel)?,
+                    })
+                }
+                "unavailable" => {
+                    fields.only(&[0, 2])?;
+                    Ok(Self::Unavailable {
+                        reason: fields.required(2, cancel)?,
+                    })
+                }
+                "unbounded" => {
+                    fields.only(&[0, 2])?;
+                    Ok(Self::Unbounded {
+                        reason: fields.required(2, cancel)?,
+                    })
+                }
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
+impl DecodeOwned for rr::RegionState {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let fields = Record::<9>::parse(
+                raw,
+                &[
+                    "kind",
+                    "numerical_rho",
+                    "mapped_rho",
+                    "total_rho",
+                    "reason",
+                    "centre_correlation",
+                    "population_correlation",
+                    "cutoff",
+                    "sign",
+                ],
+                cancel,
+            )?;
+            match fields.tag(0)? {
+                "planar" => {
+                    fields.only(&[0, 1, 5, 6, 7, 8])?;
+                    Ok(Self::Planar {
+                        centre_correlation: fields.required(5, cancel)?,
+                        population_correlation: fields.required(6, cancel)?,
+                        cutoff: fields.required(7, cancel)?,
+                        numerical_rho: fields.required(1, cancel)?,
+                        sign: fields.required(8, cancel)?,
+                    })
+                }
+                "point" => {
+                    fields.only(&[0, 1])?;
+                    Ok(Self::Point {
+                        numerical_rho: fields.required(1, cancel)?,
+                    })
+                }
+                "conditional" => {
+                    fields.only(&[0, 2, 1, 3])?;
+                    Ok(Self::Conditional {
+                        mapped_rho: fields.required(2, cancel)?,
+                        numerical_rho: fields.required(1, cancel)?,
+                        total_rho: fields.required(3, cancel)?,
+                    })
+                }
+                "unsupported" => {
+                    fields.only(&[0, 4])?;
+                    Ok(Self::Unsupported {
+                        reason: fields.required(4, cancel)?,
+                    })
+                }
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
+impl DecodeOwned for rr::Multiplicity {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let fields = Record::<2>::parse(raw, &["kind", "count"], cancel)?;
+            match fields.tag(0)? {
+                "unknown" => {
+                    fields.only(&[0])?;
+                    Ok(Self::Unknown)
+                }
+                "exact" => {
+                    fields.only(&[0, 1])?;
+                    Ok(Self::Exact {
+                        count: fields.required(1, cancel)?,
+                    })
+                }
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
+impl DecodeOwned for rr::Enclosure {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let fields = Record::<3>::parse(raw, &["kind", "range", "reason"], cancel)?;
+            match fields.tag(0)? {
+                "bounds" => {
+                    fields.only(&[0, 1])?;
+                    Ok(Self::Bounds {
+                        range: fields.required(1, cancel)?,
+                    })
+                }
+                "undefined" => {
+                    fields.only(&[0, 2])?;
+                    Ok(Self::Undefined {
+                        reason: fields.required(2, cancel)?,
+                    })
+                }
+                "unbounded" => {
+                    fields.only(&[0, 2])?;
+                    Ok(Self::Unbounded {
+                        reason: fields.required(2, cancel)?,
+                    })
+                }
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
+impl DecodeOwned for rr::ShareState {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let fields = Record::<3>::parse(raw, &["kind", "range", "reason"], cancel)?;
+            match fields.tag(0)? {
+                "covariance" => {
+                    fields.only(&[0, 1])?;
+                    Ok(Self::Covariance {
+                        range: fields.required(1, cancel)?,
+                    })
+                }
+                "not_applicable" => {
+                    fields.only(&[0])?;
+                    Ok(Self::NotApplicable)
+                }
+                "unavailable" => {
+                    fields.only(&[0, 2])?;
+                    Ok(Self::Unavailable {
+                        reason: fields.required(2, cancel)?,
+                    })
+                }
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
+impl DecodeOwned for rr::FounderRecord {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let fields = Record::<9>::parse(
+                raw,
+                &[
+                    "kind", "query", "origin", "node", "direct", "families", "date", "lens",
+                    "reason",
+                ],
+                cancel,
+            )?;
+            match fields.tag(0)? {
+                "origin" => {
+                    fields.only(&[0, 1, 2])?;
+                    Ok(Self::Origin {
+                        query: fields.required(1, cancel)?,
+                        origin: fields.required(2, cancel)?,
+                    })
+                }
+                "target" => {
+                    fields.only(&[0, 1, 3, 4, 5])?;
+                    Ok(Self::Target {
+                        query: fields.required(1, cancel)?,
+                        node: fields.required(3, cancel)?,
+                        direct: fields.required(4, cancel)?,
+                        families: fields.required(5, cancel)?,
+                    })
+                }
+                "unavailable" => {
+                    fields.only(&[0, 1, 6, 7, 8])?;
+                    Ok(Self::Unavailable {
+                        query: fields.required(1, cancel)?,
+                        date: fields.required(6, cancel)?,
+                        lens: fields.required(7, cancel)?,
+                        reason: fields.required(8, cancel)?,
+                    })
+                }
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
+impl DecodeOwned for rr::FounderOrigin {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let fields = Record::<4>::parse(raw, &["kind", "node", "group", "reason"], cancel)?;
+            match fields.tag(0)? {
+                "node" => {
+                    fields.only(&[0, 1])?;
+                    Ok(Self::Node {
+                        node: fields.required(1, cancel)?,
+                    })
+                }
+                "internal_line" => {
+                    fields.only(&[0, 2])?;
+                    Ok(Self::InternalLine {
+                        group: fields.required(2, cancel)?,
+                    })
+                }
+                "unavailable" => {
+                    fields.only(&[0, 3])?;
+                    Ok(Self::Unavailable {
+                        reason: fields.required(3, cancel)?,
+                    })
+                }
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
+impl DecodeOwned for rr::DirectResult {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let fields = Record::<7>::parse(
+                raw,
+                &[
+                    "kind",
+                    "ordinal",
+                    "point",
+                    "geometry",
+                    "method_bracket",
+                    "verdict",
+                    "reason",
+                ],
+                cancel,
+            )?;
+            match fields.tag(0)? {
+                "available" => {
+                    fields.only(&[0, 1, 2, 3, 4, 5])?;
+                    Ok(Self::Available {
+                        ordinal: fields.required(1, cancel)?,
+                        point: fields.required(2, cancel)?,
+                        geometry: fields.required(3, cancel)?,
+                        method_bracket: fields.required(4, cancel)?,
+                        verdict: fields.required(5, cancel)?,
+                    })
+                }
+                "unavailable" => {
+                    fields.only(&[0, 6])?;
+                    Ok(Self::Unavailable {
+                        reason: fields.required(6, cancel)?,
+                    })
+                }
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
+impl DecodeOwned for rr::Bottleneck {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let fields = Record::<2>::parse(raw, &["kind", "degrees"], cancel)?;
+            match fields.tag(0)? {
+                "bound" => {
+                    fields.only(&[0, 1])?;
+                    Ok(Self::Bound {
+                        degrees: fields.required(1, cancel)?,
+                    })
+                }
+                "no_route" => {
+                    fields.only(&[0])?;
+                    Ok(Self::NoRoute)
+                }
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
+impl DecodeOwned for rr::Parent {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let fields = Record::<2>::parse(raw, &["kind", "node"], cancel)?;
+            match fields.tag(0)? {
+                "origin" => {
+                    fields.only(&[0])?;
+                    Ok(Self::Origin)
+                }
+                "node" => {
+                    fields.only(&[0, 1])?;
+                    Ok(Self::Node {
+                        node: fields.required(1, cancel)?,
+                    })
+                }
+                "no_route" => {
+                    fields.only(&[0])?;
+                    Ok(Self::NoRoute)
+                }
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
+impl DecodeOwned for rr::ReachState {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let fields = Record::<2>::parse(raw, &["kind", "reason"], cancel)?;
+            match fields.tag(0)? {
+                "agreed" => {
+                    fields.only(&[0])?;
+                    Ok(Self::Agreed)
+                }
+                "possible" => {
+                    fields.only(&[0])?;
+                    Ok(Self::Possible)
+                }
+                "excluded" => {
+                    fields.only(&[0])?;
+                    Ok(Self::Excluded)
+                }
+                "unavailable" => {
+                    fields.only(&[0, 1])?;
+                    Ok(Self::Unavailable {
+                        reason: fields.required(1, cancel)?,
+                    })
+                }
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
+impl DecodeOwned for rr::RecordBatch {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let fields = Record::<2>::parse(raw, &["kind", "records"], cancel)?;
+            match fields.tag(0)? {
+                "partitions" => Ok(Self::Partitions(fields.required(1, cancel)?)),
+                "date_evidence" => Ok(Self::DateEvidence(fields.required(1, cancel)?)),
+                "views" => Ok(Self::Views(fields.required(1, cancel)?)),
+                "edges" => Ok(Self::Edges(fields.required(1, cancel)?)),
+                "windows" => Ok(Self::Windows(fields.required(1, cancel)?)),
+                "candidates" => Ok(Self::Candidates(fields.required(1, cancel)?)),
+                "founders" => Ok(Self::Founders(fields.required(1, cancel)?)),
+                "paths" => Ok(Self::Paths(fields.required(1, cancel)?)),
+                "norms" => Ok(Self::Norms(fields.required(1, cancel)?)),
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
+
+record!(rr::GroupPartition; subject:usize, date:usize, lens:rl::Lens, first_node:usize, state:rr::PartitionState;);
+impl DecodeOwned for rr::PartitionState {
+    fn from_raw(raw: &RawValue, cancel: &Cancellation) -> Result<Self> {
+        memory::scope(|| {
+            let fields = Record::<3>::parse(raw, &["kind", "ranks", "reason"], cancel)?;
+            match fields.tag(0)? {
+                "groups" => {
+                    fields.only(&[0, 1])?;
+                    Ok(Self::Groups {
+                        ranks: fields.required(1, cancel)?,
+                    })
+                }
+                "unavailable" => {
+                    fields.only(&[0, 2])?;
+                    Ok(Self::Unavailable {
+                        reason: fields.required(2, cancel)?,
+                    })
+                }
+                _ => Err(invalid()),
+            }
+        })
+    }
+}
+
+impl DecodeOwned for rr::AxisSign {
+    fn from_raw(raw: &RawValue, _: &Cancellation) -> Result<Self> {
+        match raw.get() {
+            "\"positive\"" => Ok(Self::Positive),
+            "\"negative\"" => Ok(Self::Negative),
+            "\"unresolved\"" => Ok(Self::Unresolved),
+            _ => Err(invalid()),
+        }
     }
 }

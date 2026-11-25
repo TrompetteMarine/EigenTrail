@@ -4,6 +4,12 @@ Lineage summaries present checked continuous or common-frame histories as an
 ordered table. The report retains the full checked history, including assumptions,
 association alternatives and feasibility evidence.
 
+The separate [rolling-lineage candidate](rolling-lineage.md) compares typed
+subspaces at observed dates and reports direct founder agreement separately from
+lagged graph reach. Its tolerance is angular, in degrees, with equality included
+when certified. This page describes the existing continuous/common-frame route;
+its inputs and strict projector-displacement motion semantics are unchanged.
+
 ## Run an example
 
 After [installation](installation.md), run from a source checkout:

@@ -2,6 +2,7 @@
 use crate::{
     Error, Result,
     resources::{self, Cancellation},
+    rolling_lineage as rl,
 };
 use std::io::Read;
 
@@ -12,6 +13,7 @@ pub enum RequestKind {
     Trace,
     History,
     LineageSummary,
+    RollingLineage,
     Transport,
 }
 
@@ -84,6 +86,7 @@ fn inspect_with_poll(
         RequestKind::Trace => scan.trace()?,
         RequestKind::History => scan.history()?,
         RequestKind::LineageSummary => scan.lineage_summary()?,
+        RequestKind::RollingLineage => scan.rolling()?,
         RequestKind::Transport => scan.transport()?,
     };
     if scan.peek()?.is_some() {
@@ -95,6 +98,7 @@ fn inspect_with_poll(
         ));
     }
     match kind {
+        RequestKind::RollingLineage => {}
         RequestKind::Transport => {
             crate::transport_workflow::preflight(shape.features, shape.dates, shape.memory_bytes)?;
         }
@@ -423,6 +427,462 @@ impl<R: Read> Scanner<'_, R> {
             return invalid("complete lineage-summary with finite positive delta required");
         }
         history.ok_or_else(|| Error::Invalid("lineage-summary history required".into()))
+    }
+
+    fn rolling_tag(&mut self, choices: &[&[u8]]) -> Result<usize> {
+        self.expect(b'"')?;
+        let mut bytes = [0u8; 32];
+        let mut length = 0;
+        loop {
+            let byte = self.byte()?;
+            if byte == b'"' {
+                break;
+            }
+            if length == bytes.len() || !(byte.is_ascii_alphanumeric() || byte == b'_') {
+                return invalid("literal rolling enum required");
+            }
+            bytes[length] = byte;
+            length += 1;
+        }
+        choices
+            .iter()
+            .position(|choice| *choice == &bytes[..length])
+            .ok_or_else(|| Error::Invalid("unsupported rolling enum".into()))
+    }
+
+    fn rolling_lens(&mut self) -> Result<usize> {
+        self.rolling_tag(&[b"covariance", b"precision", b"correlation", b"partial"])
+    }
+
+    fn rolling_dates(&mut self) -> Result<usize> {
+        self.expect(b'[')?;
+        if self.take(b']')? {
+            return Ok(0);
+        }
+        let (mut count, mut previous) = (0, None);
+        loop {
+            if count == 10000 {
+                return invalid("too many rolling dates");
+            }
+            let (mut seen, mut time) = (0, 0.);
+            self.expect(b'{')?;
+            loop {
+                match self.field(&[b"id", b"time"], &mut seen)? {
+                    1 => time = self.finite()?,
+                    _ => self.string()?,
+                }
+                if self.take(b'}')? {
+                    break;
+                }
+                self.expect(b',')?;
+            }
+            if seen != 3 || previous.is_some_and(|old| time <= old) {
+                return invalid("complete strictly ordered rolling dates required");
+            }
+            previous = Some(time);
+            count += 1;
+            if self.take(b']')? {
+                return Ok(count);
+            }
+            self.expect(b',')?;
+        }
+    }
+
+    fn rolling_slots(&mut self) -> Result<(usize, usize)> {
+        self.expect(b'[')?;
+        if self.take(b']')? {
+            return Ok((0, 0));
+        }
+        let (mut count, mut dimension) = (0, 0);
+        loop {
+            if count == 10000 {
+                return invalid("too many rolling slots");
+            }
+            let (mut seen, mut tag, mut matrix) = (0, None, None);
+            self.expect(b'{')?;
+            loop {
+                match self.field(&[b"covariance", b"reason", b"tag"], &mut seen)? {
+                    0 => matrix = Some(self.matrix()?),
+                    1 => self.string()?,
+                    _ => tag = Some(self.rolling_tag(&[b"observed", b"missing"])?),
+                }
+                if self.take(b'}')? {
+                    break;
+                }
+                self.expect(b',')?;
+            }
+            match tag {
+                Some(0) if seen == 5 => {
+                    let n = matrix
+                        .ok_or_else(|| Error::Invalid("observed covariance missing".into()))?;
+                    if dimension != 0 && n != dimension {
+                        return invalid("common rolling dimension required");
+                    }
+                    dimension = n;
+                }
+                Some(1) if seen == 6 => {}
+                _ => return invalid("explicit observed covariance or missing reason required"),
+            }
+            count += 1;
+            if self.take(b']')? {
+                return Ok((count, dimension));
+            }
+            self.expect(b',')?;
+        }
+    }
+
+    fn rolling_subjects(&mut self) -> Result<(usize, usize, usize)> {
+        self.expect(b'[')?;
+        if self.take(b']')? {
+            return Ok((0, 0, 0));
+        }
+        let (mut count, mut slots, mut dimension) = (0, 0, 0);
+        loop {
+            if count == rl::MAX_SUBJECTS {
+                return invalid("too many rolling subjects");
+            }
+            let (mut seen, mut current) = (0, (0, 0));
+            self.expect(b'{')?;
+            loop {
+                match self.field(&[b"id", b"slots"], &mut seen)? {
+                    1 => current = self.rolling_slots()?,
+                    _ => self.string()?,
+                }
+                if self.take(b'}')? {
+                    break;
+                }
+                self.expect(b',')?;
+            }
+            if seen != 3
+                || (count > 0 && current.0 != slots)
+                || (dimension != 0 && current.1 != 0 && current.1 != dimension)
+            {
+                return invalid(
+                    "complete subjects with common rolling date/feature shape required",
+                );
+            }
+            slots = current.0;
+            if current.1 != 0 {
+                dimension = current.1;
+            }
+            count += 1;
+            if self.take(b']')? {
+                return Ok((count, slots, dimension));
+            }
+            self.expect(b',')?;
+        }
+    }
+
+    fn rolling_travel(&mut self) -> Result<[[bool; 4]; 4]> {
+        let mut pairs = [[false; 4]; 4];
+        self.expect(b'[')?;
+        if self.take(b']')? {
+            return Ok(pairs);
+        }
+        loop {
+            self.expect(b'[')?;
+            let source = self.rolling_lens()?;
+            self.expect(b',')?;
+            let target = self.rolling_lens()?;
+            self.expect(b']')?;
+            if pairs[source][target] {
+                return invalid("duplicate rolling lens travel");
+            }
+            pairs[source][target] = true;
+            if self.take(b']')? {
+                return Ok(pairs);
+            }
+            self.expect(b',')?;
+        }
+    }
+
+    fn rolling_mask_ranges(&mut self) -> Result<(usize, usize)> {
+        self.expect(b'[')?;
+        if self.take(b']')? {
+            return Ok((0, 0));
+        }
+        let (mut count, mut previous) = (0usize, 0usize);
+        loop {
+            self.expect(b'[')?;
+            let start = self.unsigned()?;
+            self.expect(b',')?;
+            let end = self.unsigned()?;
+            self.expect(b']')?;
+            if start >= end || start < previous || end > 256 {
+                return invalid("ordered disjoint rolling rank intervals required");
+            }
+            count += end - start;
+            previous = end;
+            if self.take(b']')? {
+                return Ok((count, previous));
+            }
+            self.expect(b',')?;
+        }
+    }
+
+    fn rolling_masks(&mut self) -> Result<([usize; 4], u8, usize)> {
+        let (mut counts, mut lenses, mut maximum) = ([0usize; 4], 0u8, 0usize);
+        self.expect(b'[')?;
+        if self.take(b']')? {
+            return Ok((counts, lenses, maximum));
+        }
+        loop {
+            let (mut seen, mut lens, mut ranks) = (0, None, (0, 0));
+            self.expect(b'{')?;
+            loop {
+                match self.field(&[b"lens", b"ranks"], &mut seen)? {
+                    0 => lens = Some(self.rolling_lens()?),
+                    _ => ranks = self.rolling_mask_ranges()?,
+                }
+                if self.take(b'}')? {
+                    break;
+                }
+                self.expect(b',')?;
+            }
+            let lens = lens.ok_or_else(|| Error::Invalid("rolling mask lens required".into()))?;
+            if seen != 3 || lenses & (1 << lens) != 0 {
+                return invalid("complete unique rolling lens masks required");
+            }
+            lenses |= 1 << lens;
+            counts[lens] = ranks.0;
+            maximum = maximum.max(ranks.1);
+            if self.take(b']')? {
+                return Ok((counts, lenses, maximum));
+            }
+            self.expect(b',')?;
+        }
+    }
+
+    fn rolling_scope(&mut self, shape: &mut rl::Shape) -> Result<(u8, usize)> {
+        let (mut seen, mut pairs, mut masks) = (0, [[false; 4]; 4], ([0usize; 4], 0u8, 0usize));
+        self.expect(b'{')?;
+        loop {
+            match self.field(
+                &[
+                    b"lens_travel",
+                    b"rank_masks",
+                    b"max_lag",
+                    b"missing",
+                    b"policy",
+                    b"certificate",
+                    b"direct_scope",
+                ],
+                &mut seen,
+            )? {
+                0 => pairs = self.rolling_travel()?,
+                1 => masks = self.rolling_masks()?,
+                2 => shape.max_lag = self.unsigned()?,
+                _ => self.string()?,
+            }
+            if self.take(b'}')? {
+                break;
+            }
+            self.expect(b',')?;
+        }
+        if seen != 127 {
+            return invalid("complete rolling scope required");
+        }
+        let mut used = masks.1;
+        for (source, row) in pairs.iter().enumerate() {
+            for (target, &eligible) in row.iter().enumerate() {
+                if eligible {
+                    used |= (1 << source) | (1 << target);
+                    shape.lens_pairs += 1;
+                    shape.rank_pairs += masks.0[source] * masks.0[target];
+                    if masks.0[source] > 0 {
+                        shape.direct_targets[source] += masks.0[target];
+                    }
+                }
+            }
+        }
+        Ok((used, masks.2))
+    }
+
+    fn rolling_founders(&mut self, shape: &mut rl::Shape) -> Result<()> {
+        self.expect(b'[')?;
+        if self.take(b']')? {
+            return Ok(());
+        }
+        loop {
+            let mut seen = 0;
+            let (mut date, mut lens) = (0usize, None);
+            self.expect(b'{')?;
+            loop {
+                match self.field(
+                    &[b"subject", b"date", b"lens", b"rank", b"policies"],
+                    &mut seen,
+                )? {
+                    1 => date = self.unsigned()?,
+                    2 => lens = Some(self.rolling_lens()?),
+                    4 => {
+                        shape.founder_policies = shape
+                            .founder_policies
+                            .checked_add(self.array_count(4)?)
+                            .ok_or_else(|| {
+                                Error::Resource("founder policy count overflow".into())
+                            })?
+                    }
+                    _ => self.value(1)?,
+                }
+                if self.take(b'}')? {
+                    break;
+                }
+                self.expect(b',')?;
+            }
+            if seen != 31 {
+                return invalid("complete rolling founder required");
+            }
+            let lens = lens.ok_or_else(|| Error::Invalid("founder lens required".into()))?;
+            if shape.direct_founders[lens] == 0 {
+                shape.first_founder_date[lens] = date;
+            } else {
+                shape.first_founder_date[lens] = shape.first_founder_date[lens].min(date);
+            }
+            shape.direct_founders[lens] = shape.direct_founders[lens]
+                .checked_add(1)
+                .ok_or_else(|| Error::Resource(String::new()))?;
+            shape.founders = shape
+                .founders
+                .checked_add(1)
+                .ok_or_else(|| Error::Resource("founder count overflow".into()))?;
+            if self.take(b']')? {
+                return Ok(());
+            }
+            self.expect(b',')?;
+        }
+    }
+
+    fn rolling_projection(&mut self, shape: &mut rl::Shape) -> Result<()> {
+        let (mut seen, mut kind) = (0, None);
+        self.expect(b'{')?;
+        loop {
+            match self.field(&[b"kind", b"blocks"], &mut seen)? {
+                0 => kind = Some(self.rolling_tag(&[b"counts", b"selected_edges", b"full"])?),
+                _ => shape.selected_blocks = self.array_count(MAX_INPUT_BYTES)?,
+            }
+            if self.take(b'}')? {
+                break;
+            }
+            self.expect(b',')?;
+        }
+        match kind {
+            Some(1) if seen == 3 => {}
+            Some(0 | 2) if seen == 1 => {}
+            _ => return invalid("complete rolling projection required"),
+        }
+        shape.full_edges = kind == Some(2);
+        Ok(())
+    }
+
+    fn rolling_limits(&mut self) -> Result<rl::Limits> {
+        let mut seen = 0;
+        let mut values = [0; 4];
+        self.expect(b'{')?;
+        loop {
+            let field = self.field(
+                &[
+                    b"max_candidates",
+                    b"max_edge_records",
+                    b"max_bytes",
+                    b"chunk_records",
+                ],
+                &mut seen,
+            )?;
+            values[field] = self.unsigned()?;
+            if self.take(b'}')? {
+                break;
+            }
+            self.expect(b',')?;
+        }
+        if seen != 15 {
+            return invalid("complete rolling limits required");
+        }
+        Ok(rl::Limits {
+            max_candidates: values[0],
+            max_edge_records: values[1],
+            max_bytes: values[2],
+            chunk_records: values[3],
+        })
+    }
+
+    fn rolling(&mut self) -> Result<Shape> {
+        const FIELDS: &[&[u8]] = &[
+            b"schema",
+            b"chart",
+            b"features",
+            b"dates",
+            b"subjects",
+            b"lenses",
+            b"representation",
+            b"grouping",
+            b"tolerance_deg",
+            b"uncertainty",
+            b"scope",
+            b"founders",
+            b"projection",
+            b"limits",
+            b"precision",
+        ];
+        let (mut seen, mut shape, mut limits) = (0, rl::Shape::default(), None);
+        let (mut subject_shape, mut scope_lenses, mut declared_lenses, mut maximum_rank) =
+            ((0, 0, 0), 0u8, 0u8, 0usize);
+        self.expect(b'{')?;
+        loop {
+            match self.field(FIELDS, &mut seen)? {
+                2 => shape.features = self.array_count(256)?,
+                3 => shape.dates = self.rolling_dates()?,
+                4 => subject_shape = self.rolling_subjects()?,
+                5 => {
+                    self.expect(b'[')?;
+                    if !self.take(b']')? {
+                        let mut previous = None;
+                        loop {
+                            let lens = self.rolling_lens()?;
+                            if previous.is_some_and(|old| lens <= old) {
+                                return invalid("unique ordered rolling lenses required");
+                            }
+                            declared_lenses |= 1 << lens;
+                            previous = Some(lens);
+                            shape.lenses += 1;
+                            if self.take(b']')? {
+                                break;
+                            }
+                            self.expect(b',')?;
+                        }
+                    }
+                }
+                8 => {
+                    self.finite()?;
+                }
+                10 => (scope_lenses, maximum_rank) = self.rolling_scope(&mut shape)?,
+                11 => self.rolling_founders(&mut shape)?,
+                12 => self.rolling_projection(&mut shape)?,
+                13 => limits = Some(self.rolling_limits()?),
+                _ => self.value(1)?,
+            }
+            if self.take(b'}')? {
+                break;
+            }
+            self.expect(b',')?;
+        }
+        if seen != (1 << FIELDS.len()) - 1
+            || subject_shape.1 != shape.dates
+            || (subject_shape.2 != 0 && subject_shape.2 != shape.features)
+            || scope_lenses & !declared_lenses != 0
+            || maximum_rank > shape.features
+        {
+            return invalid("complete rolling request with consistent shapes/lenses required");
+        }
+        shape.subjects = subject_shape.0;
+        shape.wire_bytes = self.bytes;
+        let limits = limits.ok_or_else(|| Error::Invalid("rolling limits required".into()))?;
+        rl::shape_preflight(&shape, &limits)?;
+        Ok(Shape {
+            features: shape.features,
+            dates: shape.dates,
+            memory_bytes: limits.max_bytes,
+            domain: [0.; 2],
+        })
     }
 
     fn finite(&mut self) -> Result<f64> {

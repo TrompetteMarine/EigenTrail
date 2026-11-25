@@ -1,9 +1,11 @@
 """Check Linux import refusal before any native extension code can run."""
 from pathlib import Path
+import ast
 import builtins
 import platform
 import sys
 import unittest
+from types import SimpleNamespace
 from unittest.mock import mock_open, patch
 
 SOURCE = Path(__file__).resolve().parents[1] / 'python/eigentrail/__init__.py'
@@ -16,17 +18,20 @@ class NativeImportReached(Exception):
     pass
 
 
-def import_gate(name, *args, **kwargs):
+def import_gate(name, *args, policy=None, **kwargs):
     if name == '_eigentrail':
         raise NativeImportReached
+    if name == '_cpu_policy':
+        return SimpleNamespace(**(policy or {'LINUX_CPU_FLAGS': tuple(FLAGS.split()),
+            'LINUX_CPU_DESCRIPTION': 'Haswell CPU instructions and kernel AVX support'}))
     return IMPORT(name, *args, **kwargs)
 
 
-def probe(cpuinfo, machine='x86_64', system='linux', error=None):
+def probe(cpuinfo, machine='x86_64', system='linux', error=None, policy=None):
     with (patch.object(sys, 'platform', system),
           patch.object(platform, 'machine', return_value=machine),
           patch('builtins.open', mock_open(read_data=cpuinfo)) as opened,
-          patch('builtins.__import__', side_effect=import_gate)):
+          patch('builtins.__import__', side_effect=lambda name, *args, **kwargs: import_gate(name, *args, policy=policy, **kwargs))):
         if error is not None:
             opened.side_effect = error
         exec(CODE, {'__name__': 'eigentrail', '__package__': 'eigentrail'})
@@ -47,6 +52,27 @@ class CpuGuardTests(unittest.TestCase):
                 probe(cpuinfo, machine)
         with self.assertRaisesRegex(ImportError, 'readable /proc/cpuinfo'):
             probe('', error=OSError('unavailable'))
+
+
+class BaselinePolicyTests(unittest.TestCase):
+    def test_baseline_accepts_sse2_and_checks_every_cpu_before_native_import(self):
+        policy = {'LINUX_CPU_FLAGS': ('sse2',), 'LINUX_CPU_DESCRIPTION': 'x86-64 baseline SSE2 instructions'}
+        with self.assertRaises(NativeImportReached):
+            probe('flags : sse2\nflags : sse2', policy=policy)
+        for text in ['', 'flags : sse\n', 'flags : sse2\nflags : sse']:
+            with self.subTest(text=text), self.assertRaises(ImportError):
+                probe(text, policy=policy)
+
+    def test_source_policy_is_an_explicit_supported_literal_profile(self):
+        path = SOURCE.with_name('_cpu_policy.py')
+        values = {node.targets[0].id: ast.literal_eval(node.value) for node in ast.parse(path.read_text()).body
+                  if isinstance(node, ast.Assign)}
+        self.assertIn(values['LINUX_CPU_PROFILE'], ('haswell', 'baseline-sse2'))
+        expected = set(FLAGS.split()) if values['LINUX_CPU_PROFILE'] == 'haswell' else {'sse2'}
+        self.assertEqual(set(values['LINUX_CPU_FLAGS']), expected)
+        policy = {key: values[key] for key in ('LINUX_CPU_FLAGS', 'LINUX_CPU_DESCRIPTION')}
+        with self.assertRaises(NativeImportReached):
+            probe('flags : ' + ' '.join(sorted(expected)), policy=policy)
 
 
 if __name__ == '__main__':

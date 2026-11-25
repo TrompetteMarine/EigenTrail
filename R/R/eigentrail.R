@@ -121,3 +121,20 @@ check_transport_json <- function(request, assessment) .checked(.Call(wrap__check
 analyze_lineage_summary_json <- function(request) .checked(.Call(wrap__analyze_lineage_summary_json, request))
 #' @export
 check_lineage_summary_json <- function(request, report) .checked(.Call(wrap__check_lineage_summary_json, request, report))
+
+.rolling_json_text <- function(value, name) {
+    if (!is.character(value) || length(value) != 1L || is.na(value))
+        stop(structure(list(message=paste0("invalid: ", name, " must be one non-NA JSON string"),
+                            call=NULL, kind="invalid"),
+            class=c("eigentrail_invalid","eigentrail_error","error","condition")))
+    value
+}
+#' Analyze a canonical rolling lineage request (raw checked JSON)
+#' @seealso rolling_lineage_json
+#' @export
+analyze_rolling_lineage_json <- function(request)
+    .checked(.Call(wrap__analyze_rolling_lineage_json, .rolling_json_text(request, "request")))
+#' @export
+check_rolling_lineage_json <- function(request, report)
+    .checked(.Call(wrap__check_rolling_lineage_json, .rolling_json_text(request, "request"),
+                   .rolling_json_text(report, "report")))

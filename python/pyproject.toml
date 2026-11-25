@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "eigentrail"
-version = "0.2.2"
+version = "0.3.0"
 requires-python = ">=3.14,<3.15"
 dependencies = ["numpy>=2.3,<3"]
 description = "TRACE covariance trajectories with independent numerical checking"
@@ -29,36 +29,61 @@ content-type = "text/markdown"
 text = """
 # EigenTrail
 
-EigenTrail tracks covariance eigenvalues and eigenspaces over time with the
-TRACE method. It provides uncertainty bounds, persistent associations and
-continuous-history summaries with an independent Rust numerical checker.
+EigenTrail tracks covariance eigenvalues and eigenspaces over time with TRACE,
+using Rust producers and independent numerical checking. Candidate **0.3.0** adds
+observed-date rolling lineage, founder reach and optional plotting. Tied groups,
+explicit missing slots, unavailable transfers and unresolved bounds stay visible.
+Statistical conclusions require the caller's declared joint event and premises.
 
-Current repository source is versioned 0.2.2 for R packaging maintenance. PyPI
-continues to distribute Python 0.2.0; the command below pins that release.
+This is an **unreleased candidate**. PyPI still distributes Python **0.2.0**;
+GitHub's latest published release is **v0.2.2** for R maintenance. No 0.3.0 tag or
+registry publication is implied. Candidate installation requires a receipt for
+the exact artifact digest and OS/architecture/ABI/CPU tuple.
 
-Python inputs are NumPy float64 arrays with shape `(dates, features, features)`.
-Sampling and path-regularity assumptions remain explicit; unresolved results
-retain their alternatives. Computation and checking run locally.
+Python receives real NumPy float64 arrays with shape `(dates, features, features)`.
+CPython **3.14** and NumPy **>=2.3,<3** are required. The optional `plot` extra adds
+Matplotlib **>=3.10,<4**; plots work offline without TeX. A built wheel needs no
+Rust toolchain. Source installation requires Rust **1.99.0** and native C/C++ tools.
 
-Requires CPython 3.14 with NumPy >=2.3,<3, Rust 1.99.0 and native C/C++ build
-tools. Supports macOS ARM64 and GNU/Linux x86-64 with Haswell/x86-64-v3 CPU
-instructions and operating-system support.
-
-Install from GitHub in an activated virtual environment:
+After the candidate wheel is qualified for macOS ARM64/CPython 3.14, install its
+verified local bytes in an activated virtual environment:
 
 ```sh
-python -m pip install "eigentrail @ git+https://github.com/TrompetteMarine/EigenTrail.git@v0.2.0#subdirectory=python"
+python -m pip install --only-binary=:all: "./candidate/eigentrail-0.3.0-cp314-cp314-macosx_14_0_arm64.whl[plot]"
 ```
 
-On Linux, set `RUSTFLAGS="-C target-cpu=haswell"` before source installation.
+A separately qualified source archive is installed with:
+
+```sh
+python -m pip install "./candidate/eigentrail-0.3.0.tar.gz[plot]"
+```
+
+The public Linux workspace now stages the preserved baseline SSE2 interval fork
+with `RUSTFLAGS="-C target-cpu=x86-64"`, `CFLAGS="-march=x86-64"` and matching
+CXXFLAGS. Generic Linux wheels remain held until native baseline, manylinux,
+independent endpoint and scientific checks pass. Windows MSVC/Haswell candidates
+need their own backend, helper/DLL and installed-artifact qualification; Windows
+source installation remains unqualified until its helper-build route is checked.
+
+For the **earlier published Python 0.2.0** API, use:
+
+```sh
+python -m pip install --only-binary=eigentrail "eigentrail==0.2.0"
+```
+
+That release's Linux source builds retain their original Haswell/OS-AVX
+requirements. The new rolling API is available only in a qualified 0.3.0 candidate.
 
 [Quickstart](https://github.com/TrompetteMarine/EigenTrail/blob/main/docs/quickstart.md)
 | [Source](https://github.com/TrompetteMarine/EigenTrail)
 | [Issues](https://github.com/TrompetteMarine/EigenTrail/issues)
 
-First-party code is MIT licensed. Distributed packages include the required
-third-party license and copyright notices.
+First-party code is MIT licensed. Distributed packages include dependency notices.
+
 """
+
+[project.optional-dependencies]
+plot = ["matplotlib>=3.10,<4"]
 
 [project.urls]
 Homepage = "https://github.com/TrompetteMarine/EigenTrail"
@@ -70,5 +95,8 @@ Issues = "https://github.com/TrompetteMarine/EigenTrail/issues"
 manifest-path = "../crates/eigentrail-python/Cargo.toml"
 python-source = "."
 module-name = "eigentrail._eigentrail"
-include = [{ path = "eigentrail/_licenses/**/*", format = ["wheel", "sdist"] }]
+include = [
+    { path = "eigentrail/_licenses/**/*", format = ["wheel", "sdist"] },
+    { path = "eigentrail/_eigentrail_cpu_guard.dll", format = "wheel" },
+]
 exclude = ["**/__pycache__/**", "**/*.pyc", "**/*.pyo"]

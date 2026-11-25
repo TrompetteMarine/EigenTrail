@@ -100,7 +100,7 @@ fn read(path: &str, remaining: &mut usize, operation: &Operation) -> Result<Mana
 }
 fn execute() -> Result<()> {
     let args = std::env::args().collect::<Vec<_>>();
-    let usage = "usage: eigentrail-check track|check|analyze-histories|check-histories|analyze-lineage-summary|check-lineage-summary REQUEST REPORT, or analyze-jumps|check-jumps|analyze-common-frame|check-common-frame REQUEST MODEL REPORT, or analyze-crossings|check-crossings REQUEST WINDOW REPORT, or analyze-transport|check-transport REQUEST REPORT";
+    let usage = "usage: eigentrail-check track|check|analyze-histories|check-histories|analyze-lineage-summary|check-lineage-summary|analyze-rolling-lineage|check-rolling-lineage REQUEST REPORT, or analyze-jumps|check-jumps|analyze-common-frame|check-common-frame REQUEST MODEL REPORT, or analyze-crossings|check-crossings REQUEST WINDOW REPORT, or analyze-transport|check-transport REQUEST REPORT";
     if args.len() == 2 {
         match args[1].as_str() {
             "-h" | "--help" => {
@@ -125,7 +125,9 @@ fn execute() -> Result<()> {
             | "analyze-transport"
             | "check-transport"
             | "analyze-lineage-summary"
-            | "check-lineage-summary",
+            | "check-lineage-summary"
+            | "analyze-rolling-lineage"
+            | "check-rolling-lineage",
         ) => 4,
         Some(
             "analyze-jumps"
@@ -148,8 +150,14 @@ fn execute() -> Result<()> {
         args[1].as_str(),
         "analyze-lineage-summary" | "check-lineage-summary"
     );
+    let rolling = matches!(
+        args[1].as_str(),
+        "analyze-rolling-lineage" | "check-rolling-lineage"
+    );
     let cancel = resources::Cancellation::default();
-    let kind = if summary {
+    let kind = if rolling {
+        RequestKind::RollingLineage
+    } else if summary {
         RequestKind::LineageSummary
     } else if transport {
         RequestKind::Transport
@@ -161,6 +169,26 @@ fn execute() -> Result<()> {
     let (operation, request_bytes, mut remaining) = read_request(&args[2], kind, &cancel)?;
     let _control = operation.external(64 * 1024)?;
     operation.run(|| {
+    if rolling {
+        let request: rolling_lineage::Request = serialization::decode_in(&request_bytes, &cancel)?;
+        drop(request_bytes);
+        if args[1] == "analyze-rolling-lineage" {
+            let report = rolling_lineage::analyze(&request, &cancel)?;
+            eigentrail_check::rolling_lineage::check(&request, &report, &cancel)?;
+            write_new(
+                &args[3],
+                &serialization::encode_rolling_report_with_cancel(&report, &cancel)?,
+            )?;
+        } else {
+            let report = serialization::decode_rolling_report_in(
+                &read(&args[3], &mut remaining, &operation)?,
+                &cancel,
+            )?;
+            eigentrail_check::rolling_lineage::check(&request, &report, &cancel)?;
+        }
+        println!("checked rolling lineage; model assumptions and resource/platform qualification remain explicit");
+        return Ok(());
+    }
     if summary {
         let request: lineage_summary::Request = serialization::decode_in(&request_bytes, &cancel)?;
         drop(request_bytes);

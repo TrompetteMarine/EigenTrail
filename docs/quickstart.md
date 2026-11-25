@@ -1,5 +1,9 @@
 # Python and R quickstart
 
+The rolling examples require a qualified **0.3.0 candidate**. The published
+Python 0.2.0 and R v0.2.2 routes retain their earlier APIs; see
+[installation](installation.md) before choosing an artifact.
+
 [Install EigenTrail](installation.md), then supply covariance matrices,
 observation times, covariance-error radii, and a global regularity bound for the
 population covariance path. All measurements must use fixed coordinates and units.
@@ -42,6 +46,41 @@ cat(report, "\n")
 R accepts double arrays with shape `(features, features, dates)` and returns
 canonical JSON text. Finite numerical values are encoded as `f64:` bit strings;
 see [serialization](serialization.md) before processing that JSON yourself.
+
+## Compare observed dates (candidate)
+
+Use the rolling candidate package, rather than the earlier tagged release, for
+this API. It needs no assumed continuous path between observations:
+
+```python
+rolling = eigentrail.track_rolling(
+    covariances, [0.0, 1.0], tolerance=20.0, mode="point", lag_cap=1,
+    founders=[{"date": 0, "lens": "covariance", "ranks": [1]}],
+    features=["height", "width"], units=["unit", "unit"], frame="fixed-chart",
+)
+print(rolling["completion"]["graph_counts"])
+assert eigentrail.check_rolling_lineage_json(
+    rolling.request_json, rolling.report_json
+)
+```
+
+Point mode still retains numerical uncertainty. Tied groups retain their full
+projector, with no arbitrary internal PC identity. Conditional mode needs its
+declared joint event and radius provider; supplying a radius does not establish
+a sampling probability. See the [rolling guide](rolling-lineage.md).
+
+From a candidate source checkout, `python examples/rolling_lineage.py NEW_FOLDER`
+saves a synthetic request/report pair. Add `--plot` with the optional plot extra
+to save SVG, PDF, 300-dpi PNG and offline HTML. The
+[saved request](../examples/requests/rolling-lineage-request.json) and
+[saved report](../examples/reports/rolling-lineage-report.json) also support the
+raw Python/R/CLI analyze/check routes. R returns canonical checked JSON:
+
+```r
+request <- paste(readLines("examples/requests/rolling-lineage-request.json"), collapse="\n")
+report <- analyze_rolling_lineage_json(request)
+stopifnot(check_rolling_lineage_json(request, report))
+```
 
 ## Query a continuous history
 

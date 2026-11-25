@@ -5,19 +5,39 @@ import struct
 import sys
 
 if sys.platform.startswith('linux'):
+    from ._cpu_policy import LINUX_CPU_FLAGS as _linux_required_flags
+    from ._cpu_policy import LINUX_CPU_DESCRIPTION as _linux_cpu_description
     if platform.machine().lower() != 'x86_64':
-        raise ImportError('EigenTrail supports Linux x86_64 with Haswell CPU instructions and kernel AVX support.')
-    # Rust 1.99 target-cpu=haswell; Linux calls SSE3 pni, CMPXCHG16B cx16 and LZCNT abm.
-    _haswell_flags = set('avx avx2 bmi1 bmi2 cx16 f16c fma fxsr abm movbe pclmulqdq popcnt rdrand sse sse2 pni sse4_1 sse4_2 ssse3 xsave xsaveopt'.split())
+        raise ImportError('EigenTrail supports Linux x86_64 with ' + _linux_cpu_description + '.')
+    _required_cpu_flags = set(_linux_required_flags)
     try:
         with open('/proc/cpuinfo', encoding='ascii') as _cpuinfo:
             _cpu_flags = [set(line.partition(':')[2].split()) for line in _cpuinfo
                           if line.partition(':')[0].strip() == 'flags']
     except (OSError, UnicodeError) as _error:
         raise ImportError('EigenTrail requires readable /proc/cpuinfo to verify Linux CPU and kernel support before loading native code.') from _error
-    # shortcut: absent kernel flags also refuse capable hosts; use baseline-safe dispatch to broaden support.
-    if not _cpu_flags or any(not _haswell_flags <= flags for flags in _cpu_flags):
-        raise ImportError('EigenTrail requires Haswell CPU instructions and kernel AVX support on every Linux CPU; /proc/cpuinfo does not confirm the required features.')
+    if not _cpu_flags or any(not _required_cpu_flags <= flags for flags in _cpu_flags):
+        raise ImportError('EigenTrail requires ' + _linux_cpu_description + ' on every Linux CPU; /proc/cpuinfo does not confirm the required features.')
+
+if sys.platform == 'win32':
+    if platform.machine().lower() not in ('amd64', 'x86_64') or struct.calcsize('P') != 8:
+        raise ImportError('EigenTrail Windows wheels require an x86-64 CPython process.')
+    import ctypes as _cpu_ctypes
+    from pathlib import Path as _CpuPath
+    _windows_cpu_path = _CpuPath(__file__).with_name('_eigentrail_cpu_guard.dll')
+    if not _windows_cpu_path.is_file():
+        raise ImportError('EigenTrail requires its separately built baseline Windows CPU guard before loading native code. Install a qualified Windows wheel that includes it.')
+    try:
+        # Load the packaged absolute DLL with Windows' explicit default-directory policy.
+        _windows_cpu_library = _cpu_ctypes.CDLL(str(_windows_cpu_path.resolve()), winmode=0x00000100 | 0x00001000)
+        _windows_cpu_check = _windows_cpu_library.eigentrail_windows_haswell_guard
+        _windows_cpu_check.argtypes = []
+        _windows_cpu_check.restype = _cpu_ctypes.c_uint32
+        _windows_cpu_status = int(_windows_cpu_check())
+    except (OSError, AttributeError) as _cpu_error:
+        raise ImportError('EigenTrail could not run its baseline Windows CPU guard before loading native code.') from _cpu_error
+    if _windows_cpu_status != 0:
+        raise ImportError('EigenTrail requires Haswell CPU instructions and OS AVX support on every active Windows CPU; the baseline guard refused status ' + str(_windows_cpu_status) + '.')
 
 from ._eigentrail import (track_json, check_json, track_covariances,
                          track_history_covariances, track_stability_covariances,
@@ -28,6 +48,7 @@ from ._eigentrail import (track_json, check_json, track_covariances,
                          analyze_transport_json, check_transport_json,
                          analyze_histories_json, check_histories_json,
                          analyze_lineage_summary_json, check_lineage_summary_json,
+                         analyze_rolling_lineage_json, check_rolling_lineage_json,
                          analyze_common_frame_json, check_common_frame_json)
 
 def _unbits(value):
@@ -219,4 +240,13 @@ __all__ = ['track','track_history','track_stability','track_stability_covariance
            'analyze_transport_json','check_transport_json',
            'analyze_histories_json','check_histories_json',
            'analyze_lineage_summary_json','check_lineage_summary_json',
+           'analyze_rolling_lineage_json','check_rolling_lineage_json',
            'analyze_common_frame_json','check_common_frame_json']
+
+from .rolling import RollingResult, track_rolling, track_rolling_panel
+
+__all__ += ["RollingResult", "track_rolling", "track_rolling_panel"]
+
+from .plotting import plot_window, plot_founder, plot_spectrum, export_html
+
+__all__ += ["plot_window", "plot_founder", "plot_spectrum", "export_html"]

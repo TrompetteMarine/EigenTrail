@@ -14,6 +14,7 @@ pub mod geometry;
 mod jump_queries;
 pub mod jumps;
 pub mod lineage_summary;
+pub mod rolling_lineage;
 pub mod stability;
 pub mod temporal;
 pub mod transport;

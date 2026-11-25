@@ -4,6 +4,7 @@ import argparse
 import gzip
 import hashlib
 import io
+import json
 import tarfile
 import tempfile
 import tomllib
@@ -52,6 +53,15 @@ def check_member_sources(prefix, files, member, root=ROOT):
         assert name in files and files[name][0] == path.read_bytes(), 'Missing or changed source: ' + name
 
 
+def local_patch_sources(root):
+    patch = tomllib.loads((root / 'Cargo.toml').read_text()).get('patch', {}).get('crates-io', {})
+    if not patch:
+        return set()
+    assert patch == {'inari': {'path': 'backports/inari'}}, 'Unreviewed local dependency patch'
+    from check_r_sources import backport_sources
+    return set(backport_sources(root / 'backports/inari'))
+
+
 def stage(source, destination):
     source, destination = source.resolve(), destination.resolve()
     assert source != destination and not destination.exists(), 'Refusing to overwrite a source archive'
@@ -63,6 +73,7 @@ def stage(source, destination):
     assert files[prefix + '/Cargo.lock'][0] == lock, 'Raw source lock differs from the adopted workspace'
     replacement = {ROOT / name for name in ['Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml', '.cargo/config.toml']}
     replacement.update(path for path in (ROOT / 'crates/eigentrail-r').rglob('*') if path.is_file())
+    replacement.update(local_patch_sources(ROOT))
     changed = set()
     for path in sorted(replacement):
         assert not path.is_symlink(), 'Linked source input'
@@ -113,7 +124,27 @@ def self_test():
                     pass
                 else:
                     raise AssertionError('Source guard accepted missing/changed ' + name)
-    print('Source archive completeness/byte guards passed')
+        (root / 'Cargo.toml').write_text('[patch.crates-io]\ninari = { path = "backports/inari" }\n')
+        fork = root / 'backports/inari'; fork.mkdir(parents=True)
+        source = fork / 'Cargo.toml'; source.write_text('test fork source')
+        provenance = fork / 'PROVENANCE.json'
+        provenance.write_text(json.dumps({'files': {'Cargo.toml': {'sha256': hashlib.sha256(source.read_bytes()).hexdigest()}}}))
+        assert local_patch_sources(root) == {source, provenance}
+        source.write_text('altered')
+        try:
+            local_patch_sources(root)
+        except AssertionError:
+            pass
+        else:
+            raise AssertionError('Changed local dependency bypassed provenance guard')
+        source.unlink()
+        try:
+            local_patch_sources(root)
+        except AssertionError:
+            pass
+        else:
+            raise AssertionError('Missing local dependency bypassed source completeness guard')
+    print('Source archive completeness/byte and local dependency guards passed')
 
 
 if __name__ == '__main__':

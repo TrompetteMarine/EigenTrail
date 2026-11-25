@@ -15,6 +15,7 @@ pub mod jumps;
 pub mod lineage_summary;
 pub mod numerics;
 pub mod resources;
+pub mod rolling_lineage;
 pub mod scalar;
 pub mod serialization;
 pub mod stability;
