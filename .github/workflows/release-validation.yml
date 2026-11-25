@@ -32,12 +32,14 @@ jobs:
             rustflags: ''
             cflags: ''
             deployment_target: '14.0'
+            cpu_profile: source
           - os: ubuntu-24.04
             machine: x86_64
             python_arch: x64
-            rustflags: '-C target-cpu=haswell'
-            cflags: '-march=haswell -mtune=haswell'
+            rustflags: '-C target-cpu=x86-64'
+            cflags: '-march=x86-64 -mtune=generic'
             deployment_target: ''
+            cpu_profile: baseline-sse2
     env:
       CARGO_BUILD_JOBS: '2'
       CARGO_INCREMENTAL: '0'
@@ -89,8 +91,19 @@ jobs:
           cargo fetch --locked
       - name: Record actual native runner, CPU and compilers
         run: |
-          python scripts/release_smoke.py --environment-only --expected-machine '${{ matrix.machine }}' --out artifacts/runner
+          python scripts/release_smoke.py --environment-only --expected-machine '${{ matrix.machine }}' --cpu-profile '${{ matrix.cpu_profile }}' --out artifacts/runner
           git rev-parse HEAD > artifacts/source-commit.txt
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          Path('artifacts/linux-candidate.json').write_text(json.dumps({
+              'schema': 'eigentrail.linux-candidate.v1', 'candidate_only': True,
+              'backend': 'inari-r-backport-sse2', 'cpu_floor': 'x86-64-v1',
+              'publication': 'held',
+              'remaining': 'Actual baseline CPU and exact-artifact private scientific replay; manylinux build/library audit'}, indent=2))
+          PY
+          fi
       - name: Check package sources and build CLI
         run: |
           set -o pipefail
@@ -100,12 +113,20 @@ jobs:
           python scripts/check_r_sources.py
           python scripts/check_release.py > artifacts/source-metadata.json
           python scripts/test_python_cpu_guard.py
+          python scripts/test_windows_cpu_guard.py
+          python scripts/test_qualified_artifacts.py
           cargo test --release --locked --lib --bins -- --test-threads=1 2>&1 | tee artifacts/rust-tests.log
           cargo install --offline --locked --path crates/eigentrail-check --root "$RUNNER_TEMP/eigentrail-cli"
-      - name: Cargo source package validation without publishing
+      - name: Upstream registry packaging smoke without publishing
         run: |
           set -o pipefail
-          cargo publish --dry-run --locked -p eigentrail-core -p eigentrail-check 2>&1 | tee artifacts/cargo-dry-run.log
+          # Normalised registry manifests do not retain the workspace-only fork patch.
+          # This separate compile is not baseline native-artifact qualification.
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            RUSTFLAGS='-C target-cpu=haswell' cargo publish --dry-run --locked -p eigentrail-core -p eigentrail-check 2>&1 | tee artifacts/cargo-dry-run.log
+          else
+            cargo publish --dry-run --locked -p eigentrail-core -p eigentrail-check 2>&1 | tee artifacts/cargo-dry-run.log
+          fi
           cargo package --locked --offline --no-verify -p eigentrail-core -p eigentrail-check
           mkdir -p artifacts/cargo
           cp "$CARGO_TARGET_DIR"/package/eigentrail-{core,check}-*.crate artifacts/cargo/
@@ -130,6 +151,7 @@ jobs:
           "$RUNNER_TEMP/eigentrail-wheel/bin/python" -I scripts/release_smoke.py --cli "$RUNNER_TEMP/eigentrail-cli/bin/eigentrail-check" --out "$RUNNER_TEMP/eigentrail-smoke-wheel"
           "$RUNNER_TEMP/eigentrail-wheel/bin/python" -I examples/gaussian-history.py
           "$RUNNER_TEMP/eigentrail-wheel/bin/python" -I examples/lineage-summary.py
+          python scripts/test_rolling_public.py --python "$RUNNER_TEMP/eigentrail-wheel/bin/python" --cli "$RUNNER_TEMP/eigentrail-cli/bin/eigentrail-check" --out "$RUNNER_TEMP/eigentrail-smoke-rolling"
       - name: Build and install source distribution outside checkout
         env:
           CARGO_NET_OFFLINE: 'true'
@@ -195,3 +217,139 @@ jobs:
             ${{ runner.temp }}/eigentrail-smoke-r/
             ${{ runner.temp }}/eigentrail-smoke-github-python/
             ${{ runner.temp }}/eigentrail-smoke-github-r/
+            ${{ runner.temp }}/eigentrail-smoke-rolling/
+
+  windows-candidate:
+    name: Windows x86-64 MSVC / Haswell candidate only
+    runs-on: windows-2022
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      CARGO_BUILD_JOBS: '2'
+      CARGO_INCREMENTAL: '0'
+      RUSTFLAGS: '-C target-cpu=haswell'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+      MATURIN_NO_INSTALL_RUST: '1'
+      EXPECTED_SHA: ${{ inputs.expected_sha }}
+      MPLBACKEND: Agg
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Require the exact candidate workflow commit
+        run: |
+          if ($env:EXPECTED_SHA -notmatch '^[0-9a-f]{40}$' -or $env:GITHUB_SHA -ne $env:EXPECTED_SHA) { throw 'Exact candidate commit required' }
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.14'
+          architecture: x64
+      - name: Prepare native MSVC tools and candidate dependencies
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installation = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $installation) { throw 'Native MSVC toolchain missing' }
+          $vcvars = Join-Path $installation 'VC\Auxiliary\Build\vcvars64.bat'
+          $settings = & $env:COMSPEC /d /s /c ('""{0}" >nul && set PATH && set INCLUDE && set LIB"' -f $vcvars)
+          if ($LASTEXITCODE) { throw 'MSVC initialization failed' }
+          foreach ($line in $settings) {
+            if ($line -match '^(PATH|INCLUDE|LIB|LIBPATH)=(.*)$') { Add-Content -Path $env:GITHUB_ENV -Value $line }
+          }
+          Add-Content -Path $env:GITHUB_ENV -Value "CARGO_TARGET_DIR=$env:RUNNER_TEMP\eigentrail-windows-target"
+          rustup toolchain install 1.99.0 --profile minimal --component rustfmt,clippy
+          if ($LASTEXITCODE) { throw 'Rust setup failed' }
+          rustup default 1.99.0
+          New-Item -ItemType Directory -Force artifacts\windows, "$env:RUNNER_TEMP\eigentrail-wheelhouse" | Out-Null
+          python -m pip download --only-binary=:all: --requirement python/requirements-build.txt --dest "$env:RUNNER_TEMP\eigentrail-wheelhouse"
+          if ($LASTEXITCODE) { throw 'Python build dependency download failed' }
+          python -m pip download --only-binary=:all: 'matplotlib>=3.10,<4' --dest "$env:RUNNER_TEMP\eigentrail-wheelhouse"
+          if ($LASTEXITCODE) { throw 'Plot dependency download failed' }
+          python -m pip install --no-index --find-links "$env:RUNNER_TEMP\eigentrail-wheelhouse" --requirement python/requirements-build.txt
+          if ($LASTEXITCODE) { throw 'Python build dependency install failed' }
+          cargo fetch --locked
+          if ($LASTEXITCODE) { throw 'Locked dependency fetch failed' }
+      - name: Build baseline pre-import guard and check actual CPU coverage
+        run: |
+          rustc --version --verbose | Out-File artifacts\windows\rustc.txt
+          rustc --print cfg --target x86_64-pc-windows-msvc -C target-cpu=haswell | Out-File artifacts\windows\extension-cfg.txt
+          Get-CimInstance Win32_Processor | Select-Object Manufacturer,Name,NumberOfCores,NumberOfLogicalProcessors | ConvertTo-Json | Out-File artifacts\windows\processors.json
+          rustfmt --edition 2024 --check scripts/windows_cpu_guard.rs
+          if ($LASTEXITCODE) { throw 'CPU guard formatting failed' }
+          rustc --edition 2024 --test -D warnings -C target-cpu=x86-64 scripts/windows_cpu_guard.rs -o artifacts\windows\guard-tests.exe
+          if ($LASTEXITCODE) { throw 'CPU guard native test build failed' }
+          & artifacts\windows\guard-tests.exe
+          if ($LASTEXITCODE) { throw 'CPU feature controls failed' }
+          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\eigentrail-cpu-guard" | Out-Null
+          rustc --edition 2024 --crate-type cdylib --target x86_64-pc-windows-msvc -C target-cpu=x86-64 -C opt-level=2 -D warnings scripts/windows_cpu_guard.rs -o "$env:RUNNER_TEMP\eigentrail-cpu-guard\_eigentrail_cpu_guard.dll" 2>&1 | Tee-Object artifacts\windows\guard-build.log
+          if ($LASTEXITCODE) { throw 'Baseline CPU guard native build failed' }
+          Copy-Item "$env:RUNNER_TEMP\eigentrail-cpu-guard\_eigentrail_cpu_guard.dll" python\eigentrail\_eigentrail_cpu_guard.dll
+          python -c "import ctypes,pathlib; p=pathlib.Path('python/eigentrail/_eigentrail_cpu_guard.dll').resolve(); f=ctypes.CDLL(str(p),winmode=0x1100).eigentrail_windows_haswell_guard; f.argtypes=[]; f.restype=ctypes.c_uint32; s=f(); print('all-CPU guard status',s); assert s==0"
+          if ($LASTEXITCODE) { throw 'Actual processor/OS coverage refused' }
+          dumpbin /DEPENDENTS python\eigentrail\_eigentrail_cpu_guard.dll | Out-File artifacts\windows\guard-dependencies.txt
+          if ($LASTEXITCODE) { throw 'Guard dependency audit failed' }
+          dumpbin /DISASM:NOBYTES python\eigentrail\_eigentrail_cpu_guard.dll | Out-File artifacts\windows\guard-disassembly.txt
+          if ($LASTEXITCODE) { throw 'Guard disassembly capture failed' }
+          python scripts/test_windows_cpu_guard.py
+          if ($LASTEXITCODE) { throw 'Windows pre-import refusal tests failed' }
+      - name: Run production Rust controls and build candidate wheel
+        run: |
+          cargo fmt --all -- --check
+          if ($LASTEXITCODE) { throw 'Rust format failed' }
+          cargo clippy --locked --lib --bins -- -D warnings
+          if ($LASTEXITCODE) { throw 'Strict Rust lint failed' }
+          cargo clippy --locked -p eigentrail-python --lib -- -D warnings
+          if ($LASTEXITCODE) { throw 'Strict Python binding lint failed' }
+          cargo test --release --locked --lib --bins -- --test-threads=1 2>&1 | Tee-Object artifacts\windows\rust-tests.log
+          if ($LASTEXITCODE) { throw 'Native production Rust tests failed' }
+          cargo install --offline --locked --path crates/eigentrail-check --root "$env:RUNNER_TEMP\eigentrail-cli"
+          if ($LASTEXITCODE) { throw 'CLI build failed' }
+          Push-Location python
+          python -m maturin build --release --locked --target x86_64-pc-windows-msvc --interpreter python --out ..\artifacts\windows 2>&1 | Tee-Object ..\artifacts\windows\wheel-build.log
+          $build = $LASTEXITCODE
+          Pop-Location
+          if ($build) { throw 'Native MSVC wheel build failed' }
+          $wheels = @(Get-ChildItem artifacts\windows\*.whl)
+          if ($wheels.Count -ne 1 -or $wheels[0].Name -notmatch '-cp314-cp314-win_amd64\.whl$') { throw 'Unexpected Windows wheel tag' }
+          python scripts/check_release.py --artifact $wheels[0].FullName | Out-File artifacts\windows\metadata-check.json
+          if ($LASTEXITCODE) { throw 'Wheel metadata failed' }
+      - name: Clean binary installation, checked rolling cases and offline plots
+        run: |
+          $wheels = @(Get-ChildItem artifacts\windows\*.whl)
+          python -m venv "$env:RUNNER_TEMP\eigentrail-windows-wheel"
+          $python = "$env:RUNNER_TEMP\eigentrail-windows-wheel\Scripts\python.exe"
+          $originalPath = $env:PATH
+          try {
+            $env:PATH = (($env:PATH -split ';') | Where-Object { $_ -notmatch '(?i)cargo|rustup' }) -join ';'
+            if (Get-Command cargo -ErrorAction SilentlyContinue) { throw 'Rust is still on clean install PATH' }
+            & $python -m pip install --only-binary=:all: --no-index --find-links "$env:RUNNER_TEMP\eigentrail-wheelhouse" ($wheels[0].FullName + '[plot]')
+            if ($LASTEXITCODE) { throw 'Clean wheel installation failed' }
+            python scripts/test_rolling_public.py --python $python --cli "$env:RUNNER_TEMP\eigentrail-cli\bin\eigentrail-check.exe" --out "$env:RUNNER_TEMP\eigentrail-windows-rolling"
+            if ($LASTEXITCODE) { throw 'Installed CLI/Python rolling parity failed' }
+            & $python -I "$env:GITHUB_WORKSPACE\examples\lineage-summary.py"
+            if ($LASTEXITCODE) { throw 'Legacy lineage regression failed' }
+            Push-Location $env:RUNNER_TEMP
+            & $python -I "$env:GITHUB_WORKSPACE\examples\rolling_lineage.py" "$env:RUNNER_TEMP\eigentrail-windows-plots" --plot
+            $plots = $LASTEXITCODE
+            Pop-Location
+            if ($plots) { throw 'Offline plotting failed' }
+          } finally { $env:PATH = $originalPath }
+          $site = & $python -c "import pathlib,eigentrail; print(pathlib.Path(eigentrail.__file__).parent)"
+          Get-ChildItem $site\*.pyd,$site\*.dll | ForEach-Object {
+            dumpbin /DEPENDENTS $_.FullName | Out-File (Join-Path artifacts\windows ($_.Name + '.dependencies.txt'))
+            if ($LASTEXITCODE) { throw 'Installed native dependency audit failed' }
+          }
+          python -c "import hashlib,json,pathlib,platform,subprocess,sys; p=pathlib.Path('artifacts/windows'); fs={f.name:hashlib.sha256(f.read_bytes()).hexdigest() for f in p.glob('*.whl')}; guard=pathlib.Path('python/eigentrail/_eigentrail_cpu_guard.dll'); (p/'candidate.json').write_text(json.dumps({'schema':'eigentrail.windows-candidate.v1','commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'platform':platform.platform(),'machine':platform.machine(),'python':sys.version,'cpu_floor':'haswell+os-avx','backend':'inari-r-backport-avx-fma','cpu_guard_sha256':hashlib.sha256(guard.read_bytes()).hexdigest(),'candidate_only':True,'publication':'held','qualification':'public-synthetic-smoke-only','artifacts':fs},indent=2))"
+      - name: Retain candidate artifacts and actual failure logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: windows-x86_64-msvc-candidate-only
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            artifacts/windows/
+            ${{ runner.temp }}/eigentrail-windows-rolling/
+            ${{ runner.temp }}/eigentrail-windows-plots/

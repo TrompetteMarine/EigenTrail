@@ -721,6 +721,40 @@ fn check_lineage_summary_json(request: &str, report: &str) -> extendr_api::Resul
     })
 }
 #[extendr]
+fn analyze_rolling_lineage_json(request: &str) -> extendr_api::Result<String> {
+    let limit = preflight_json_inputs(request, &[], RequestKind::RollingLineage)?;
+    let operation = Operation::new(limit).map_err(fail)?;
+    let request_text = copy_json_text(&operation, request)?;
+    with_interrupt(operation, move |cancel| {
+        let request: core::rolling_lineage::Request =
+            core::serialization::decode_in(request_text.as_bytes(), &cancel)?;
+        drop(request_text);
+        let report = core::rolling_lineage::analyze(&request, &cancel)?;
+        eigentrail_check::rolling_lineage::check(&request, &report, &cancel)?;
+        String::from_utf8(core::serialization::encode_rolling_report_with_cancel(
+            &report, &cancel,
+        )?)
+        .map_err(|_| core::Error::Invalid("UTF-8".into()))
+    })
+}
+#[extendr]
+fn check_rolling_lineage_json(request: &str, report: &str) -> extendr_api::Result<bool> {
+    let limit = preflight_json_inputs(request, &[report], RequestKind::RollingLineage)?;
+    let operation = Operation::new(limit).map_err(fail)?;
+    let request_text = copy_json_text(&operation, request)?;
+    let report_text = copy_json_text(&operation, report)?;
+    with_interrupt(operation, move |cancel| {
+        let request: core::rolling_lineage::Request =
+            core::serialization::decode_in(request_text.as_bytes(), &cancel)?;
+        drop(request_text);
+        let report =
+            core::serialization::decode_rolling_report_in(report_text.as_bytes(), &cancel)?;
+        drop(report_text);
+        eigentrail_check::rolling_lineage::check(&request, &report, &cancel)?;
+        Ok(true)
+    })
+}
+#[extendr]
 fn analyze_common_frame_json(request: &str, model: &str) -> extendr_api::Result<String> {
     let limit = preflight_json_inputs(request, &[model], RequestKind::Trace)?;
     let operation = Operation::new(limit).map_err(fail)?;
@@ -758,4 +792,4 @@ fn check_common_frame_json(request: &str, model: &str, report: &str) -> extendr_
         Ok(true)
     })
 }
-extendr_module! {mod eigentrail;fn window_envelope_json;fn temporal_gaussian_json;fn spd_tube_geometry_json;fn track_stability_covariances;fn analyze_stability_json;fn track_json;fn check_json;fn track_covariances;fn track_history_covariances;fn analyze_jumps_json;fn check_jumps_json;fn analyze_crossings_json;fn check_crossings_json;fn analyze_transport_json;fn check_transport_json;fn analyze_histories_json;fn check_histories_json;fn analyze_common_frame_json;fn check_common_frame_json;fn analyze_lineage_summary_json;fn check_lineage_summary_json;}
+extendr_module! {mod eigentrail;fn window_envelope_json;fn temporal_gaussian_json;fn spd_tube_geometry_json;fn track_stability_covariances;fn analyze_stability_json;fn track_json;fn check_json;fn track_covariances;fn track_history_covariances;fn analyze_jumps_json;fn check_jumps_json;fn analyze_crossings_json;fn check_crossings_json;fn analyze_transport_json;fn check_transport_json;fn analyze_histories_json;fn check_histories_json;fn analyze_common_frame_json;fn check_common_frame_json;fn analyze_lineage_summary_json;fn check_lineage_summary_json;fn analyze_rolling_lineage_json;fn check_rolling_lineage_json;}

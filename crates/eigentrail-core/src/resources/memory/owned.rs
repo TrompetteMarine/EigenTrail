@@ -76,6 +76,54 @@ tuple!(A:0,B:1,C:2);
 tuple!(A:0,B:1,C:2,D:3);
 macro_rules! fields {($t:ty;$($field:ident),*)=>{impl HeapBytes for $t{fn heap_bytes(&self)->Result<usize>{sum(&[$(self.$field.heap_bytes()?),*])}}};}
 fields!(Matrix;data);
+fields!(rolling_lineage::Request;schema,chart,features,dates,subjects,lenses,representation,uncertainty,scope,founders,projection,precision);
+fields!(rolling_lineage::Chart;frame,coordinates);
+fields!(rolling_lineage::Feature;id,unit);
+fields!(rolling_lineage::Date;id);
+fields!(rolling_lineage::Subject;id,slots);
+fields!(rolling_lineage::Representation;symmetry);
+fields!(rolling_lineage::Scope;lens_travel,rank_masks,missing,policy,certificate,direct_scope);
+fields!(rolling_lineage::RankMask;ranks);
+fields!(rolling_lineage::Founder;policies);
+fields!(rolling_lineage::Precision;format,angle_unit);
+zero!(
+    rolling_lineage::Lens,
+    rolling_lineage::FounderPolicy,
+    rolling_lineage::Correction,
+    rolling_lineage::Grouping,
+    rolling_lineage::Limits,
+    rolling_lineage::EdgeBlock,
+    rolling_lineage::Shape,
+    rolling_lineage::Preflight
+);
+impl HeapBytes for rolling_lineage::Slot {
+    fn heap_bytes(&self) -> Result<usize> {
+        match self {
+            Self::Observed { covariance } => covariance.heap_bytes(),
+            Self::Missing { reason } => reason.heap_bytes(),
+        }
+    }
+}
+impl HeapBytes for rolling_lineage::Uncertainty {
+    fn heap_bytes(&self) -> Result<usize> {
+        match self {
+            Self::Point => Ok(0),
+            Self::Conditional {
+                joint_event,
+                provider,
+                ..
+            } => sum(&[joint_event.heap_bytes()?, provider.heap_bytes()?]),
+        }
+    }
+}
+impl HeapBytes for rolling_lineage::Projection {
+    fn heap_bytes(&self) -> Result<usize> {
+        match self {
+            Self::SelectedEdges { blocks } => blocks.heap_bytes(),
+            Self::Counts | Self::Full => Ok(0),
+        }
+    }
+}
 fields!(Eigensystem;values,vectors);
 fields!(TraceRequest;schema,times,covariances,features,calibration,correction);
 fields!(TraceReport;schema,request_hash,eigensystems,radii,segments,summaries,calibration_scope,witness,resource_qualification);
@@ -255,3 +303,112 @@ impl HeapBytes for lineage_summary::RowState {
         }
     }
 }
+
+// Append within resources/memory/owned.rs.
+use crate::rolling_lineage::report as rr;
+fields!(rr::Report;schema,request_hash,protocol,scope,chunks,completion,resource_qualification);
+fields!(rr::Protocol;method,arithmetic_recipe,backend,format,angle_unit);
+fields!(rr::ReportScope;direct_scope);
+fields!(rr::Chunk;prev_digest,records,digest);
+fields!(rr::DateEvidence;root,correlation,inverse,normalised_precision);
+fields!(rr::FrameProof;midpoint,eigensystem);
+fields!(rr::ViewGroups;spectrum,groups);
+fields!(rr::WindowSummary;lens_pairs,candidate_digest);
+fields!(rr::PackedDecisions;hex);
+fields!(rr::CandidateBatch;decisions,digest);
+fields!(rr::SelectedPath;nodes,slot_gaps);
+fields!(rr::SparseNormWitness;matrix,eigensystem);
+fields!(rr::Completion;terminal_digest,graph_digest,direct_digest);
+zero!(rr::CompletionStatus);
+impl HeapBytes for rr::FrameState {
+    fn heap_bytes(&self) -> Result<usize> {
+        match self {
+            Self::NotRequested => Ok(0),
+            Self::Available { proof, .. } => sum(&[proof.heap_bytes()?]),
+            Self::Unavailable { .. } => Ok(0),
+        }
+    }
+}
+impl HeapBytes for rr::InverseState {
+    fn heap_bytes(&self) -> Result<usize> {
+        match self {
+            Self::NotRequested => Ok(0),
+            Self::Available { midpoint, .. } => sum(&[midpoint.heap_bytes()?]),
+            Self::Unavailable { .. } => Ok(0),
+        }
+    }
+}
+impl HeapBytes for rr::SpectrumState {
+    fn heap_bytes(&self) -> Result<usize> {
+        match self {
+            Self::Available { intervals, .. } => sum(&[intervals.heap_bytes()?]),
+            Self::Unavailable { .. } => Ok(0),
+            Self::Unbounded { .. } => Ok(0),
+        }
+    }
+}
+impl HeapBytes for rr::FounderRecord {
+    fn heap_bytes(&self) -> Result<usize> {
+        match self {
+            Self::Origin { .. } => Ok(0),
+            Self::Target { families, .. } => sum(&[families.heap_bytes()?]),
+            Self::Unavailable { .. } => Ok(0),
+        }
+    }
+}
+impl HeapBytes for rr::RecordBatch {
+    fn heap_bytes(&self) -> Result<usize> {
+        match self {
+            Self::Partitions(rows) => rows.heap_bytes(),
+            Self::DateEvidence(rows) => rows.heap_bytes(),
+            Self::Views(rows) => rows.heap_bytes(),
+            Self::Edges(rows) => rows.heap_bytes(),
+            Self::Windows(rows) => rows.heap_bytes(),
+            Self::Candidates(rows) => rows.heap_bytes(),
+            Self::Founders(rows) => rows.heap_bytes(),
+            Self::Paths(rows) => rows.heap_bytes(),
+            Self::Norms(rows) => rows.heap_bytes(),
+        }
+    }
+}
+zero!(
+    rr::Verdict,
+    rr::CandidateStream,
+    rr::Reference,
+    rr::EdgeType,
+    rr::SmallerSide,
+    rr::GroupingCause,
+    rr::InformationLevel,
+    rr::BottleneckFamily,
+    rr::PathSide,
+    rr::WindowOutcome,
+    rr::Reason,
+    rr::NormKind,
+    rr::GroupRecord,
+    rr::EdgeRecord,
+    rr::Counts,
+    rr::CountsByKind,
+    rr::LensWindow,
+    rr::FamilyState,
+    rr::RegionState,
+    rr::Multiplicity,
+    rr::Enclosure,
+    rr::ShareState,
+    rr::FounderOrigin,
+    rr::DirectResult,
+    rr::Bottleneck,
+    rr::Parent,
+    rr::ReachState
+);
+
+fields!(rr::GroupPartition;state);
+impl HeapBytes for rr::PartitionState {
+    fn heap_bytes(&self) -> Result<usize> {
+        match self {
+            Self::Groups { ranks } => ranks.heap_bytes(),
+            Self::Unavailable { .. } => Ok(0),
+        }
+    }
+}
+
+zero!(rr::AxisSign);

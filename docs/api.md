@@ -49,6 +49,7 @@ return `True` in Python or `TRUE` in R on success. Invalid reports raise errors.
 | `track_json` | `check_json` | request |
 | `analyze_histories_json` | `check_histories_json` | request |
 | `analyze_lineage_summary_json` | `check_lineage_summary_json` | request |
+| `analyze_rolling_lineage_json` | `check_rolling_lineage_json` | request |
 | `analyze_common_frame_json` | `check_common_frame_json` | request, model |
 | `analyze_jumps_json` | `check_jumps_json` | request, model |
 | `analyze_crossings_json` | `check_crossings_json` | request, window |
@@ -76,12 +77,36 @@ Analysis commands refuse existing output files. All checking runs locally.
 | `track` / `check` | REQUEST REPORT |
 | `analyze-histories` / `check-histories` | REQUEST REPORT |
 | `analyze-lineage-summary` / `check-lineage-summary` | REQUEST REPORT |
+| `analyze-rolling-lineage` / `check-rolling-lineage` | REQUEST REPORT |
 | `analyze-common-frame` / `check-common-frame` | REQUEST MODEL REPORT |
 | `analyze-jumps` / `check-jumps` | REQUEST MODEL REPORT |
 | `analyze-crossings` / `check-crossings` | REQUEST WINDOW REPORT |
 | `analyze-transport` / `check-transport` | REQUEST REPORT |
 
 Use `eigentrail-check --help` for syntax and `--version` for the installed version.
+
+## Observed-date rolling lineage (candidate)
+
+Python adds `track_rolling(covariances, dates, *, tolerance, mode, lag_cap,
+founders, features, units, frame, ...)`. Tolerance is in degrees; mode is `point`
+or `conditional`. Conditional mode additionally requires `rho`, `joint_event`
+and `radius_provider`. Dates retain their original slot indices. Founder
+dictionaries use zero-based dates and consecutive human ranks `1..N`; the wire
+uses zero-based half-open blocks. `track_rolling_panel` requires the explicit
+`('subject', 'feature', 'feature', 'date')` axes declaration for `(K,N,N,T)` and
+never pools subjects. Use the raw JSON route for explicitly missing dates.
+
+The returned `RollingResult` retains canonical `request_json` and `report_json`,
+decoded documented numerical fields, and `records(kind)` for chunk records.
+`plot_window`, `plot_founder`, `plot_spectrum` and `export_html` consume these
+checked records; plotting dependencies are optional and loaded lazily.
+R exposes the canonical analyze/check routes above.
+
+Direct founder comparisons and chains of local agreement are separate records.
+Agreement includes a certified angular upper bound equal to tolerance; this
+does not change the strict displacement comparison in `lineage-summary.v1`.
+See [rolling lineage](rolling-lineage.md) for lenses, masks, block identity,
+predecessors, unresolved outcomes and qualification status.
 
 ## Interpret results under the declared model
 

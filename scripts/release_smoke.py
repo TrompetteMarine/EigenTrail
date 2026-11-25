@@ -1,5 +1,6 @@
 """Exercise an installed package and CLI on one independent constant-path fixture."""
 from fractions import Fraction
+import ast
 from pathlib import Path
 import argparse
 import hashlib
@@ -98,7 +99,25 @@ def command(argv, cwd):
     return {'argv': [str(item) for item in argv], 'exit_code': result.returncode, 'stdout': result.stdout, 'stderr': result.stderr}
 
 
-def environment(expected_machine=None):
+def cpu_policy(profile='source'):
+    path = ROOT / 'python/eigentrail/_cpu_policy.py'
+    constants = {node.targets[0].id: ast.literal_eval(node.value)
+        for node in ast.parse(path.read_text()).body
+        if isinstance(node, ast.Assign) and len(node.targets) == 1
+        and isinstance(node.targets[0], ast.Name)}
+    expected = {'haswell': ('-C target-cpu=haswell', '-march=haswell', 'upstream-inari-avx-fma'),
+                'baseline-sse2': ('-C target-cpu=x86-64', '-march=x86-64', 'inari-r-backport-sse2')}
+    selected = constants['LINUX_CPU_PROFILE']
+    assert selected in expected and (profile == 'source' or profile == selected), 'CPU profile differs from source policy'
+    assert (constants['LINUX_RUSTFLAGS'], constants['LINUX_CFLAGS'],
+            constants['LINUX_NUMERICAL_BACKEND']) == expected[selected], 'Inconsistent backend/build policy'
+    required = set(constants['LINUX_CPU_FLAGS'])
+    assert required and all(isinstance(flag, str) for flag in required)
+    assert selected != 'baseline-sse2' or required == {'sse2'}
+    return constants
+
+
+def environment(expected_machine=None, profile='source'):
     machine = platform.machine().lower()
     if expected_machine: assert machine == expected_machine.lower(), (machine, expected_machine)
     commands = [['uname', '-a'], ['rustc', '-Vv'], ['cargo', '--version'], ['cc', '--version'], ['c++', '--version'], ['R', '--version']]
@@ -109,16 +128,21 @@ def environment(expected_machine=None):
         if shutil.which(argv[0]): records.append(command(argv, ROOT))
     if sys.platform == 'darwin':
         assert all(record['stdout'].strip() != '1' for record in records if record['argv'][-1] == 'sysctl.proc_translated'), 'Rosetta runner is not native ARM64'
-    flags = None
-    if sys.platform.startswith('linux') and expected_machine == 'x86_64':
-        flags = set(next(line.split(':', 1)[1].split() for line in Path('/proc/cpuinfo').read_text().splitlines() if line.startswith('flags')))
-        assert {'avx', 'avx2', 'fma', 'bmi1', 'bmi2', 'f16c', 'sse4_2', 'popcnt', 'xsave'} <= flags
-        assert os.environ.get('RUSTFLAGS') == '-C target-cpu=haswell'
-        for key in ['CFLAGS', 'CXXFLAGS']: assert '-march=haswell' in os.environ.get(key, '')
+    flags, policy = None, None
+    if sys.platform.startswith('linux') and machine == 'x86_64':
+        policy = cpu_policy(profile)
+        processors = [set(line.split(':', 1)[1].split()) for line in Path('/proc/cpuinfo').read_text().splitlines()
+                      if line.partition(':')[0].strip() == 'flags']
+        assert processors and all(set(policy['LINUX_CPU_FLAGS']) <= cpu for cpu in processors), 'CPU policy missing on an eligible CPU'
+        flags = set.intersection(*processors)
+        assert os.environ.get('RUSTFLAGS') == policy['LINUX_RUSTFLAGS']
+        for key in ['CFLAGS', 'CXXFLAGS']:
+            assert policy['LINUX_CFLAGS'] in os.environ.get(key, '').split()
     return {'platform': platform.platform(), 'machine': machine, 'python': sys.version,
         'commands': records, 'cpu_flags': sorted(flags) if flags else None,
+        'linux_cpu_policy': policy,
         'build_flags': {key: os.environ.get(key) for key in ['RUSTFLAGS', 'CFLAGS', 'CXXFLAGS', 'PKG_CFLAGS', 'PKG_CXXFLAGS', 'MACOSX_DEPLOYMENT_TARGET']},
-        'scope': 'Actual runner and explicit compiler flags; a newer CPU is not execution on an actual Haswell processor.'}
+        'scope': 'Actual runner and explicit compiler flags; this record does not establish the minimum hardware or qualify a wheel.'}
 
 
 R_PROBE = '''args <- commandArgs(TRUE);folder <- normalizePath(args[[1]]);lib <- normalizePath(args[[2]])
@@ -144,9 +168,10 @@ def main():
     parser.add_argument('--rscript', default='Rscript')
     parser.add_argument('--environment-only', action='store_true')
     parser.add_argument('--expected-machine')
+    parser.add_argument('--cpu-profile', choices=['source', 'haswell', 'baseline-sse2'], default='source')
     args = parser.parse_args(); folder = args.out.resolve(); folder.mkdir(parents=True, exist_ok=False)
     if args.environment_only:
-        (folder / 'runner.json').write_text(json.dumps(environment(args.expected_machine), indent=2) + '\n')
+        (folder / 'runner.json').write_text(json.dumps(environment(args.expected_machine, args.cpu_profile), indent=2) + '\n')
         return
     assert not folder.is_relative_to(ROOT), 'Installed smoke must run outside checkout'
     os.chdir(folder)

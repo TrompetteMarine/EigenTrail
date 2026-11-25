@@ -1,48 +1,52 @@
 # EigenTrail
 
-EigenTrail tracks covariance eigenvalues and eigenspaces over time with the TRACE
-method. Python, R and Rust interfaces return numerically checked uncertainty
-bounds, persistent associations and continuous-history summaries.
+EigenTrail tracks covariance eigenvalues and eigenspaces with TRACE. Python, R
+and Rust interfaces produce uncertainty bounds, association alternatives and
+independently checked reports.
 
-Version 0.2.0 adds [window and temporal calibration, projector stability and
-SPD geometry](docs/curve-calibration.md), with explicit premises and unresolved
-outcomes. A small [composition example](examples/calibrated-window.py) is included.
-R 0.2.2 corrects build cleanup and linking for CRAN incoming checks, retaining
-the baseline x86-64 support and lower Rust compiler minimum added in R 0.2.1.
-Current source manifests use version 0.2.2; the published Python package and
-the pinned Python/Rust installation commands below remain at 0.2.0.
+Current source stages **0.3.0, an unreleased candidate**. It adds observed-date
+[rolling lineage](docs/rolling-lineage.md), founder reach and optional Python
+plots. It retains explicit missing slots, tied blocks and unresolved outcomes.
+[Candidate notes](docs/releases/v0.3.0.md) describe the new capability and the
+remaining qualification gates. There is no 0.3.0 tag or registry publication.
 
-## Install from GitHub
+The latest published GitHub release remains **v0.2.2** for R maintenance; PyPI
+still distributes Python **0.2.0**. Those earlier releases do not contain the
+rolling additions. Historical release records stay unchanged.
 
-Python and Rust 0.2.0 source installation requires **Rust 1.99.0** and native
-C/C++ build tools. The qualified Python wheel targets macOS ARM64. Their Linux
-source builds require Haswell/x86-64-v3 CPU and operating-system instruction
-support; set `export RUSTFLAGS="-C target-cpu=haswell"` for those builds only.
-Linux binary publication remains held.
+## Install a qualified candidate
 
-For **CPython 3.14**:
+Use only local candidate bytes whose SHA-256 and exact platform tuple have passed
+the candidate receipt. For CPython 3.14 on macOS ARM64, the proposed wheel name is:
 
 ```sh
-python3.14 -m venv .venv
-source .venv/bin/activate
-python -m pip install "eigentrail @ git+https://github.com/TrompetteMarine/EigenTrail.git@v0.2.0#subdirectory=python"
+python -m pip install --only-binary=:all: "./candidate/eigentrail-0.3.0-cp314-cp314-macosx_14_0_arm64.whl[plot]"
 ```
 
-For **R 4.5 or later**, use Cargo and rustc **1.85.1 or later**, a C compiler,
-GNU make and tar with xz support. R supports macOS ARM64/Intel and GNU/Linux
-x86-64 with baseline SSE2; it needs no Haswell build flags:
+For the separately checked source packages:
 
-```r
-install.packages("remotes")
-remotes::install_github("TrompetteMarine/EigenTrail", ref = "v0.2.2",
-                        subdir = "R", upgrade = "never")
+```sh
+python -m pip install "./candidate/eigentrail-0.3.0.tar.gz[plot]"
+R CMD INSTALL ./candidate/eigentrail_0.3.0.tar.gz
 ```
 
-CRAN publication is not yet confirmed; use GitHub source until it is available.
-See [R installation](docs/r-installation.md) for source assets and the conditional
-CRAN route. For Python, Rust and the command-line interface, see
-[installation](docs/installation.md). Release receipts record qualified artifacts
-and the actual status of each distribution channel.
+Built wheels need no Rust toolchain. Python source requires Rust 1.99.0 and
+native C/C++ build tools. R source requires R >=4.5 and Cargo/rustc >=1.85.1,
+a C compiler, GNU make and tar with xz support. The public Linux workspace stages
+a baseline SSE2 interval backend, with generic wheel publication held until its
+native baseline, manylinux and scientific qualification. Windows MSVC/Haswell
+candidates also remain held; source installation needs separate helper-build
+qualification. See [installation](docs/installation.md) for exact CPU/backend
+profiles, earlier published commands and [R installation](docs/r-installation.md).
+
+To install the **earlier published Python 0.2.0** API from PyPI:
+
+```sh
+python -m pip install --only-binary=eigentrail "eigentrail==0.2.0"
+```
+
+CRAN publication is not inferred from a submission confirmation. Its public
+listing and the release receipt determine the R channel status.
 
 ## Track a covariance path
 
@@ -73,7 +77,9 @@ fixed. Missing values are rejected. Near ties, EigenTrail can return a separated
 subspace or an unresolved association instead of forcing an eigenvector identity.
 
 Continue with the [quickstart](docs/quickstart.md), [API guide](docs/api.md),
-[lineage summaries](docs/lineage-summary.md), or [JSON format](docs/serialization.md).
+[lineage summaries](docs/lineage-summary.md),
+[observed-date rolling lineage](docs/rolling-lineage.md), or
+[JSON format](docs/serialization.md).
 Runnable examples are in [examples](examples/).
 
 First-party code is [MIT licensed](LICENSE). Dependency licenses and

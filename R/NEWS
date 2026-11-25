@@ -1,3 +1,18 @@
+Changes in version 0.3.0 (unreleased candidate)
+
+* Add observed-date rolling lineage analysis and independent checking through
+  analyze_rolling_lineage_json() and check_rolling_lineage_json().
+* Compare covariance, precision, correlation and partial-correlation rank groups;
+  retain tied blocks, explicit missing slots and unresolved internal directions.
+* Add founder-specific direct agreement, lag-capped reach, bottleneck bounds
+  and checked predecessor evidence. Angular agreement includes equality;
+  the existing continuous-history lineage motion semantics remain unchanged.
+* Keep point-input numerical enclosures separate from conditional population
+  regions. Statistical statements require the caller's declared joint event
+  and radius provider; unsupported transfers remain explicitly unavailable.
+* Stage coordinated Python/R/Rust version 0.3.0. Native artifact qualification,
+  release approval and registry publication remain separate pending steps.
+
 Changes in version 0.2.2
 
 * Remove package-owned Rust build outputs after successful linking so incoming

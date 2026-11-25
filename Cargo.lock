@@ -114,7 +114,7 @@ checksum = "e1d926b4d407d372f141f93bb444696142c29d32962ccbd3531117cf3aa0bfa9"
 
 [[package]]
 name = "eigentrail-check"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "eigentrail-core",
  "serde",
@@ -124,7 +124,7 @@ dependencies = [
 
 [[package]]
 name = "eigentrail-core"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "faer",
  "inari",
@@ -135,7 +135,7 @@ dependencies = [
 
 [[package]]
 name = "eigentrail-python"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "eigentrail-check",
  "eigentrail-core",
@@ -147,7 +147,7 @@ dependencies = [
 
 [[package]]
 name = "eigentrail-r"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "eigentrail-check",
  "eigentrail-core",
@@ -438,8 +438,6 @@ checksum = "e17592d60ebacc7d5e169f4663c5f84f9161cc90328abcfe8456f41e4dfcb284"
 [[package]]
 name = "inari"
 version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4048200fd855870ab456160b71ebeefdf0d4c70e24e5242513a232cc4beb9f7"
 dependencies = [
  "cfg-if",
  "forward_ref",

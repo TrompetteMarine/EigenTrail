@@ -142,3 +142,80 @@ pub fn acos(x: Interval) -> Result<Interval> {
     finite_domain(x, -1., 1.)?;
     interval(acos_point(x.sup())?.inf(), acos_point(x.inf())?.sup())
 }
+
+fn sinh_cosh_point_nonnegative(x: f64) -> Result<(Interval, Interval)> {
+    let mut reduced = point(x);
+    let mut doublings = 0;
+    while reduced.sup() > 0.5 {
+        reduced /= point(2.);
+        doublings += 1;
+    }
+    let squared = square(reduced);
+    let mut sinh_term = reduced;
+    let mut cosh_term = point(1.);
+    let mut sinh = point(0.);
+    let mut cosh = point(0.);
+    for k in 0..24 {
+        sinh += sinh_term;
+        cosh += cosh_term;
+        sinh_term *= squared / point(((2 * k + 2) * (2 * k + 3)) as f64);
+        cosh_term *= squared / point(((2 * k + 1) * (2 * k + 2)) as f64);
+    }
+    // First omitted terms are r^49/49! and r^48/48!; later ratios only decrease.
+    sinh += interval(
+        0.,
+        upper(sinh_term / (point(1.) - squared / point(50. * 51.)))?,
+    )?;
+    cosh += interval(
+        0.,
+        upper(cosh_term / (point(1.) - squared / point(49. * 50.)))?,
+    )?;
+    for _ in 0..doublings {
+        let next_sinh = point(2.) * sinh * cosh;
+        let next_cosh = square(cosh) + square(sinh);
+        upper(next_sinh)?;
+        upper(next_cosh)?;
+        sinh = next_sinh;
+        cosh = next_cosh;
+    }
+    Ok((sinh, cosh))
+}
+
+/// Positive series with an explicit tail and exact binary range reduction.
+/// Finite nonnegative inputs whose enclosures overflow return `Exhausted`.
+pub fn sinh_cosh_nonnegative(x: Interval) -> Result<(Interval, Interval)> {
+    finite_domain(x, 0., f64::MAX)?;
+    let (lower_sinh, lower_cosh) = sinh_cosh_point_nonnegative(x.inf())?;
+    let (upper_sinh, upper_cosh) = if x.inf() == x.sup() {
+        (lower_sinh, lower_cosh)
+    } else {
+        sinh_cosh_point_nonnegative(x.sup())?
+    };
+    Ok((
+        interval(lower_sinh.inf(), upper_sinh.sup())?,
+        interval(lower_cosh.inf(), upper_cosh.sup())?,
+    ))
+}
+
+/// Outward exp on finite nonnegative inputs; use its reciprocal for exp(-x).
+pub fn exp_nonnegative(x: Interval) -> Result<Interval> {
+    let (sinh, cosh) = sinh_cosh_nonnegative(x)?;
+    let result = sinh + cosh;
+    upper(result)?;
+    Ok(result)
+}
+
+/// Outward tanh on finite nonnegative inputs, retaining its geometric range.
+pub fn tanh_nonnegative(x: Interval) -> Result<Interval> {
+    finite_domain(x, 0., f64::MAX)?;
+    let (lower_sinh, lower_cosh) = sinh_cosh_point_nonnegative(x.inf())?;
+    let (upper_sinh, upper_cosh) = if x.inf() == x.sup() {
+        (lower_sinh, lower_cosh)
+    } else {
+        sinh_cosh_point_nonnegative(x.sup())?
+    };
+    interval(
+        (lower_sinh / lower_cosh).inf().max(0.),
+        (upper_sinh / upper_cosh).sup().min(1.),
+    )
+}

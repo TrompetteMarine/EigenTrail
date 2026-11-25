@@ -38,3 +38,29 @@ The [request examples](../examples/requests/) provide ready-to-use canonical
 inputs. [Gaussian history](../examples/gaussian-history.py) also shows a small
 Python encoder and a display decoder. Saving ordinary `json.dumps` output from a
 decoded report does not preserve its certificate encoding.
+
+## Observed-date rolling lineage (candidate)
+
+`eigentrail.rolling-lineage.v1` is a separate request-bound schema; it does not
+change `lineage-summary.v1` or `histories.v2`. Requests declare subject, feature
+and original date axes, chart, lens/rank masks, lag policy, uncertainty premises,
+threshold in degrees, precision and output projection. Ranks use zero-based
+half-open intervals. Missing slots are tagged, and binary64 values retain the
+canonical finite-bit string encoding. Descriptions beginning with reserved
+prefixes retain the existing string escape.
+
+A report owns ordered typed chunks of date witnesses, partitions, selected view
+and edge records, windows, packed candidate decisions, founders, paths and sparse
+norm witnesses. Request-bound domain-separated SHA-256 chains detect omissions,
+repetitions and order changes; the independent checker additionally reconstructs
+every eligible competitor and its signed decision. Completion binds both graph
+and all-later direct-founder streams. Undefined and unbounded quantities retain
+explicit reasons; `no_route` is a tag. Counts projection omits verbose edge rows,
+not candidate coverage. The report-specific streaming codecs retain strict
+canonical comparison without buffering the whole chunk array as one field.
+
+The numerical recipe intersects the line's dot-product angle with its equivalent
+unit-vector chord enclosure, avoiding square-root loss of precision near zero.
+Independent reconstruction uses retained frame and norm witnesses; it does not
+rerun the producer's rolling decision routine. See [rolling lineage](rolling-lineage.md)
+for fields, cutoff equality, grouping and interpretation.

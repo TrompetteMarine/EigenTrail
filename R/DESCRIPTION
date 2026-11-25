@@ -1,7 +1,7 @@
 Package: eigentrail
 Type: Package
 Title: Checked Covariance Trajectories and Eigenspace Stability
-Version: 0.2.2
+Version: 0.3.0
 Authors@R: c(
     person("Gabriel", "Bontemps", role=c("aut", "cre"), email="gbontemps@protonmail.com"),
     person("Aaron Trent", role="ctb", comment="generic-array"),

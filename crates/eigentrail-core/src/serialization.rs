@@ -139,6 +139,133 @@ pub fn encode_with_cancel<T: Serialize>(record: &T, cancel: &Cancellation) -> Re
         encode::to_vec(record, cancel)
     })
 }
+
+/// Canonical rolling encoding streams its large chunks field through the existing child codec.
+pub fn encode_rolling_report(record: &crate::rolling_lineage::Report) -> Result<Vec<u8>> {
+    encode_rolling_report_with_cancel(record, &Cancellation::default())
+}
+pub fn encode_rolling_report_with_cancel(
+    record: &crate::rolling_lineage::Report,
+    cancel: &Cancellation,
+) -> Result<Vec<u8>> {
+    struct Count(usize);
+    impl encode::Sink for Count {
+        fn write(&mut self, bytes: &[u8]) -> Result<()> {
+            self.0 = self
+                .0
+                .checked_add(bytes.len())
+                .ok_or_else(|| Error::Resource(String::new()))?;
+            Ok(())
+        }
+    }
+    struct Output(Vec<u8>);
+    impl encode::Sink for Output {
+        fn write(&mut self, bytes: &[u8]) -> Result<()> {
+            // Child codec scopes must never allocate or grow this caller-owned buffer.
+            if self
+                .0
+                .len()
+                .checked_add(bytes.len())
+                .is_none_or(|end| end > self.0.capacity())
+            {
+                return Err(Error::Resource(String::new()));
+            }
+            memory::extend(&mut self.0, bytes)
+        }
+    }
+    let limit = memory::active_limit().unwrap_or(crate::resources::DEFAULT_BYTES);
+    memory::ensure_operation(limit, 0, || {
+        cancel.poll()?;
+        let mut count = Count(0);
+        rolling_report_to_sink(record, &mut count, cancel)?;
+        let mut output = Output(memory::capacity(count.0)?);
+        rolling_report_to_sink(record, &mut output, cancel)?;
+        if output.0.len() != count.0 {
+            return Err(Error::Invalid(String::new()));
+        }
+        Ok(output.0)
+    })
+}
+/// Decode a rolling report inside the boundary's shared managed operation.
+/// Canonical comparison streams chunks instead of buffering their complete array.
+pub fn decode_rolling_report_in(
+    bytes: &[u8],
+    cancel: &Cancellation,
+) -> Result<crate::rolling_lineage::Report> {
+    if memory::active_limit().is_none() {
+        return Err(Error::Resource(memory::text(
+            "decoding requires a shared operation",
+        )?));
+    }
+    struct Compare<'a> {
+        bytes: &'a [u8],
+        position: usize,
+    }
+    impl encode::Sink for Compare<'_> {
+        fn write(&mut self, piece: &[u8]) -> Result<()> {
+            let end = self.position.checked_add(piece.len());
+            if end.and_then(|end| self.bytes.get(self.position..end)) != Some(piece) {
+                return Err(Error::Invalid(memory::text(
+                    "noncanonical typed rolling representation",
+                )?));
+            }
+            self.position = end.expect("checked comparison length");
+            Ok(())
+        }
+    }
+    memory::scope(|| {
+        cancel.poll()?;
+        input::validate_package_keys(bytes, cancel)?;
+        let raw: &serde_json::value::RawValue = serde_json::from_slice(bytes).map_err(|_| {
+            memory::text("malformed typed rolling JSON")
+                .map(Error::Invalid)
+                .unwrap_or_else(|error| error)
+        })?;
+        cancel.poll()?;
+        let record = crate::rolling_lineage::Report::from_raw(raw, cancel)?;
+        let mut comparison = Compare { bytes, position: 0 };
+        rolling_report_to_sink(&record, &mut comparison, cancel)?;
+        if comparison.position != bytes.len() {
+            return Err(Error::Invalid(memory::text(
+                "noncanonical typed rolling representation",
+            )?));
+        }
+        cancel.poll()?;
+        Ok(record)
+    })
+}
+fn rolling_report_to_sink(
+    record: &crate::rolling_lineage::Report,
+    output: &mut dyn encode::Sink,
+    cancel: &Cancellation,
+) -> Result<()> {
+    cancel.poll()?;
+    output.write(b"{\"chunks\":[")?;
+    for (index, chunk) in record.chunks.iter().enumerate() {
+        cancel.poll()?;
+        if index > 0 {
+            output.write(b",")?;
+        }
+        encode::to_sink(chunk, output, cancel)?;
+    }
+    output.write(b"]")?;
+    macro_rules! field {
+        ($name:literal,$value:expr) => {{
+            output.write(concat!(",\"", $name, "\":").as_bytes())?;
+            encode::to_sink($value, output, cancel)?;
+        }};
+    }
+    // Exact sorted order of Report remaining fields; child value rules are unchanged.
+    field!("completion", &record.completion);
+    field!("managed_reservation", &record.managed_reservation);
+    field!("protocol", &record.protocol);
+    field!("request_hash", &record.request_hash);
+    field!("resource_qualification", &record.resource_qualification);
+    field!("schema", &record.schema);
+    field!("scope", &record.scope);
+    output.write(b"}")?;
+    cancel.poll()
+}
 pub fn decode<T: DeserializeOwned + Serialize>(bytes: &[u8]) -> Result<T> {
     decode_with_cancel(bytes, &Cancellation::default())
 }

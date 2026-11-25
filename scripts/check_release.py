@@ -41,6 +41,23 @@ def contacts(values):
     return [(entry.get('name'),entry.get('email')) for entry in values]
 
 
+def requirement(value):
+    body,_,marker=value.partition(';')
+    body=re.sub(r'[ ()]','',body).lower()
+    matched=re.fullmatch(r'([a-z][a-z0-9_.-]*)(.*)',body)
+    require(matched is not None,'Malformed dependency requirement')
+    versions=tuple(sorted(matched[2].split(',')))
+    marker=re.sub(r'\s','',marker).replace("'",'"').lower()
+    return matched[1],versions,marker
+
+
+def dependencies(project):
+    require(project.get('dependencies')==['numpy>=2.3,<3'],'Changed supported NumPy requirement')
+    require(project.get('optional-dependencies')=={'plot':['matplotlib>=3.10,<4']},'Declare only the supported optional plot dependency')
+    return sorted([requirement(project['dependencies'][0]),
+                   requirement(project['optional-dependencies']['plot'][0]+'; extra == "plot"')])
+
+
 def core_metadata(data,project):
     require(len(data)<=2*1024**2,'Metadata exceeds2MiB')
     metadata=BytesParser(policy=default).parsebytes(data)
@@ -54,8 +71,9 @@ def core_metadata(data,project):
     require(isinstance(body,bytes) and body.decode('utf-8').strip()==readme(project),'Artifact long description differs from the Python project')
     requires=set(metadata.get('Requires-Python','').replace(' ','').split(','))
     require(requires=={'>=3.14','<3.15'},'Artifact advertises an unqualified Python version')
-    dependencies=[re.sub(r'[ ()]','',value).lower() for value in metadata.get_all('Requires-Dist',[])]
-    require(len(dependencies)==1 and dependencies[0].startswith('numpy') and set(dependencies[0][5:].split(','))=={'>=2.3','<3'},'Changed artifact NumPy dependency')
+    declared=sorted(requirement(value) for value in metadata.get_all('Requires-Dist',[]))
+    require(declared==dependencies(project),'Changed artifact base/optional dependency declarations')
+    require(metadata.get_all('Provides-Extra',[])==['plot'],'Changed artifact optional extras')
     require(CLASSIFIERS<=set(metadata.get_all('Classifier',[])),'Missing native CPython3.14 classifiers')
     urls=dict(value.split(',',1) for value in metadata.get_all('Project-URL',[]))
     require({key:value.strip() for key,value in urls.items()}==project['urls'],'Changed artifact project URLs')
@@ -103,7 +121,7 @@ def check_release(root,artifacts=()):
     require(workspace.get('repository')==REPOSITORY,'Missing canonical Rust repository URL')
     require(project['license']=='MIT' and project['license-files']==['LICENSE'] and (root/'python/LICENSE').is_file(),'Missing first-party Python license')
     require(project['requires-python']=='>=3.14,<3.15','Declare only qualified CPython3.14 support')
-    require(project['dependencies']==['numpy>=2.3,<3'],'Changed supported NumPy requirement')
+    dependencies(project)
     classifiers=set(project.get('classifiers',[]))
     require(CLASSIFIERS<=classifiers and 'Operating System :: OS Independent' not in classifiers,'Unqualified platform classifiers')
     require(bool(project['description'].strip()),'Missing package description')

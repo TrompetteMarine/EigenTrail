@@ -1,4 +1,4 @@
-//! Shared native worker ownership; storage remains charged until the thread joins.
+//! Shared native worker ownership; heap storage remains charged until the thread joins.
 use super::{
     Cancellation,
     memory::{Guard, HeapBytes, Managed, Operation},
@@ -26,9 +26,8 @@ impl<'scope, T: Send + HeapBytes + 'scope> Worker<'scope, T> {
         operation: &Operation,
         work: impl FnOnce(Cancellation) -> Result<T> + Send + 'scope,
     ) -> Result<Self> {
-        let bytes = STACK_BYTES
-            .checked_add(CONTROL_BYTES)
-            .and_then(|n| n.checked_add(std::mem::size_of_val(&work)))
+        let bytes = CONTROL_BYTES
+            .checked_add(std::mem::size_of_val(&work))
             .and_then(|n| n.checked_add(std::mem::size_of::<T>()))
             .ok_or_else(|| Error::Resource("worker storage overflow".into()))?;
         let storage = operation.external(bytes)?;
@@ -71,5 +70,22 @@ impl<T> Drop for Worker<'_, T> {
             // A panicked worker is reported by the disconnected receiver as incomplete.
             let _ = handle.join();
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fixed_thread_stack_does_not_consume_managed_heap_budget() {
+        let operation = Operation::new(1024 * 1024).unwrap();
+        std::thread::scope(|scope| {
+            let worker = Worker::spawn(scope, &operation, |_| Ok(())).unwrap();
+            worker
+                .recv_timeout(Duration::from_secs(1))
+                .unwrap()
+                .unwrap();
+        });
     }
 }
