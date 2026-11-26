@@ -1,4 +1,4 @@
-Changes in version 0.3.0 (unreleased candidate)
+Changes in version 0.3.0
 
 * Add observed-date rolling lineage analysis and independent checking through
   analyze_rolling_lineage_json() and check_rolling_lineage_json().
@@ -10,8 +10,6 @@ Changes in version 0.3.0 (unreleased candidate)
 * Keep point-input numerical enclosures separate from conditional population
   regions. Statistical statements require the caller's declared joint event
   and radius provider; unsupported transfers remain explicitly unavailable.
-* Stage coordinated Python/R/Rust version 0.3.0. Native artifact qualification,
-  release approval and registry publication remain separate pending steps.
 
 Changes in version 0.2.2
 
