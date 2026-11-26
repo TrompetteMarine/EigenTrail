@@ -277,7 +277,7 @@ jobs:
           $installation = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           if (-not $installation) { throw 'Native MSVC toolchain missing' }
           $vcvars = Join-Path $installation 'VC\Auxiliary\Build\vcvars64.bat'
-          $settings = & $env:COMSPEC /d /s /c ('""{0}" >nul && set PATH && set INCLUDE && set LIB"' -f $vcvars)
+          $settings = & $env:COMSPEC /d /s /c "call `"$vcvars`" >nul && set PATH && set INCLUDE && set LIB"
           if ($LASTEXITCODE) { throw 'MSVC initialization failed' }
           foreach ($line in $settings) {
             if ($line -match '^(PATH|INCLUDE|LIB|LIBPATH)=(.*)$') { Add-Content -Path $env:GITHUB_ENV -Value $line }
