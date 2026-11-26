@@ -5,6 +5,7 @@ import hashlib
 import io
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -46,7 +47,11 @@ def write_wheel(path, tags, extra=b''):
 BAD_WHEELS = [(['cp314-cp314-macosx_14_0_universal2'], b'', 'declares wheel tags'),
               (['cp314-cp314-macosx_14_0_x86_64', 'cp314-cp314-macosx_14_0_arm64'], b'', 'declares wheel tags'),
               (['cp314-cp314-macosx_14_0_arm64'], b'tag: cp314-cp314-macosx_14_0_universal2\n', 'declares wheel tags'),
-              (['cp314-cp314-macosx_14_0_arm64'], b'Generator: \xff\n', 'not UTF-8')]  # pip refuses these too.
+              (['cp314-cp314-macosx_14_0_arm64'], b'Generator: \xff\n', 'not UTF-8'),  # pip refuses these too.
+              # Unicode padding that str.strip() removes: the tag must be the expected one byte for byte.
+              (['cp314-cp314-macosx_14_0_arm64 '], b'', 'declares wheel tags'),
+              ([' cp314-cp314-macosx_14_0_arm64'], b'', 'declares wheel tags'),
+              (['cp314-cp314-macosx_14_0_arm64　'], b'', 'declares wheel tags')]
 
 
 def write_sdist(path, text='source', level=9):
@@ -151,6 +156,7 @@ class CreateTests(Fixture):
         (mac / UNIVERSAL2).rename(mac / WHEEL)
         for tags, extra, error in BAD_WHEELS:
             with self.subTest(tags=tags, extra=extra):
+                shutil.rmtree(self.bundle, ignore_errors=True)  # A wrongly accepted case must not mask the next.
                 write_wheel(mac / WHEEL, tags, extra)
                 self.rejects(error, self.create)
 
@@ -542,6 +548,82 @@ class PublishShellTests(unittest.TestCase):
         (self.release / 'extra.txt').unlink()
         (self.release / 'Bravo.whl').unlink()
         self.assertNotEqual(self.run_block().returncode, 0)
+
+
+# How both publish-pypi.yml jobs peel the release tag; each job sets tag_repo to its own clone.
+TAG_PEEL = ('git -C "$tag_repo" fetch --quiet --no-tags origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"',
+            '[[ "$(git -C "$tag_repo" rev-parse --verify --quiet "refs/tags/$RELEASE_TAG^{commit}")" == "$EXPECTED_SHA" ]]')
+
+
+def workflow_tag_peel_blocks():
+    """The tag-peeling lines of each publish-pypi.yml job, in workflow order (verify, then publish)."""
+    lines = [line.strip() for line in PUBLISH_WORKFLOW.read_text().splitlines()]
+    return [tuple(lines[i:i + 2]) for i, line in enumerate(lines) if line.startswith('git -C "$tag_repo" fetch')]
+
+
+@unittest.skipUnless(shutil.which('git') and shutil.which('bash'), 'needs git and bash')
+class TagPeelTests(unittest.TestCase):
+    """Both jobs peel the release tag identically, through any depth of annotated tags."""
+
+    DEPTH = 24  # Deeper than the 16-level API walk the publish job used to stop at.
+
+    def setUp(self):
+        folder = tempfile.TemporaryDirectory()
+        self.addCleanup(folder.cleanup)
+        self.tmp = Path(folder.name)
+        # A private HOME and no system config: the user's git settings (tag signing, hooks) stay out.
+        self.env = {**os.environ, 'HOME': str(self.tmp), 'GIT_CONFIG_NOSYSTEM': '1',
+                    'GIT_AUTHOR_NAME': 'tag test', 'GIT_AUTHOR_EMAIL': 'tag-test@example.invalid',
+                    'GIT_COMMITTER_NAME': 'tag test', 'GIT_COMMITTER_EMAIL': 'tag-test@example.invalid'}
+        self.origin = self.tmp / 'origin'
+        self.git('init', '-q', '-b', 'main', str(self.origin))
+        self.git('-C', str(self.origin), 'commit', '-q', '--allow-empty', '-m', 'expected')
+        self.expected = self.git('-C', str(self.origin), 'rev-parse', 'HEAD')
+        self.git('-C', str(self.origin), 'commit', '-q', '--allow-empty', '-m', 'elsewhere')
+        self.elsewhere = self.git('-C', str(self.origin), 'rev-parse', 'HEAD')
+        self.chain('v1.0.0', self.expected)
+        self.chain('v2.0.0', self.elsewhere)
+        tree = self.git('-C', str(self.origin), 'rev-parse', 'HEAD^{tree}')
+        self.git('-C', str(self.origin), 'tag', '-a', '-m', 'not a commit', 'v3.0.0', tree)
+        self.repos = 0
+
+    def git(self, *args):
+        return subprocess.run(['git', *args], check=True, capture_output=True, text=True, env=self.env).stdout.strip()
+
+    def chain(self, name, target):
+        """An annotated tag of an annotated tag of ... DEPTH levels, ending at target."""
+        previous = target
+        for level in range(self.DEPTH - 1):
+            self.git('-C', str(self.origin), 'tag', '-a', '-m', f'{name} level {level}', f'{name}-{level}', previous)
+            previous = f'{name}-{level}'
+        self.git('-C', str(self.origin), 'tag', '-a', '-m', name, name, previous)
+
+    def peel(self, block, tag):
+        """Run one job's peeling lines in a fresh clone whose origin holds the tags."""
+        self.repos += 1
+        repo = self.tmp / f'clone-{self.repos}'
+        self.git('init', '-q', '--bare', str(repo))
+        self.git('-C', str(repo), 'remote', 'add', 'origin', str(self.origin))
+        script = f'tag_repo={shlex.quote(str(repo))}\n' + '\n'.join(block) + '\n'
+        return subprocess.run(['bash', '--noprofile', '--norc', '-eo', 'pipefail', '-c', script],
+                              env={**self.env, 'RELEASE_TAG': tag, 'EXPECTED_SHA': self.expected},
+                              capture_output=True, text=True)
+
+    def test_both_jobs_peel_with_the_same_commands(self):
+        self.assertEqual(workflow_tag_peel_blocks(), [TAG_PEEL, TAG_PEEL])
+
+    def test_deep_chain_to_the_expected_commit_is_accepted_by_both_jobs(self):
+        self.assertEqual(self.git('-C', str(self.origin), 'rev-parse', 'v1.0.0^{commit}'), self.expected)
+        for job, block in zip(('verify', 'publish'), workflow_tag_peel_blocks()):
+            with self.subTest(job=job):
+                result = self.peel(block, 'v1.0.0')
+                self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_deep_chain_elsewhere_and_non_commit_tags_are_refused_by_both_jobs(self):
+        for job, block in zip(('verify', 'publish'), workflow_tag_peel_blocks()):
+            for tag in ('v2.0.0', 'v3.0.0', 'v9.9.9'):  # Another commit, a tree, no such tag.
+                with self.subTest(job=job, tag=tag):
+                    self.assertNotEqual(self.peel(block, tag).returncode, 0)
 
 
 if __name__ == '__main__':

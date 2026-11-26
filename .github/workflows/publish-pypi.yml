@@ -84,8 +84,11 @@ jobs:
           # the pipe with SIGPIPE.)
           git rev-list --first-parent HEAD | grep -Fx "$EXPECTED_SHA" > /dev/null
           [[ "$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" --jq '.draft == false and .prerelease == false')" == true ]]
-          git -C candidate fetch origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
-          [[ "$(git -C candidate rev-parse "$RELEASE_TAG^{commit}")" == "$EXPECTED_SHA" ]]
+          # Both jobs peel the tag with these same two git commands: any depth of annotated
+          # tags, down to a commit, as ^{commit} does.
+          tag_repo=candidate
+          git -C "$tag_repo" fetch --quiet --no-tags origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+          [[ "$(git -C "$tag_repo" rev-parse --verify --quiet "refs/tags/$RELEASE_TAG^{commit}")" == "$EXPECTED_SHA" ]]
           [[ "$(git -C candidate rev-parse HEAD)" == "$EXPECTED_SHA" ]]
           gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release-validation.yml" > "$RUNNER_TEMP/validation-workflow.json"
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$VALIDATION_RUN_ID" > "$RUNNER_TEMP/validation-run.json"
@@ -141,18 +144,16 @@ jobs:
           [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
           [[ "$RELEASE_INVENTORY_SHA256" =~ ^[0-9a-f]{64}$ ]]
           [[ "$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" --jq '.draft == false and .prerelease == false')" == true ]]
-          object=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq '.object.type + " " + .object.sha')
-          for _ in {1..16}; do  # Peel annotated tags as git's ^{commit} does.
-            [[ "$object" == tag\ * ]] || break
-            object=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/${object#tag }" --jq '.object.type + " " + .object.sha')
-          done
-          [[ "$object" == "commit $EXPECTED_SHA" ]]
           # main may have moved or been rewound while approval was pending: the tagged
           # commit must still be on its first-parent line. A bare, treeless clone reads
-          # only main's commit graph; nothing is checked out or run.
+          # only main's commit graph and the tag; nothing is checked out or run.
           git clone --quiet --bare --filter=tree:0 --single-branch --branch main --no-tags \
             "https://github.com/$GITHUB_REPOSITORY.git" "$RUNNER_TEMP/main-history"
           git -C "$RUNNER_TEMP/main-history" rev-list --first-parent refs/heads/main | grep -Fx "$EXPECTED_SHA" > /dev/null
+          # The tag must still name the commit, peeled with the same two commands as in verify.
+          tag_repo="$RUNNER_TEMP/main-history"
+          git -C "$tag_repo" fetch --quiet --no-tags origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+          [[ "$(git -C "$tag_repo" rev-parse --verify --quiet "refs/tags/$RELEASE_TAG^{commit}")" == "$EXPECTED_SHA" ]]
           # A release changed while approval was pending stops the upload: every asset, by
           # name and content, must be what verify checked. Hash literal ./name paths, so an
           # asset named "-" is not read from stdin.

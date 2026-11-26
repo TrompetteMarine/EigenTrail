@@ -93,7 +93,9 @@ def check_wheel_tags(path, platform):
     """Reject universal2 and multi-platform wheels whatever the file is called.
 
     Read WHEEL as pip does: strict UTF-8, then the email parser, so header names
-    are case-insensitive.
+    are case-insensitive. Strip only the ASCII blanks a header value can carry:
+    str.strip() would also drop U+00A0 and other Unicode spaces, accepting a tag
+    that is not byte-for-byte the expected one.
     """
     with zipfile.ZipFile(path) as archive:
         records = [n for n in archive.namelist() if n.count('/') == 1 and n.endswith('.dist-info/WHEEL')]
@@ -104,7 +106,7 @@ def check_wheel_tags(path, platform):
         text = data.decode('utf-8')
     except UnicodeDecodeError:
         raise ValueError(f'{path.name} WHEEL record is not UTF-8') from None
-    tags = [str(tag).strip() for tag in Parser().parsestr(text).get_all('Tag', [])]
+    tags = [str(tag).strip(' \t\r\n') for tag in Parser().parsestr(text).get_all('Tag', [])]
     require(tags == [f'{PYTHON_TAG}-{PLATFORMS[platform]}'], f'{path.name} declares wheel tags {tags}')
 
 
