@@ -1,471 +1,78 @@
-name: Package installation checks
-
-# Artifact validation only. Publishing requires a separate explicitly approved
-# workflow with a protected environment; this job has no registry credentials.
-# After the native platforms pass, the bundle job binds the exact sdist and all
-# three platform wheels to this commit and run as the release-bundle artifact, the
-# only bytes publish-pypi.yml accepts.
-on:
-  workflow_dispatch:
-    inputs:
-      expected_sha:
-        description: Exact staged commit to qualify
-        required: true
-        type: string
-
+name: Verify Python 0.3.0 installations from production PyPI
+on: workflow_dispatch
 permissions:
   contents: read
-
-concurrency:
-  group: release-validation-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
-  native:
-    name: ${{ matrix.os }} / ${{ matrix.machine }}
+  install:
+    name: PyPI / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: macos-15
-            machine: arm64
-            python_arch: arm64
-            rustflags: ''
-            cflags: ''
-            deployment_target: '14.0'
-            cpu_profile: source
+            wheel: eigentrail-0.3.0-cp314-cp314-macosx_14_0_arm64.whl
+            sha256: 0f8bcf3e451978d6ff78f1906205f5801ee11e9416360641b91d301cd099191b
           - os: ubuntu-24.04
-            machine: x86_64
-            python_arch: x64
-            rustflags: '-C target-cpu=x86-64'
-            cflags: '-march=x86-64 -mtune=generic'
-            deployment_target: ''
-            cpu_profile: baseline-sse2
-    env:
-      CARGO_BUILD_JOBS: '2'
-      CARGO_INCREMENTAL: '0'
-      RUSTFLAGS: ${{ matrix.rustflags }}
-      CFLAGS: ${{ matrix.cflags }}
-      CXXFLAGS: ${{ matrix.cflags }}
-      PKG_CFLAGS: ${{ matrix.cflags }}
-      PKG_CXXFLAGS: ${{ matrix.cflags }}
-      MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
-      PIP_DISABLE_PIP_VERSION_CHECK: '1'
-      MATURIN_NO_INSTALL_RUST: '1'
-      MATURIN_PEP517_ARGS: '--locked --offline'
-    defaults:
-      run:
-        shell: bash
+            wheel: eigentrail-0.3.0-cp314-cp314-manylinux_2_28_x86_64.whl
+            sha256: 69304db09df3d367bfd4531f235b4bdf36d38c83b07a3ff6e71f393e23495827
+          - os: windows-2022
+            wheel: eigentrail-0.3.0-cp314-cp314-win_amd64.whl
+            sha256: 80218defe00bd1574b02246f6442773d7c3ca6f4de8142fb05927f31d092522e
     steps:
-      - name: Require the exact staged workflow commit
-        env:
-          EXPECTED_SHA: ${{ inputs.expected_sha }}
-        run: |
-          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
-          [[ "$GITHUB_SHA" == "$EXPECTED_SHA" ]]
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
+          ref: 778634ab999b4119230d59c602c0d8a0cc473c8f
           persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
           python-version: '3.14'
-          architecture: ${{ matrix.python_arch }}
-      - uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2.14.0
-        with:
-          r-version: '4.6.2'
-          use-public-rspm: false
-      - name: Native build prerequisites
+      - name: Install published wheel and run the released example outside checkout
+        shell: python
+        env:
+          WHEEL_FILE: ${{ matrix.wheel }}
+          WHEEL_SHA256: ${{ matrix.sha256 }}
+          MPLBACKEND: Agg
         run: |
-          export CARGO_TARGET_DIR="$RUNNER_TEMP/eigentrail-target"
-          printf 'CARGO_TARGET_DIR=%s\n' "$CARGO_TARGET_DIR" >> "$GITHUB_ENV"
-          if [[ "$RUNNER_OS" == Linux ]]; then
-            sudo apt-get update
-            sudo apt-get install --yes --no-install-recommends build-essential m4 pkg-config xz-utils devscripts
-          else
-            brew install m4 make checkbashisms
-          fi
-          rustup toolchain install 1.99.0 --profile minimal --component rustfmt,clippy
-          rustup default 1.99.0
-          mkdir -p artifacts/python artifacts/raw artifacts/r "$RUNNER_TEMP/eigentrail-wheelhouse"
-          python -m pip download --only-binary=:all: --requirement python/requirements-build.txt --dest "$RUNNER_TEMP/eigentrail-wheelhouse"
-          python -m pip install --no-index --find-links "$RUNNER_TEMP/eigentrail-wheelhouse" --requirement python/requirements-build.txt
-          cargo fetch --locked
-      - name: Record actual native runner, CPU and compilers
-        run: |
-          python scripts/release_smoke.py --environment-only --expected-machine '${{ matrix.machine }}' --cpu-profile '${{ matrix.cpu_profile }}' --out artifacts/runner
-          git rev-parse HEAD > artifacts/source-commit.txt
-          if [[ "$RUNNER_OS" == Linux ]]; then
-            python - <<'PY'
           import json
+          import os
           from pathlib import Path
-          Path('artifacts/linux-candidate.json').write_text(json.dumps({
-              'schema': 'eigentrail.linux-candidate.v1', 'candidate_only': True,
-              'backend': 'inari-r-backport-sse2', 'cpu_floor': 'x86-64-v1',
-              'publication': 'held',
-              'remaining': 'Native x86-64-v1 execution, independent endpoint controls, exact-wheel private scientific replay, and external shared-library inspection'}, indent=2))
-          PY
-          fi
-      - name: Check package sources and build CLI
-        run: |
-          set -o pipefail
-          cargo fmt --all -- --check
-          cargo clippy --locked --lib --bins -- -D warnings
-          cargo clippy --locked -p eigentrail-python --lib -- -D warnings
-          python scripts/check_r_sources.py
-          python scripts/check_release.py > artifacts/source-metadata.json
-          python scripts/test_python_cpu_guard.py
-          python scripts/test_windows_cpu_guard.py
-          python scripts/test_qualified_artifacts.py
-          python scripts/test_release_bundle.py
-          cargo test --release --locked --lib --bins -- --test-threads=1 2>&1 | tee artifacts/rust-tests.log
-          cargo install --offline --locked --path crates/eigentrail-check --root "$RUNNER_TEMP/eigentrail-cli"
-      - name: Upstream registry packaging smoke without publishing
-        run: |
-          set -o pipefail
-          # Normalised registry manifests do not retain the workspace-only fork patch.
-          # This separate compile is not baseline native-artifact qualification.
-          if [[ "$RUNNER_OS" == Linux ]]; then
-            RUSTFLAGS='-C target-cpu=haswell' cargo publish --dry-run --locked -p eigentrail-core -p eigentrail-check 2>&1 | tee artifacts/cargo-dry-run.log
-          else
-            cargo publish --dry-run --locked -p eigentrail-core -p eigentrail-check 2>&1 | tee artifacts/cargo-dry-run.log
-          fi
-          cargo package --locked --offline --no-verify -p eigentrail-core -p eigentrail-check
-          mkdir -p artifacts/cargo
-          cp "$CARGO_TARGET_DIR"/package/eigentrail-{core,check}-*.crate artifacts/cargo/
-      - name: Build Linux manylinux 2.28 wheel
-        if: matrix.os == 'ubuntu-24.04'
-        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
-        with:
-          command: build
-          working-directory: python
-          target: x86_64-unknown-linux-gnu
-          manylinux: 2_28
-          rust-toolchain: 1.99.0
-          maturin-version: v1.9.6
-          args: --release --locked --out ../artifacts/python --interpreter python3.14
-          docker-options: -e CARGO_BUILD_JOBS -e CARGO_INCREMENTAL -e RUSTFLAGS -e CFLAGS -e CXXFLAGS -e PKG_CFLAGS -e PKG_CXXFLAGS
-      - name: Build macOS wheel
-        if: matrix.os == 'macos-15'
-        run: |
-          (cd python && python -m maturin build --release --locked --out ../artifacts/python --interpreter python)
-      - name: Build and stage the Python source distribution
-        run: |
-          (cd python && python -m maturin sdist --out ../artifacts/raw)
-          raw=(artifacts/raw/eigentrail-*.tar.gz)
-          [[ ${#raw[@]} -eq 1 ]]
-          python scripts/stage_python_sdist.py "${raw[0]}" "artifacts/python/$(basename "${raw[0]}")"
-          wheels=(artifacts/python/*.whl)
-          [[ ${#wheels[@]} -eq 1 ]]
-          python scripts/check_release.py --artifact "${wheels[0]}" --artifact "artifacts/python/$(basename "${raw[0]}")" > artifacts/python/metadata-check.json
-          # Every package and licence member must be the committed bytes of its source.
-          python scripts/release_bundle.py sources --root . --wheel "${wheels[0]}" --platform '${{ matrix.os }}-${{ matrix.machine }}' > artifacts/python/source-bytes.json
-          # Keep the built bytes; staging later requires every smoke test to have used them.
-          mkdir "$RUNNER_TEMP/release-candidate"
-          cp -- "${wheels[0]}" "artifacts/python/$(basename "${raw[0]}")" "$RUNNER_TEMP/release-candidate/"
-      - name: Install wheel outside checkout and run smoke
-        run: |
-          python -m venv "$RUNNER_TEMP/eigentrail-wheel"
-          wheels=(artifacts/python/*.whl)
-          [[ ${#wheels[@]} -eq 1 ]]
-          "$RUNNER_TEMP/eigentrail-wheel/bin/python" -m pip install --no-index --find-links "$RUNNER_TEMP/eigentrail-wheelhouse" "${wheels[0]}"
-          "$RUNNER_TEMP/eigentrail-wheel/bin/python" -I scripts/release_smoke.py --cli "$RUNNER_TEMP/eigentrail-cli/bin/eigentrail-check" --out "$RUNNER_TEMP/eigentrail-smoke-wheel"
-          "$RUNNER_TEMP/eigentrail-wheel/bin/python" -I examples/gaussian-history.py
-          "$RUNNER_TEMP/eigentrail-wheel/bin/python" -I examples/lineage-summary.py
-          python scripts/test_rolling_public.py --python "$RUNNER_TEMP/eigentrail-wheel/bin/python" --cli "$RUNNER_TEMP/eigentrail-cli/bin/eigentrail-check" --out "$RUNNER_TEMP/eigentrail-smoke-rolling"
-      - name: Build and install source distribution outside checkout
-        env:
-          CARGO_NET_OFFLINE: 'true'
-          PIP_NO_CACHE_DIR: '1'
-        run: |
-          python -m venv "$RUNNER_TEMP/eigentrail-source"
-          sources=(artifacts/python/eigentrail-*.tar.gz)
-          [[ ${#sources[@]} -eq 1 ]]
-          "$RUNNER_TEMP/eigentrail-source/bin/python" -m pip install --no-index --find-links "$RUNNER_TEMP/eigentrail-wheelhouse" "${sources[0]}"
-          "$RUNNER_TEMP/eigentrail-source/bin/python" -I scripts/release_smoke.py --cli "$RUNNER_TEMP/eigentrail-cli/bin/eigentrail-check" --out "$RUNNER_TEMP/eigentrail-smoke-source"
-      - name: Install Python directly from GitHub
-        run: |
-          python -m venv "$RUNNER_TEMP/eigentrail-github-python"
-          "$RUNNER_TEMP/eigentrail-github-python/bin/python" -m pip install --no-index --find-links "$RUNNER_TEMP/eigentrail-wheelhouse" "eigentrail @ git+https://github.com/TrompetteMarine/EigenTrail.git@${{ github.sha }}#subdirectory=python"
-          "$RUNNER_TEMP/eigentrail-github-python/bin/python" -I scripts/release_smoke.py --cli "$RUNNER_TEMP/eigentrail-cli/bin/eigentrail-check" --out "$RUNNER_TEMP/eigentrail-smoke-github-python"
-      - name: Build, install and check R source
-        env:
-          CARGO_NET_OFFLINE: 'true'
-        run: |
-          unset RUSTFLAGS CFLAGS CXXFLAGS PKG_CFLAGS PKG_CXXFLAGS
-          stage="$GITHUB_WORKSPACE/R"
-          mkdir -p "$RUNNER_TEMP/eigentrail-r-library"
-          (cd artifacts/r && R CMD build --no-manual --no-build-vignettes "$stage")
-          sources=(artifacts/r/eigentrail_*.tar.gz)
-          [[ ${#sources[@]} -eq 1 ]]
-          R CMD INSTALL --use-vanilla --library="$RUNNER_TEMP/eigentrail-r-library" "${sources[0]}"
-          source="$(cd artifacts/r && pwd)/$(basename "${sources[0]}")"
-          (cd artifacts/r && R CMD check --as-cran --no-manual "$source")
-          "$RUNNER_TEMP/eigentrail-wheel/bin/python" -I scripts/release_smoke.py --cli "$RUNNER_TEMP/eigentrail-cli/bin/eigentrail-check" --r-library "$RUNNER_TEMP/eigentrail-r-library" --out "$RUNNER_TEMP/eigentrail-smoke-r"
-      - name: Install R directly from GitHub
-        env:
-          GITHUB_PAT: ${{ github.token }}
-        run: |
-          unset RUSTFLAGS CFLAGS CXXFLAGS PKG_CFLAGS PKG_CXXFLAGS
-          Rscript --vanilla -e 'install.packages("remotes", repos="https://cloud.r-project.org")'
-          mkdir -p "$RUNNER_TEMP/eigentrail-github-r"
-          EIGENTRAIL_R_LIBRARY="$RUNNER_TEMP/eigentrail-github-r" Rscript --vanilla -e 'remotes::install_github("TrompetteMarine/EigenTrail", ref=Sys.getenv("GITHUB_SHA"), subdir="R", upgrade="never", lib=Sys.getenv("EIGENTRAIL_R_LIBRARY"))'
-          "$RUNNER_TEMP/eigentrail-wheel/bin/python" -I scripts/release_smoke.py --cli "$RUNNER_TEMP/eigentrail-cli/bin/eigentrail-check" --r-library "$RUNNER_TEMP/eigentrail-github-r" --out "$RUNNER_TEMP/eigentrail-smoke-github-r"
-      - name: Record candidate artifact identities
-        run: |
-          git rev-parse 'HEAD^{tree}' > artifacts/source-tree.txt
-          python - <<'PY'
-          import hashlib
-          from pathlib import Path
-          root = Path('artifacts')
-          packages = sorted(p for p in root.rglob('*') if p.is_file() and
-                            (p.name.endswith('.whl') or p.name.endswith('.tar.gz')))
-          (root / 'SHA256SUMS').write_text(''.join(
-              f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(root)}\n'
-              for p in packages))
-          PY
-      - name: Stage this platform's release candidate
-        run: |
-          candidate="$RUNNER_TEMP/release-candidate"
-          built=("$candidate"/*)
-          tested=(artifacts/python/*.whl artifacts/python/*.tar.gz)
-          # Plain test commands: the macOS runner's /bin/bash 3.2 does not stop on a failed [[ ]].
-          test "${#built[@]}" -eq 2
-          test "${#tested[@]}" -eq 2
-          for file in "${tested[@]}"; do cmp -- "$file" "$candidate/$(basename "$file")"; done
-          cp artifacts/source-commit.txt artifacts/source-tree.txt "$candidate/"
-      - name: Upload this platform's release candidate
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: candidate-${{ matrix.os }}-${{ matrix.machine }}
-          retention-days: 90
-          if-no-files-found: error
-          path: ${{ runner.temp }}/release-candidate/
-      - name: Upload candidate artifacts and actual logs
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: validation-${{ matrix.os }}-${{ matrix.machine }}
-          retention-days: 30
-          if-no-files-found: warn
-          path: |
-            artifacts/
-            ${{ runner.temp }}/eigentrail-smoke-wheel/
-            ${{ runner.temp }}/eigentrail-smoke-source/
-            ${{ runner.temp }}/eigentrail-smoke-r/
-            ${{ runner.temp }}/eigentrail-smoke-github-python/
-            ${{ runner.temp }}/eigentrail-smoke-github-r/
-            ${{ runner.temp }}/eigentrail-smoke-rolling/
+          import subprocess
+          import sys
+          import tempfile
+          from urllib.parse import urlsplit
 
-  windows-candidate:
-    name: Windows x86-64 MSVC / Haswell candidate only
-    runs-on: windows-2022
-    timeout-minutes: 60
-    permissions:
-      contents: read
-    env:
-      CARGO_BUILD_JOBS: '2'
-      CARGO_INCREMENTAL: '0'
-      RUSTFLAGS: '-C target-cpu=haswell'
-      PIP_DISABLE_PIP_VERSION_CHECK: '1'
-      MATURIN_NO_INSTALL_RUST: '1'
-      EXPECTED_SHA: ${{ inputs.expected_sha }}
-      MPLBACKEND: Agg
-    defaults:
-      run:
-        shell: pwsh
-    steps:
-      - name: Require the exact candidate workflow commit
-        run: |
-          if ($env:EXPECTED_SHA -notmatch '^[0-9a-f]{40}$' -or $env:GITHUB_SHA -ne $env:EXPECTED_SHA) { throw 'Exact candidate commit required' }
-      # Windows runners default to core.autocrlf=true, which turned 145 of the 0.3.0
-      # candidate wheel's 149 package and licence files into CRLF copies. The wheel must
-      # carry the committed bytes, so check out without conversion.
-      - name: Keep Git's exact bytes in the checkout
-        run: git config --global core.autocrlf false
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: '3.14'
-          architecture: x64
-      - name: Check the checkout against Git blobs, and that an edit is refused
-        run: |
-          python scripts/release_bundle.py sources --root .
-          if ($LASTEXITCODE) { throw 'Checkout bytes differ from Git' }
-          Add-Content -Path python\eigentrail\rolling.py -Value '# edited' -NoNewline
-          python scripts/release_bundle.py sources --root .
-          if ($LASTEXITCODE -eq 0) { throw 'An edited tracked file was accepted' }
-          git checkout -- python/eigentrail/rolling.py
-          python scripts/release_bundle.py sources --root .
-          if ($LASTEXITCODE) { throw 'Restored checkout differs from Git' }
-      - name: Prepare native MSVC tools and candidate dependencies
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $installation = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
-          if (-not $installation) { throw 'Native MSVC toolchain missing' }
-          $vcvars = Join-Path $installation 'VC\Auxiliary\Build\vcvars64.bat'
-          $settings = & $env:COMSPEC /d /s /c "call `"$vcvars`" >nul && set PATH && set INCLUDE && set LIB"
-          if ($LASTEXITCODE) { throw 'MSVC initialization failed' }
-          foreach ($line in $settings) {
-            if ($line -match '^(PATH|INCLUDE|LIB|LIBPATH)=(.*)$') { Add-Content -Path $env:GITHUB_ENV -Value $line }
-          }
-          Add-Content -Path $env:GITHUB_ENV -Value "CARGO_TARGET_DIR=$env:RUNNER_TEMP\eigentrail-windows-target"
-          rustup toolchain install 1.99.0 --profile minimal --component rustfmt,clippy
-          if ($LASTEXITCODE) { throw 'Rust setup failed' }
-          rustup default 1.99.0
-          New-Item -ItemType Directory -Force artifacts\windows, "$env:RUNNER_TEMP\eigentrail-wheelhouse" | Out-Null
-          python -m pip download --only-binary=:all: --requirement python/requirements-build.txt --dest "$env:RUNNER_TEMP\eigentrail-wheelhouse"
-          if ($LASTEXITCODE) { throw 'Python build dependency download failed' }
-          python -m pip download --only-binary=:all: 'matplotlib>=3.10,<4' --dest "$env:RUNNER_TEMP\eigentrail-wheelhouse"
-          if ($LASTEXITCODE) { throw 'Plot dependency download failed' }
-          python -m pip install --no-index --find-links "$env:RUNNER_TEMP\eigentrail-wheelhouse" --requirement python/requirements-build.txt
-          if ($LASTEXITCODE) { throw 'Python build dependency install failed' }
-          cargo fetch --locked
-          if ($LASTEXITCODE) { throw 'Locked dependency fetch failed' }
-      - name: Build baseline pre-import guard and check actual CPU coverage
-        run: |
-          rustc --version --verbose | Out-File artifacts\windows\rustc.txt
-          rustc --print cfg --target x86_64-pc-windows-msvc -C target-cpu=haswell | Out-File artifacts\windows\extension-cfg.txt
-          Get-CimInstance Win32_Processor | Select-Object Manufacturer,Name,NumberOfCores,NumberOfLogicalProcessors | ConvertTo-Json | Out-File artifacts\windows\processors.json
-          rustfmt --edition 2024 --check scripts/windows_cpu_guard.rs
-          if ($LASTEXITCODE) { throw 'CPU guard formatting failed' }
-          rustc --edition 2024 --test -D warnings -C target-cpu=x86-64 scripts/windows_cpu_guard.rs -o artifacts\windows\guard-tests.exe
-          if ($LASTEXITCODE) { throw 'CPU guard native test build failed' }
-          & artifacts\windows\guard-tests.exe
-          if ($LASTEXITCODE) { throw 'CPU feature controls failed' }
-          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\eigentrail-cpu-guard" | Out-Null
-          rustc --edition 2024 --crate-type cdylib --target x86_64-pc-windows-msvc -C target-cpu=x86-64 -C opt-level=2 -D warnings scripts/windows_cpu_guard.rs -o "$env:RUNNER_TEMP\eigentrail-cpu-guard\_eigentrail_cpu_guard.dll" 2>&1 | Tee-Object artifacts\windows\guard-build.log
-          if ($LASTEXITCODE) { throw 'Baseline CPU guard native build failed' }
-          Copy-Item "$env:RUNNER_TEMP\eigentrail-cpu-guard\_eigentrail_cpu_guard.dll" python\eigentrail\_eigentrail_cpu_guard.dll
-          python -c "import ctypes,pathlib; p=pathlib.Path('python/eigentrail/_eigentrail_cpu_guard.dll').resolve(); f=ctypes.CDLL(str(p),winmode=0x1100).eigentrail_windows_haswell_guard; f.argtypes=[]; f.restype=ctypes.c_uint32; s=f(); print('all-CPU guard status',s); assert s==0"
-          if ($LASTEXITCODE) { throw 'Actual processor/OS coverage refused' }
-          dumpbin /DEPENDENTS python\eigentrail\_eigentrail_cpu_guard.dll | Out-File artifacts\windows\guard-dependencies.txt
-          if ($LASTEXITCODE) { throw 'Guard dependency audit failed' }
-          dumpbin /DISASM:NOBYTES python\eigentrail\_eigentrail_cpu_guard.dll | Out-File artifacts\windows\guard-disassembly.txt
-          if ($LASTEXITCODE) { throw 'Guard disassembly capture failed' }
-          python scripts/test_windows_cpu_guard.py
-          if ($LASTEXITCODE) { throw 'Windows pre-import refusal tests failed' }
-      - name: Run production Rust controls and build candidate wheel
-        run: |
-          cargo fmt --all -- --check
-          if ($LASTEXITCODE) { throw 'Rust format failed' }
-          cargo clippy --locked --lib --bins -- -D warnings
-          if ($LASTEXITCODE) { throw 'Strict Rust lint failed' }
-          cargo clippy --locked -p eigentrail-python --lib -- -D warnings
-          if ($LASTEXITCODE) { throw 'Strict Python binding lint failed' }
-          cargo test --release --locked --lib --bins -- --test-threads=1 2>&1 | Tee-Object artifacts\windows\rust-tests.log
-          if ($LASTEXITCODE) { throw 'Native production Rust tests failed' }
-          cargo install --offline --locked --path crates/eigentrail-check --root "$env:RUNNER_TEMP\eigentrail-cli"
-          if ($LASTEXITCODE) { throw 'CLI build failed' }
-          Push-Location python
-          python -m maturin build --release --locked --target x86_64-pc-windows-msvc --interpreter python --out ..\artifacts\windows 2>&1 | Tee-Object ..\artifacts\windows\wheel-build.log
-          $build = $LASTEXITCODE
-          Pop-Location
-          if ($build) { throw 'Native MSVC wheel build failed' }
-          $wheels = @(Get-ChildItem artifacts\windows\*.whl)
-          if ($wheels.Count -ne 1 -or $wheels[0].Name -notmatch '-cp314-cp314-win_amd64\.whl$') { throw 'Unexpected Windows wheel tag' }
-          python scripts/check_release.py --artifact $wheels[0].FullName | Out-File artifacts\windows\metadata-check.json
-          if ($LASTEXITCODE) { throw 'Wheel metadata failed' }
-          python scripts/release_bundle.py sources --root . --wheel $wheels[0].FullName --platform windows-2022-x86_64 | Out-File artifacts\windows\source-bytes.json
-          if ($LASTEXITCODE) { throw 'Wheel members differ from their committed sources' }
-      - name: Clean binary installation, checked rolling cases and offline plots
-        run: |
-          $wheels = @(Get-ChildItem artifacts\windows\*.whl)
-          python -m venv "$env:RUNNER_TEMP\eigentrail-windows-wheel"
-          $python = "$env:RUNNER_TEMP\eigentrail-windows-wheel\Scripts\python.exe"
-          $originalPath = $env:PATH
-          try {
-            $env:PATH = (($env:PATH -split ';') | Where-Object { $_ -notmatch '(?i)cargo|rustup' }) -join ';'
-            if (Get-Command cargo -ErrorAction SilentlyContinue) { throw 'Rust is still on clean install PATH' }
-            & $python -m pip install --only-binary=:all: --no-index --find-links "$env:RUNNER_TEMP\eigentrail-wheelhouse" ($wheels[0].FullName + '[plot]')
-            if ($LASTEXITCODE) { throw 'Clean wheel installation failed' }
-            python scripts/test_rolling_public.py --python $python --cli "$env:RUNNER_TEMP\eigentrail-cli\bin\eigentrail-check.exe" --out "$env:RUNNER_TEMP\eigentrail-windows-rolling"
-            if ($LASTEXITCODE) { throw 'Installed CLI/Python rolling parity failed' }
-            & $python -I "$env:GITHUB_WORKSPACE\examples\lineage-summary.py"
-            if ($LASTEXITCODE) { throw 'Legacy lineage regression failed' }
-            Push-Location $env:RUNNER_TEMP
-            & $python -I "$env:GITHUB_WORKSPACE\examples\rolling_lineage.py" "$env:RUNNER_TEMP\eigentrail-windows-plots" --plot
-            $plots = $LASTEXITCODE
-            Pop-Location
-            if ($plots) { throw 'Offline plotting failed' }
-          } finally { $env:PATH = $originalPath }
-          $site = & $python -c "import pathlib,eigentrail; print(pathlib.Path(eigentrail.__file__).parent)"
-          Get-ChildItem $site\*.pyd,$site\*.dll | ForEach-Object {
-            dumpbin /DEPENDENTS $_.FullName | Out-File (Join-Path artifacts\windows ($_.Name + '.dependencies.txt'))
-            if ($LASTEXITCODE) { throw 'Installed native dependency audit failed' }
-          }
-          python -c "import hashlib,json,pathlib,platform,subprocess,sys; p=pathlib.Path('artifacts/windows'); fs={f.name:hashlib.sha256(f.read_bytes()).hexdigest() for f in p.glob('*.whl')}; guard=pathlib.Path('python/eigentrail/_eigentrail_cpu_guard.dll'); (p/'candidate.json').write_text(json.dumps({'schema':'eigentrail.windows-candidate.v1','commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'platform':platform.platform(),'machine':platform.machine(),'python':sys.version,'cpu_floor':'haswell+os-avx','backend':'inari-r-backport-avx-fma','cpu_guard_sha256':hashlib.sha256(guard.read_bytes()).hexdigest(),'candidate_only':True,'publication':'held','qualification':'public-synthetic-smoke-only','artifacts':fs},indent=2))"
-      - name: Retain candidate artifacts and actual failure logs
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: windows-x86_64-msvc-candidate-only
-          retention-days: 30
-          if-no-files-found: warn
-          path: |
-            artifacts/windows/
-            ${{ runner.temp }}/eigentrail-windows-rolling/
-            ${{ runner.temp }}/eigentrail-windows-plots/
-      - name: Stage the tested Windows wheel for the release bundle
-        run: |
-          $wheels = @(Get-ChildItem artifacts\windows\*.whl)
-          if ($wheels.Count -ne 1) { throw 'Expected one tested Windows wheel' }
-          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\release-candidate" | Out-Null
-          Copy-Item $wheels[0].FullName "$env:RUNNER_TEMP\release-candidate\"
-          git rev-parse HEAD | Out-File "$env:RUNNER_TEMP\release-candidate\source-commit.txt" -NoNewline -Encoding ascii
-          git rev-parse 'HEAD^{tree}' | Out-File "$env:RUNNER_TEMP\release-candidate\source-tree.txt" -NoNewline -Encoding ascii
-      - name: Upload tested Windows wheel candidate
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: candidate-windows-2022-x86_64
-          retention-days: 90
-          if-no-files-found: error
-          path: ${{ runner.temp }}/release-candidate/
-
-  bundle:
-    name: Release bundle
-    # Wait for every job: re-running any failed job then re-runs this one too, so the
-    # receipt's run attempt matches the run's final attempt.
-    needs: [native, windows-candidate]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - name: Require the exact staged workflow commit
-        env:
-          EXPECTED_SHA: ${{ inputs.expected_sha }}
-        run: |
-          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
-          [[ "$GITHUB_SHA" == "$EXPECTED_SHA" ]]
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          pattern: candidate-*
-          path: ${{ runner.temp }}/candidates
-      - name: Bind the published files to this commit and run
-        run: |
-          # Every wheel's package and licence members must be this commit's bytes.
-          for platform in macos-15-arm64 ubuntu-24.04-x86_64 windows-2022-x86_64; do
-            wheel=("$RUNNER_TEMP/candidates/candidate-$platform"/*.whl)
-            test "${#wheel[@]}" -eq 1
-            python3 -I scripts/release_bundle.py sources --root . --commit "$GITHUB_SHA" --wheel "${wheel[0]}" --platform "$platform"
-          done
-          python3 -I scripts/release_bundle.py create \
-            --candidates "$RUNNER_TEMP/candidates" --out "$RUNNER_TEMP/release-bundle" \
-            --repository "$GITHUB_REPOSITORY" --workflow-ref "$GITHUB_WORKFLOW_REF" --ref "$GITHUB_REF" \
-            --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT" \
-            --commit "$GITHUB_SHA" --tree "$(git rev-parse 'HEAD^{tree}')"
-      - name: Retain the immutable release bundle
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: release-bundle
-          retention-days: 90
-          if-no-files-found: error
-          path: ${{ runner.temp }}/release-bundle/
+          root = Path(tempfile.mkdtemp(dir=os.environ['RUNNER_TEMP']))
+          os.chdir(root)
+          subprocess.run([sys.executable, '-m', 'venv', 'venv'], check=True)
+          python = root / 'venv' / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
+          def run(*args):
+              subprocess.run([python, '-I', *args], check=True)
+          run('-m', 'pip', '--isolated', 'install', '--index-url', 'https://pypi.org/simple',
+              '--no-cache-dir', '--only-binary=:all:', '--report', 'install.json', 'eigentrail[plot]==0.3.0')
+          item, = [entry for entry in json.loads(Path('install.json').read_text(encoding='utf-8'))['install']
+                   if entry['metadata']['name'].lower() == 'eigentrail']
+          download = item['download_info']
+          url = urlsplit(download['url'])
+          assert item['metadata']['version'] == '0.3.0'
+          assert url.scheme == 'https' and url.hostname == 'files.pythonhosted.org'
+          assert Path(url.path).name == os.environ['WHEEL_FILE']
+          assert download['archive_info']['hashes']['sha256'] == os.environ['WHEEL_SHA256']
+          print(os.environ['WHEEL_FILE'], os.environ['WHEEL_SHA256'], flush=True)
+          run('-m', 'pip', 'check')
+          run(Path(os.environ['GITHUB_WORKSPACE']) / 'examples' / 'rolling_lineage.py', 'out', '--plot')
+          run('-c', """from pathlib import Path
+          from eigentrail import check_rolling_lineage_json
+          def read(name):
+              return (Path('out') / name).read_text(encoding='utf-8')
+          assert check_rolling_lineage_json(read('request.json'), read('report.json'))
+          """)
+          out = Path('out')
+          completion = json.loads((out / 'report.json').read_text(encoding='utf-8'))['completion']
+          assert completion['status'] == 'complete'
+          assert completion['graph_counts'] == dict(candidates=84, agreement=76, exclusion=8, open=0, unavailable=0)
+          for chart in ('window', 'founder', 'spectrum'):
+              for extension in ('svg', 'pdf', 'png'):
+                  assert (out / f'{chart}.{extension}').stat().st_size > 0
+          assert (out / 'report.html').stat().st_size > 0
