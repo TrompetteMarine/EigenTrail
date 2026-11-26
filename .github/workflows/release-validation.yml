@@ -144,7 +144,7 @@ jobs:
           manylinux: 2_28
           rust-toolchain: 1.99.0
           maturin-version: v1.9.6
-          args: --release --locked --compatibility pypi --out ../artifacts/python --interpreter python3.14
+          args: --release --locked --out ../artifacts/python --interpreter python3.14
           docker-options: -e CARGO_BUILD_JOBS -e CARGO_INCREMENTAL -e RUSTFLAGS -e CFLAGS -e CXXFLAGS -e PKG_CFLAGS -e PKG_CXXFLAGS
       - name: Build macOS wheel
         if: matrix.os == 'macos-15'
