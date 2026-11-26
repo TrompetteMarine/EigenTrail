@@ -1,0 +1,78 @@
+name: Verify Python 0.3.0 installations from production PyPI
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  install:
+    name: PyPI / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            wheel: eigentrail-0.3.0-cp314-cp314-macosx_14_0_arm64.whl
+            sha256: 0f8bcf3e451978d6ff78f1906205f5801ee11e9416360641b91d301cd099191b
+          - os: ubuntu-24.04
+            wheel: eigentrail-0.3.0-cp314-cp314-manylinux_2_28_x86_64.whl
+            sha256: 69304db09df3d367bfd4531f235b4bdf36d38c83b07a3ff6e71f393e23495827
+          - os: windows-2022
+            wheel: eigentrail-0.3.0-cp314-cp314-win_amd64.whl
+            sha256: 80218defe00bd1574b02246f6442773d7c3ca6f4de8142fb05927f31d092522e
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: 778634ab999b4119230d59c602c0d8a0cc473c8f
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: '3.14'
+      - name: Install published wheel and run the released example outside checkout
+        shell: python
+        env:
+          WHEEL_FILE: ${{ matrix.wheel }}
+          WHEEL_SHA256: ${{ matrix.sha256 }}
+          MPLBACKEND: Agg
+        run: |
+          import json
+          import os
+          from pathlib import Path
+          import subprocess
+          import sys
+          import tempfile
+          from urllib.parse import urlsplit
+
+          root = Path(tempfile.mkdtemp(dir=os.environ['RUNNER_TEMP']))
+          os.chdir(root)
+          subprocess.run([sys.executable, '-m', 'venv', 'venv'], check=True)
+          python = root / 'venv' / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
+          def run(*args):
+              subprocess.run([python, '-I', *args], check=True)
+          run('-m', 'pip', '--isolated', 'install', '--index-url', 'https://pypi.org/simple',
+              '--no-cache-dir', '--only-binary=:all:', '--report', 'install.json', 'eigentrail[plot]==0.3.0')
+          item, = [entry for entry in json.loads(Path('install.json').read_text(encoding='utf-8'))['install']
+                   if entry['metadata']['name'].lower() == 'eigentrail']
+          download = item['download_info']
+          url = urlsplit(download['url'])
+          assert item['metadata']['version'] == '0.3.0'
+          assert url.scheme == 'https' and url.hostname == 'files.pythonhosted.org'
+          assert Path(url.path).name == os.environ['WHEEL_FILE']
+          assert download['archive_info']['hashes']['sha256'] == os.environ['WHEEL_SHA256']
+          print(os.environ['WHEEL_FILE'], os.environ['WHEEL_SHA256'], flush=True)
+          run('-m', 'pip', 'check')
+          run(Path(os.environ['GITHUB_WORKSPACE']) / 'examples' / 'rolling_lineage.py', 'out', '--plot')
+          run('-c', """from pathlib import Path
+          from eigentrail import check_rolling_lineage_json
+          def read(name):
+              return (Path('out') / name).read_text(encoding='utf-8')
+          assert check_rolling_lineage_json(read('request.json'), read('report.json'))
+          """)
+          out = Path('out')
+          completion = json.loads((out / 'report.json').read_text(encoding='utf-8'))['completion']
+          assert completion['status'] == 'complete'
+          assert completion['graph_counts'] == dict(candidates=84, agreement=76, exclusion=8, open=0, unavailable=0)
+          for chart in ('window', 'founder', 'spectrum'):
+              for extension in ('svg', 'pdf', 'png'):
+                  assert (out / f'{chart}.{extension}').stat().st_size > 0
+          assert (out / 'report.html').stat().st_size > 0
