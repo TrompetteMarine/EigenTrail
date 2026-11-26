@@ -5,13 +5,14 @@ import hashlib
 import io
 import json
 import os
-import shlex
+import re
 import shutil
 import subprocess
 import sys
 import tarfile
 import tempfile
 import unittest
+from unittest import mock
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -550,20 +551,54 @@ class PublishShellTests(unittest.TestCase):
         self.assertNotEqual(self.run_block().returncode, 0)
 
 
-# How both publish-pypi.yml jobs peel the release tag; each job sets tag_repo to its own clone.
+# How both publish-pypi.yml jobs peel the release tag, after pointing tag_repo at their own clone.
 TAG_PEEL = ('git -C "$tag_repo" fetch --quiet --no-tags origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"',
             '[[ "$(git -C "$tag_repo" rev-parse --verify --quiet "refs/tags/$RELEASE_TAG^{commit}")" == "$EXPECTED_SHA" ]]')
+TAG_REPOS = {'verify': 'tag_repo=candidate', 'publish': 'tag_repo="$RUNNER_TEMP/main-history"'}
 
 
-def workflow_tag_peel_blocks():
-    """The tag-peeling lines of each publish-pypi.yml job, in workflow order (verify, then publish)."""
-    lines = [line.strip() for line in PUBLISH_WORKFLOW.read_text().splitlines()]
-    return [tuple(lines[i:i + 2]) for i, line in enumerate(lines) if line.startswith('git -C "$tag_repo" fetch')]
+def job_lines(job):
+    """The stripped lines of one publish-pypi.yml job, from its key to the next job's."""
+    lines = PUBLISH_WORKFLOW.read_text().splitlines()
+    keys = [i for i, line in enumerate(lines) if re.fullmatch(r'  [a-z][a-z0-9_-]*:', line)]
+    start = lines.index(f'  {job}:')
+    end = next((i for i in keys if i > start), len(lines))
+    return [line.strip() for line in lines[start:end]]
+
+
+def job_tag_peel(job):
+    """The job's one tag_repo assignment and the two peeling lines after it."""
+    lines = job_lines(job)
+    found = [tuple(lines[i:i + 3]) for i, line in enumerate(lines) if line.startswith('tag_repo=')]
+    if len(found) != 1:
+        raise AssertionError(f'the {job} job peels the release tag {len(found)} times, not once')
+    return found[0]
+
+
+def job_main_clone(job='publish'):
+    """The publish job's bare, treeless clone of main, with its continuation lines."""
+    lines = job_lines(job)
+    start = end = next(i for i, line in enumerate(lines) if line.startswith('git clone '))
+    while lines[end].endswith('\\'):
+        end += 1
+    return lines[start:end + 1]
+
+
+def isolated_git_environment(home):
+    """Only PATH comes from the caller: an inherited GIT_DIR, GIT_WORK_TREE or global config must
+    not point the fixture's commits and tags at a real repository."""
+    environment = {'PATH': os.environ.get('PATH', os.defpath), 'HOME': str(home), 'GIT_CONFIG_NOSYSTEM': '1',
+                   'GIT_CONFIG_GLOBAL': os.devnull, 'GIT_TERMINAL_PROMPT': '0',
+                   'GIT_AUTHOR_NAME': 'tag test', 'GIT_AUTHOR_EMAIL': 'tag-test@example.invalid',
+                   'GIT_COMMITTER_NAME': 'tag test', 'GIT_COMMITTER_EMAIL': 'tag-test@example.invalid'}
+    if 'SYSTEMROOT' in os.environ:
+        environment['SYSTEMROOT'] = os.environ['SYSTEMROOT']
+    return environment
 
 
 @unittest.skipUnless(shutil.which('git') and shutil.which('bash'), 'needs git and bash')
 class TagPeelTests(unittest.TestCase):
-    """Both jobs peel the release tag identically, through any depth of annotated tags."""
+    """Each job peels the release tag once, identically, through any depth of annotated tags."""
 
     DEPTH = 24  # Deeper than the 16-level API walk the publish job used to stop at.
 
@@ -571,60 +606,93 @@ class TagPeelTests(unittest.TestCase):
         folder = tempfile.TemporaryDirectory()
         self.addCleanup(folder.cleanup)
         self.tmp = Path(folder.name)
-        # A private HOME and no system config: the user's git settings (tag signing, hooks) stay out.
-        self.env = {**os.environ, 'HOME': str(self.tmp), 'GIT_CONFIG_NOSYSTEM': '1',
-                    'GIT_AUTHOR_NAME': 'tag test', 'GIT_AUTHOR_EMAIL': 'tag-test@example.invalid',
-                    'GIT_COMMITTER_NAME': 'tag test', 'GIT_COMMITTER_EMAIL': 'tag-test@example.invalid'}
+        self.env = isolated_git_environment(self.tmp)
         self.origin = self.tmp / 'origin'
-        self.git('init', '-q', '-b', 'main', str(self.origin))
-        self.git('-C', str(self.origin), 'commit', '-q', '--allow-empty', '-m', 'expected')
-        self.expected = self.git('-C', str(self.origin), 'rev-parse', 'HEAD')
-        self.git('-C', str(self.origin), 'commit', '-q', '--allow-empty', '-m', 'elsewhere')
-        self.elsewhere = self.git('-C', str(self.origin), 'rev-parse', 'HEAD')
-        self.chain('v1.0.0', self.expected)
-        self.chain('v2.0.0', self.elsewhere)
-        tree = self.git('-C', str(self.origin), 'rev-parse', 'HEAD^{tree}')
-        self.git('-C', str(self.origin), 'tag', '-a', '-m', 'not a commit', 'v3.0.0', tree)
-        self.repos = 0
+        self.make_origin(self.origin)
+        self.runs = 0
 
-    def git(self, *args):
-        return subprocess.run(['git', *args], check=True, capture_output=True, text=True, env=self.env).stdout.strip()
+    def git(self, *args, env=None):
+        return subprocess.run(['git', *args], check=True, capture_output=True, text=True,
+                              env=env or self.env).stdout.strip()
 
-    def chain(self, name, target):
-        """An annotated tag of an annotated tag of ... DEPTH levels, ending at target."""
-        previous = target
-        for level in range(self.DEPTH - 1):
-            self.git('-C', str(self.origin), 'tag', '-a', '-m', f'{name} level {level}', f'{name}-{level}', previous)
-            previous = f'{name}-{level}'
-        self.git('-C', str(self.origin), 'tag', '-a', '-m', name, name, previous)
+    def make_origin(self, path, env=None):
+        """main holds the expected commit; an unmerged branch holds another; deep tag chains reach both."""
+        def git(*args):
+            return self.git('-C', str(path), *args, env=env)
+        self.git('init', '-q', '-b', 'main', str(path), env=env)
+        git('config', 'uploadpack.allowFilter', 'true')  # Serve the publish job's treeless clone as GitHub does.
+        git('commit', '-q', '--allow-empty', '-m', 'expected')
+        self.expected = git('rev-parse', 'HEAD')
+        git('switch', '-q', '-c', 'unmerged')
+        git('commit', '-q', '--allow-empty', '-m', 'off main')
+        self.off_main = git('rev-parse', 'HEAD')
+        git('switch', '-q', 'main')
+        git('commit', '-q', '--allow-empty', '-m', 'later on main')
+        for name, target in (('v1.0.0', self.expected), ('v2.0.0', self.off_main)):
+            previous = target
+            for level in range(self.DEPTH - 1):
+                git('tag', '-a', '-m', f'{name} level {level}', f'{name}-{level}', previous)
+                previous = f'{name}-{level}'
+            git('tag', '-a', '-m', name, name, previous)
+        git('tag', '-a', '-m', 'not a commit', 'v3.0.0', git('rev-parse', 'HEAD^{tree}'))
 
-    def peel(self, block, tag):
-        """Run one job's peeling lines in a fresh clone whose origin holds the tags."""
-        self.repos += 1
-        repo = self.tmp / f'clone-{self.repos}'
-        self.git('init', '-q', '--bare', str(repo))
-        self.git('-C', str(repo), 'remote', 'add', 'origin', str(self.origin))
-        script = f'tag_repo={shlex.quote(str(repo))}\n' + '\n'.join(block) + '\n'
-        return subprocess.run(['bash', '--noprofile', '--norc', '-eo', 'pipefail', '-c', script],
-                              env={**self.env, 'RELEASE_TAG': tag, 'EXPECTED_SHA': self.expected},
-                              capture_output=True, text=True)
+    def run_job(self, job, tag):
+        """Run the job's own lines (for publish, its clone of main from GitHub, served here) and its peel."""
+        self.runs += 1
+        work = self.tmp / f'{job}-{self.runs}'
+        temp = work / 'runner-temp'
+        temp.mkdir(parents=True)
+        lines = []
+        if job == 'verify':  # actions/checkout left the candidate clone, with an origin remote.
+            clone = work / 'candidate'
+            self.git('init', '-q', str(clone))
+            self.git('-C', str(clone), 'remote', 'add', 'origin', self.origin.as_uri())
+        else:
+            clone = temp / 'main-history'
+            lines += job_main_clone()
+        lines += job_tag_peel(job)
+        env = {**self.env, 'RELEASE_TAG': tag, 'EXPECTED_SHA': self.expected, 'RUNNER_TEMP': str(temp),
+               'GITHUB_REPOSITORY': REPO, 'GIT_CONFIG_COUNT': '1',
+               'GIT_CONFIG_KEY_0': f'url.{self.origin.as_uri()}.insteadOf',
+               'GIT_CONFIG_VALUE_0': f'https://github.com/{REPO}.git'}
+        result = subprocess.run(['bash', '--noprofile', '--norc', '-eo', 'pipefail', '-c', '\n'.join(lines) + '\n'],
+                                cwd=work, env=env, capture_output=True, text=True)
+        return result, clone
 
-    def test_both_jobs_peel_with_the_same_commands(self):
-        self.assertEqual(workflow_tag_peel_blocks(), [TAG_PEEL, TAG_PEEL])
+    def test_each_job_peels_once_with_the_same_commands(self):
+        for job, assignment in TAG_REPOS.items():
+            with self.subTest(job=job):
+                self.assertEqual(job_tag_peel(job), (assignment, *TAG_PEEL))
 
     def test_deep_chain_to_the_expected_commit_is_accepted_by_both_jobs(self):
-        self.assertEqual(self.git('-C', str(self.origin), 'rev-parse', 'v1.0.0^{commit}'), self.expected)
-        for job, block in zip(('verify', 'publish'), workflow_tag_peel_blocks()):
+        for job in TAG_REPOS:
             with self.subTest(job=job):
-                result = self.peel(block, 'v1.0.0')
+                result, _ = self.run_job(job, 'v1.0.0')
                 self.assertEqual(result.returncode, 0, result.stderr)
 
-    def test_deep_chain_elsewhere_and_non_commit_tags_are_refused_by_both_jobs(self):
-        for job, block in zip(('verify', 'publish'), workflow_tag_peel_blocks()):
-            for tag in ('v2.0.0', 'v3.0.0', 'v9.9.9'):  # Another commit, a tree, no such tag.
-                with self.subTest(job=job, tag=tag):
-                    self.assertNotEqual(self.peel(block, tag).returncode, 0)
+    def test_deep_chain_to_an_off_main_commit_is_fetched_then_refused(self):
+        for job in TAG_REPOS:
+            with self.subTest(job=job):
+                result, clone = self.run_job(job, 'v2.0.0')
+                self.assertNotEqual(result.returncode, 0)
+                # The fetch worked, also into the publish job's treeless partial clone: the comparison refused it.
+                self.assertEqual(self.git('-C', str(clone), 'rev-parse', 'refs/tags/v2.0.0^{commit}'), self.off_main)
 
+    def test_non_commit_and_missing_tags_are_refused_by_both_jobs(self):
+        for job in TAG_REPOS:
+            for tag in ('v3.0.0', 'v9.9.9'):  # A tag of a tree; no such tag.
+                with self.subTest(job=job, tag=tag):
+                    self.assertNotEqual(self.run_job(job, tag)[0].returncode, 0)
+
+    def test_fixture_git_ignores_an_inherited_git_dir(self):
+        decoy = self.tmp / 'decoy'
+        self.git('init', '-q', '-b', 'main', str(decoy))
+        self.git('-C', str(decoy), 'commit', '-q', '--allow-empty', '-m', 'decoy')
+        state = lambda: (self.git('-C', str(decoy), 'rev-parse', 'HEAD'), self.git('-C', str(decoy), 'tag', '--list'))
+        before = state()
+        with mock.patch.dict(os.environ, {'GIT_DIR': str(decoy / '.git'), 'GIT_WORK_TREE': str(decoy)}):
+            self.make_origin(self.tmp / 'second-origin', env=isolated_git_environment(self.tmp))
+        self.assertEqual(state(), before)
 
 if __name__ == '__main__':
     unittest.main()
