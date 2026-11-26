@@ -551,8 +551,14 @@ def workflow_bundle_publish_block():
     return '\n'.join(line[indent:] for line in lines[start:end + 1]) + '\n'
 
 
-@unittest.skipUnless(shutil.which('bash') and shutil.which('sha256sum'),
-                     'needs bash and GNU sha256sum, as on the publish runner')
+def supports_publish_shell():
+    if not shutil.which('bash') or not shutil.which('sha256sum'):
+        return False
+    return subprocess.run(['bash', '-c', 'declare -A probe'], capture_output=True).returncode == 0
+
+
+@unittest.skipUnless(supports_publish_shell(),
+                     'needs Bash associative arrays and GNU sha256sum, as on the publish runner')
 class PublishShellTests(unittest.TestCase):
     """Run the workflow's own inventory shell against release_inventory()'s canonical text."""
 
@@ -588,8 +594,8 @@ class PublishShellTests(unittest.TestCase):
         self.assertNotEqual(self.run_block().returncode, 0)
 
 
-@unittest.skipUnless(shutil.which('bash') and shutil.which('sha256sum'),
-                     'needs bash and GNU sha256sum, as on the publish runner')
+@unittest.skipUnless(supports_publish_shell(),
+                     'needs Bash associative arrays and GNU sha256sum, as on the publish runner')
 class PublishWheelTests(unittest.TestCase):
     """Execute the publisher's exact wheel/hash block against synthetic bundle files."""
 
