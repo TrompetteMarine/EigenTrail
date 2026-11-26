@@ -17,12 +17,12 @@ WHEEL = 'eigentrail-0.3.0-' + TAG + '.whl'
 SDIST = 'eigentrail-0.3.0.tar.gz'
 
 
-def wheel(path, tag=TAG):
+def wheel(path, tag=TAG, name='eigentrail'):
     with ZipFile(path, 'w') as archive:
         archive.writestr('eigentrail-0.3.0.dist-info/WHEEL',
             'Wheel-Version: 1.0\nRoot-Is-Purelib: false\nTag: ' + tag + '\n')
         archive.writestr('eigentrail-0.3.0.dist-info/METADATA',
-            'Metadata-Version: 2.4\nName: eigentrail\nVersion: 0.3.0\n')
+            'Metadata-Version: 2.4\nName: ' + name + '\nVersion: 0.3.0\n')
 
 
 def entry():
@@ -101,9 +101,21 @@ class SelectorTests(unittest.TestCase):
         with self.assertRaises(ValueError): self.selected()
 
     def test_internal_wheel_tags_are_checked_after_hashes(self):
-        for tag in ('cp313-cp313-macosx_14_0_arm64', TAG + '\u00a0', '\u00a0' + TAG, TAG + '\u3000'):
+        # Letters and a backslash at either end must not be stripped as if they were blanks.
+        for tag in ('cp313-cp313-macosx_14_0_arm64', TAG + '\u00a0', '\u00a0' + TAG, TAG + '\u3000',
+                    't' + TAG, TAG + 'n', TAG + 'r', TAG + '\\', '\\' + TAG):
             with self.subTest(tag=tag):
                 wheel(self.root / WHEEL, tag); seal(self.root, self.receipt)
+                with self.assertRaises(ValueError): self.selected()
+        for tag in (TAG + ' ', TAG + '\t', ' \t' + TAG):  # ASCII blanks around a header value are tolerated.
+            with self.subTest(tag=tag):
+                wheel(self.root / WHEEL, tag); seal(self.root, self.receipt)
+                self.assertEqual(len(self.selected()), 2)
+
+    def test_internal_package_name_is_checked_exactly(self):
+        for name in ('eigentrailn', 'neigentrail', 'eigentrailt', 'reigentrail', 'eigentrail\\', 'eigentrail\u00a0'):
+            with self.subTest(name=name):
+                wheel(self.root / WHEEL, name=name); seal(self.root, self.receipt)
                 with self.assertRaises(ValueError): self.selected()
 
     def test_unqualified_candidate_and_tuple_tampering(self):

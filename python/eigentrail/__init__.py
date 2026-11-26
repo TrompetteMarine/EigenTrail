@@ -26,7 +26,7 @@ if sys.platform == 'win32':
     from pathlib import Path as _CpuPath
     _windows_cpu_path = _CpuPath(__file__).with_name('_eigentrail_cpu_guard.dll')
     if not _windows_cpu_path.is_file():
-        raise ImportError('EigenTrail requires its separately built baseline Windows CPU guard before loading native code. Install a qualified Windows wheel that includes it.')
+        raise ImportError('EigenTrail requires its separately built baseline Windows CPU guard before loading native code. Install the EigenTrail Windows wheel, which includes it; Windows source builds are not supported.')
     try:
         # Load the packaged absolute DLL with Windows' explicit default-directory policy.
         _windows_cpu_library = _cpu_ctypes.CDLL(str(_windows_cpu_path.resolve()), winmode=0x00000100 | 0x00001000)

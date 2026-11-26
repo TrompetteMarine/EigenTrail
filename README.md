@@ -4,46 +4,30 @@ EigenTrail tracks covariance eigenvalues and eigenspaces with TRACE. Python, R
 and Rust interfaces produce uncertainty bounds, association alternatives and
 independently checked reports.
 
-Current source stages **0.3.0, an unreleased candidate**. It adds observed-date
-[rolling lineage](docs/rolling-lineage.md), founder reach and optional Python
-plots. It retains explicit missing slots, tied blocks and unresolved outcomes.
-[Candidate notes](docs/releases/v0.3.0.md) describe the new capability and the
-remaining qualification gates. There is no 0.3.0 tag or registry publication.
+Version **0.3.0** adds observed-date [rolling lineage](docs/rolling-lineage.md),
+founder reach and optional Python plots. It retains explicit missing slots, tied
+blocks and unresolved outcomes. The [0.3.0 notes](docs/releases/v0.3.0.md) describe
+the new capability. The R package's latest published release remains **v0.2.2**,
+which does not contain the rolling additions.
 
-The latest published GitHub release remains **v0.2.2** for R maintenance; PyPI
-still distributes Python **0.2.0**. Those earlier releases do not contain the
-rolling additions. Historical release records stay unchanged.
+## Install
 
-## Install a qualified candidate
-
-Use only local candidate bytes whose SHA-256 and exact platform tuple have passed
-the candidate receipt. For CPython 3.14 on macOS ARM64, the proposed wheel name is:
+For CPython 3.14:
 
 ```sh
-python -m pip install --only-binary=:all: "./candidate/eigentrail-0.3.0-cp314-cp314-macosx_14_0_arm64.whl[plot]"
+python -m pip install "eigentrail[plot]==0.3.0"
 ```
 
-For the separately checked source packages:
-
-```sh
-python -m pip install "./candidate/eigentrail-0.3.0.tar.gz[plot]"
-R CMD INSTALL ./candidate/eigentrail_0.3.0.tar.gz
-```
-
-Built wheels need no Rust toolchain. Python source requires Rust 1.99.0 and
-native C/C++ build tools. R source requires R >=4.5 and Cargo/rustc >=1.85.1,
-a C compiler, GNU make and tar with xz support. The public Linux workspace stages
-a baseline SSE2 interval backend, with generic wheel publication held until its
-native baseline, manylinux and scientific qualification. Windows MSVC/Haswell
-candidates also remain held; source installation needs separate helper-build
-qualification. See [installation](docs/installation.md) for exact CPU/backend
-profiles, earlier published commands and [R installation](docs/r-installation.md).
-
-To install the **earlier published Python 0.2.0** API from PyPI:
-
-```sh
-python -m pip install --only-binary=eigentrail "eigentrail==0.2.0"
-```
+Wheels need no Rust toolchain. They cover macOS 14 or later on Apple silicon,
+Linux x86-64 with glibc 2.28 or later, and Windows x86-64 on Haswell-class
+processors whose operating system enables AVX. EigenTrail's Linux native code uses
+only baseline x86-64 (SSE2) instructions; current NumPy releases need x86-64-v2.
+On Windows a packaged guard refuses unsupported processors before the native
+extension loads. Python source builds need Rust 1.99.0 and native C/C++ build
+tools; Windows source builds are not supported. R source requires R >=4.5 and
+Cargo/rustc >=1.85.1, a C compiler, GNU make and tar with xz support. See
+[installation](docs/installation.md) for exact CPU/backend profiles and
+[R installation](docs/r-installation.md).
 
 CRAN publication is not inferred from a submission confirmation. Its public
 listing and the release receipt determine the R channel status.

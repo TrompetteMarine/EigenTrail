@@ -802,5 +802,144 @@ class TagPeelTests(unittest.TestCase):
             self.make_origin(self.tmp / 'second-origin', env=isolated_git_environment(self.tmp))
         self.assertEqual(state(), before)
 
+VALIDATION_WORKFLOW = Path(__file__).resolve().parents[1] / '.github/workflows/release-validation.yml'
+
+
+def validation_job(job):
+    """The stripped lines of one release-validation.yml job."""
+    lines = VALIDATION_WORKFLOW.read_text().splitlines()
+    keys = [i for i, line in enumerate(lines) if re.fullmatch(r'  [a-z][a-z0-9_-]*:', line)]
+    start = lines.index(f'  {job}:')
+    end = next((i for i in keys if i > start), len(lines))
+    return [line.strip() for line in lines[start:end]]
+
+
+@unittest.skipUnless(shutil.which('git'), 'needs git')
+class SourceBytesTests(unittest.TestCase):
+    """A checkout and each built wheel must hold Git's exact bytes, as the producer checks them."""
+
+    FILES = {'python/pyproject.toml': b'[project]\nname = "eigentrail"\nversion = "0.1.0"\n',
+             'python/LICENSE': b'MIT License\n\nCopyright fixture.\n',
+             'python/eigentrail/__init__.py': b'"""Package."""\nVALUE = 1\n',
+             'python/eigentrail/_licenses/LICENSE': b'MIT License\n\nCopyright fixture.\n',
+             'python/eigentrail/_licenses/THIRD_PARTY_NOTICES.md': b'# Notices\n\nNone.\n',
+             'scripts/tool.py': b'print("tool")\n'}
+    PLATFORM = WINDOWS_PLATFORM
+    DIST = f'eigentrail-{VERSION}.dist-info'
+
+    def setUp(self):
+        folder = tempfile.TemporaryDirectory()
+        self.addCleanup(folder.cleanup)
+        self.tmp = Path(folder.name)
+        self.root = self.tmp / 'checkout'
+        for name, data in self.FILES.items():
+            (self.root / name).parent.mkdir(parents=True, exist_ok=True)
+            (self.root / name).write_bytes(data)
+        env = isolated_git_environment(self.tmp)
+        for args in (['init', '-q'], ['add', '-A'], ['commit', '-q', '-m', 'fixture']):
+            subprocess.run(['git', '-C', str(self.root), *args], check=True, capture_output=True, env=env)
+        self.wheels = 0
+
+    def wheel(self, changes=None, drop=(), platform=None):
+        """The wheel the platform job would build from this checkout, with any changed members."""
+        self.wheels += 1
+        path = self.tmp / f'wheel-{self.wheels}' / rb.wheel_name(VERSION, platform or self.PLATFORM)
+        path.parent.mkdir()
+        members = {name[len('python/'):]: data for name, data in self.FILES.items() if name.startswith('python/eigentrail/')}
+        members[f'{self.DIST}/licenses/LICENSE'] = self.FILES['python/LICENSE']
+        members.update(dict.fromkeys(rb.NATIVES[platform or self.PLATFORM], b'compiled bytes'))
+        for name in ('WHEEL', 'METADATA', 'RECORD'):
+            members[f'{self.DIST}/{name}'] = b'generated\n'
+        members.update(changes or {})
+        with zipfile.ZipFile(path, 'w') as archive:
+            for name, data in members.items():
+                if name not in drop:
+                    archive.writestr(name, data)
+        return path
+
+    def check(self, path, platform=None):
+        return rb.check_wheel_sources(path, platform or self.PLATFORM, root=self.root)
+
+    def test_exact_checkout_and_wheel_pass(self):
+        self.assertEqual(rb.check_checkout(self.root), len(self.FILES))
+        self.assertEqual(self.check(self.wheel()), 4)  # Three package files and the dist-info licence copy.
+        for platform in rb.NATIVES:
+            with self.subTest(platform=platform):
+                self.assertEqual(self.check(self.wheel(platform=platform), platform), 4)
+
+    def test_line_ending_conversion_or_edit_in_the_checkout_is_refused(self):
+        for name in ('python/eigentrail/__init__.py', 'python/LICENSE', 'scripts/tool.py'):
+            path = self.root / name
+            original = path.read_bytes()
+            for label, data in (('CRLF', original.replace(b'\n', b'\r\n')), ('edited', original + b'# edited\n')):
+                with self.subTest(name=name, change=label):
+                    path.write_bytes(data)
+                    with self.assertRaisesRegex(ValueError, '1 tracked files differ from their committed bytes'):
+                        rb.check_checkout(self.root)
+                    path.write_bytes(original)
+        (self.root / 'scripts/tool.py').unlink()
+        with self.assertRaisesRegex(ValueError, '1 tracked files differ'):
+            rb.check_checkout(self.root)
+
+    def test_converted_or_edited_package_and_licence_members_are_refused(self):
+        init, notices = 'eigentrail/__init__.py', 'eigentrail/_licenses/THIRD_PARTY_NOTICES.md'
+        cases = {'CRLF package file': {init: self.FILES['python/eigentrail/__init__.py'].replace(b'\n', b'\r\n')},
+                 'edited package file': {init: b'"""Package."""\nVALUE = 2\n'},
+                 'edited package licence copy': {'eigentrail/_licenses/LICENSE': b'MIT License\n\nCopyright other.\n'},
+                 'CRLF dist-info licence copy': {f'{self.DIST}/licenses/LICENSE': self.FILES['python/LICENSE'].replace(b'\n', b'\r\n')},
+                 'edited notices': {notices: b'# Notices\n\nSome.\n'},
+                 'untracked package file': {'eigentrail/extra.py': b'pass\n'},
+                 'untracked licence copy': {f'{self.DIST}/licenses/NOTICE': b'notice\n'},
+                 "another platform's native member": {'eigentrail/_eigentrail.cpython-314-darwin.so': b'compiled bytes'}}
+        for label, changes in cases.items():
+            with self.subTest(case=label):
+                with self.assertRaisesRegex(ValueError, r'1 .*\.whl members differ from their committed sources'):
+                    self.check(self.wheel(changes))
+
+    def test_missing_tracked_files_and_unexpected_members_are_refused(self):
+        with self.assertRaisesRegex(ValueError, 'lacks tracked package files'):
+            self.check(self.wheel(drop=('eigentrail/_licenses/LICENSE',)))
+        with self.assertRaisesRegex(ValueError, 'unexpected member'):
+            self.check(self.wheel({f'{self.DIST}/entry_points.txt': b'[console_scripts]\n'}))
+        with self.assertRaisesRegex(ValueError, 'unexpected member'):
+            self.check(self.wheel({'other/module.py': b'pass\n'}))
+
+    def test_command_line_reports_and_refuses(self):
+        def sources(*args):
+            return subprocess.run([sys.executable, '-I', str(Path(rb.__file__)), 'sources', '--root', str(self.root), *args],
+                                  capture_output=True, text=True)
+        self.assertEqual(sources().returncode, 0)
+        self.assertEqual(json.loads(sources('--wheel', str(self.wheel()), '--platform', self.PLATFORM).stdout)['members'], 4)
+        edited = self.wheel({'eigentrail/__init__.py': b'"""Package."""\nVALUE = 2\n'})
+        refused = sources('--wheel', str(edited), '--platform', self.PLATFORM)
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertIn('members differ from their committed sources', refused.stderr)
+        (self.root / 'python/eigentrail/__init__.py').write_bytes(b'"""Package."""\r\nVALUE = 1\r\n')
+        self.assertIn('tracked files differ', sources().stderr)
+        self.assertEqual(sources('--wheel', str(edited)).returncode, 2)  # --platform is required with --wheel.
+
+    def test_release_validation_runs_the_checks_on_each_producer(self):
+        windows = validation_job('windows-candidate')
+        checkout = next(i for i, line in enumerate(windows) if line.startswith('- uses: actions/checkout@'))
+        config = windows.index('run: git config --global core.autocrlf false')
+        self.assertLess(config, checkout, 'autocrlf must be off before the Windows checkout')
+        preflight = windows.index('python scripts/release_bundle.py sources --root .')
+        edit = next(i for i, line in enumerate(windows) if line.startswith('Add-Content') and 'python\\eigentrail\\rolling.py' in line)
+        self.assertLess(checkout, preflight)
+        self.assertLess(preflight, edit)
+        self.assertIn('if ($LASTEXITCODE -eq 0) { throw', windows[edit + 2])  # The edited checkout must be refused.
+        self.assertIn('git checkout -- python/eigentrail/rolling.py', windows)
+        self.assertTrue(any('release_bundle.py sources --root . --wheel $wheels[0].FullName --platform windows-2022-x86_64' in line
+                            for line in windows))
+        native = validation_job('native')
+        self.assertTrue(any('release_bundle.py sources --root . --wheel "${wheels[0]}" --platform' in line for line in native))
+        bundle = validation_job('bundle')
+        loop = bundle.index('for platform in macos-15-arm64 ubuntu-24.04-x86_64 windows-2022-x86_64; do')
+        create = next(i for i, line in enumerate(bundle) if 'scripts/release_bundle.py create' in line)
+        self.assertLess(loop, create)
+        self.assertTrue(any('release_bundle.py sources --root . --commit "$GITHUB_SHA" --wheel "${wheel[0]}" --platform "$platform"' in line
+                            for line in bundle[loop:create]))
+
+
 if __name__ == '__main__':
     unittest.main()

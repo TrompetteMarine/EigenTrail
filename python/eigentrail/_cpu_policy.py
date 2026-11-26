@@ -1,4 +1,4 @@
-"""Public baseline candidate policy; generic Linux publication remains unqualified."""
+"""Linux CPU policy: EigenTrail's native code needs only baseline x86-64 SSE2 instructions."""
 LINUX_CPU_PROFILE = 'baseline-sse2'
 LINUX_CPU_FLAGS = ('sse2',)
 LINUX_CPU_DESCRIPTION = 'x86-64 baseline SSE2 instructions'

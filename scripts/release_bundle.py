@@ -20,6 +20,7 @@ import hashlib
 import json
 import re
 import shutil
+import subprocess
 import tomllib
 import zipfile
 
@@ -110,6 +111,85 @@ def check_wheel_tags(path, platform):
         raise ValueError(f'{path.name} WHEEL record is not UTF-8') from None
     tags = [str(tag).strip(' \t\r\n') for tag in Parser().parsestr(text).get_all('Tag', [])]
     require(tags == [f'{PYTHON_TAG}-{PLATFORMS[platform]}'], f'{path.name} declares wheel tags {tags}')
+
+
+# Members each platform job compiles; every other wheel member is a tracked file.
+NATIVES = {'macos-15-arm64': {'eigentrail/_eigentrail.cpython-314-darwin.so'},
+           'ubuntu-24.04-x86_64': {'eigentrail/_eigentrail.cpython-314-x86_64-linux-gnu.so'},
+           'windows-2022-x86_64': {'eigentrail/_eigentrail.cp314-win_amd64.pyd', 'eigentrail/_eigentrail_cpu_guard.dll'}}
+
+
+def git(root, *args):
+    result = subprocess.run(['git', '-C', str(root), *args], capture_output=True)
+    require(result.returncode == 0, f'git {args[0]} failed: {result.stderr.decode(errors="replace").strip()}')
+    return result.stdout
+
+
+def blob_id(data):
+    """Git's object id for these exact bytes: no clean filter or line-ending conversion applies."""
+    return hashlib.sha1(b'blob %d\0' % len(data) + data).hexdigest()
+
+
+def tracked_blobs(root, commit):
+    """Path -> committed blob id for every regular file at commit."""
+    require(git(root, 'rev-parse', '--show-object-format').strip() == b'sha1', 'Only SHA-1 repositories are supported')
+    blobs = {}
+    for record in git(root, 'ls-tree', '-r', '-z', commit).split(b'\0'):
+        if record:
+            header, name = record.split(b'\t', 1)
+            mode, kind, oid = header.decode().split()
+            if kind == 'blob' and mode in ('100644', '100755'):
+                blobs[name.decode()] = oid
+    return blobs
+
+
+def check_checkout(root, commit='HEAD'):
+    """Every tracked file in the checkout holds its committed bytes.
+
+    Windows runners default to core.autocrlf=true, which rewrites text files to CRLF
+    on checkout; git diff hides that because it compares after the same conversion.
+    """
+    def current(name):
+        path = root / name
+        return blob_id(path.read_bytes()) if path.is_file() and not path.is_symlink() else None
+    blobs = tracked_blobs(root, commit)
+    changed = sorted(name for name, oid in blobs.items() if current(name) != oid)
+    require(not changed, f'{len(changed)} tracked files differ from their committed bytes, e.g. {changed[:3]}')
+    return len(blobs)
+
+
+def check_wheel_sources(path, platform, *, root, commit='HEAD'):
+    """Every package and licence member of the built wheel is the committed bytes of its source.
+
+    Package files come from python/; the dist-info licence copies come from the files
+    pyproject.toml names under python/. Only the platform's compiled members and
+    the generated WHEEL, METADATA and RECORD may differ from Git.
+    """
+    blobs = tracked_blobs(root, commit)
+    with zipfile.ZipFile(path) as archive:
+        names = archive.namelist()
+        require(len(names) == len(set(names)), f'{path.name} repeats an archive member')
+        dist = {name.split('/', 1)[0] for name in names if name.split('/', 1)[0].endswith('.dist-info')}
+        require(len(dist) == 1, f'{path.name} needs exactly one dist-info directory')
+        dist, = dist
+        generated = {f'{dist}/{name}' for name in ('WHEEL', 'METADATA', 'RECORD')}
+        compared, changed = 0, []
+        for name in names:
+            if name in generated or name in NATIVES[platform]:
+                continue
+            if name.startswith(dist + '/licenses/'):
+                source = 'python/' + name[len(dist + '/licenses/'):]
+            else:
+                require(name.startswith('eigentrail/'), f'{path.name} has unexpected member {name}')
+                source = 'python/' + name
+            if blobs.get(source) != blob_id(archive.read(name)):
+                changed.append(name)
+            compared += 1
+    require(not changed, f'{len(changed)} {path.name} members differ from their committed sources, e.g. {changed[:3]}')
+    missing = sorted(name[len('python/'):] for name in blobs if name.startswith('python/eigentrail/')
+                     and name[len('python/'):] not in names)
+    require(not missing, f'{path.name} lacks tracked package files {missing[:3]}')
+    return compared
 
 
 def load_json(path, what='release receipt'):
@@ -330,7 +410,25 @@ def main():
     verify_command.add_argument('--tag', required=True)
     verify_command.add_argument('--dist', type=Path, required=True)
     verify_command.add_argument('--github-output', type=Path)
+    sources_command = commands.add_parser('sources', help='Check a checkout, or a built wheel, against Git blobs')
+    sources_command.add_argument('--root', type=Path, default=ROOT)
+    sources_command.add_argument('--commit', default='HEAD')
+    sources_command.add_argument('--wheel', type=Path)
+    sources_command.add_argument('--platform', choices=sorted(NATIVES))
     args = parser.parse_args()
+    if args.command == 'sources':
+        if (args.wheel is None) != (args.platform is None):
+            parser.error('--wheel and --platform go together')
+        try:
+            if args.wheel is None:
+                checked = {'checkout_files': check_checkout(args.root, args.commit)}
+            else:
+                checked = {'wheel': args.wheel.name, 'members': check_wheel_sources(args.wheel, args.platform,
+                                                                                    root=args.root, commit=args.commit)}
+        except ValueError as error:
+            raise SystemExit(f'release bundle sources failed: {error}')
+        print(json.dumps({'status': 'passed', 'command': 'sources', 'commit': args.commit, **checked}, indent=2))
+        return
     version = project_version(args.root)
     common = dict(repository=args.repository, run_id=args.run_id, commit=args.commit, tree=args.tree, version=version)
     try:

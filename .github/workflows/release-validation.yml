@@ -159,6 +159,8 @@ jobs:
           wheels=(artifacts/python/*.whl)
           [[ ${#wheels[@]} -eq 1 ]]
           python scripts/check_release.py --artifact "${wheels[0]}" --artifact "artifacts/python/$(basename "${raw[0]}")" > artifacts/python/metadata-check.json
+          # Every package and licence member must be the committed bytes of its source.
+          python scripts/release_bundle.py sources --root . --wheel "${wheels[0]}" --platform '${{ matrix.os }}-${{ matrix.machine }}' > artifacts/python/source-bytes.json
           # Keep the built bytes; staging later requires every smoke test to have used them.
           mkdir "$RUNNER_TEMP/release-candidate"
           cp -- "${wheels[0]}" "artifacts/python/$(basename "${raw[0]}")" "$RUNNER_TEMP/release-candidate/"
@@ -277,6 +279,11 @@ jobs:
       - name: Require the exact candidate workflow commit
         run: |
           if ($env:EXPECTED_SHA -notmatch '^[0-9a-f]{40}$' -or $env:GITHUB_SHA -ne $env:EXPECTED_SHA) { throw 'Exact candidate commit required' }
+      # Windows runners default to core.autocrlf=true, which turned 145 of the 0.3.0
+      # candidate wheel's 149 package and licence files into CRLF copies. The wheel must
+      # carry the committed bytes, so check out without conversion.
+      - name: Keep Git's exact bytes in the checkout
+        run: git config --global core.autocrlf false
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
@@ -284,6 +291,16 @@ jobs:
         with:
           python-version: '3.14'
           architecture: x64
+      - name: Check the checkout against Git blobs, and that an edit is refused
+        run: |
+          python scripts/release_bundle.py sources --root .
+          if ($LASTEXITCODE) { throw 'Checkout bytes differ from Git' }
+          Add-Content -Path python\eigentrail\rolling.py -Value '# edited' -NoNewline
+          python scripts/release_bundle.py sources --root .
+          if ($LASTEXITCODE -eq 0) { throw 'An edited tracked file was accepted' }
+          git checkout -- python/eigentrail/rolling.py
+          python scripts/release_bundle.py sources --root .
+          if ($LASTEXITCODE) { throw 'Restored checkout differs from Git' }
       - name: Prepare native MSVC tools and candidate dependencies
         run: |
           $ErrorActionPreference = 'Stop'
@@ -352,6 +369,8 @@ jobs:
           if ($wheels.Count -ne 1 -or $wheels[0].Name -notmatch '-cp314-cp314-win_amd64\.whl$') { throw 'Unexpected Windows wheel tag' }
           python scripts/check_release.py --artifact $wheels[0].FullName | Out-File artifacts\windows\metadata-check.json
           if ($LASTEXITCODE) { throw 'Wheel metadata failed' }
+          python scripts/release_bundle.py sources --root . --wheel $wheels[0].FullName --platform windows-2022-x86_64 | Out-File artifacts\windows\source-bytes.json
+          if ($LASTEXITCODE) { throw 'Wheel members differ from their committed sources' }
       - name: Clean binary installation, checked rolling cases and offline plots
         run: |
           $wheels = @(Get-ChildItem artifacts\windows\*.whl)
@@ -432,6 +451,12 @@ jobs:
           path: ${{ runner.temp }}/candidates
       - name: Bind the published files to this commit and run
         run: |
+          # Every wheel's package and licence members must be this commit's bytes.
+          for platform in macos-15-arm64 ubuntu-24.04-x86_64 windows-2022-x86_64; do
+            wheel=("$RUNNER_TEMP/candidates/candidate-$platform"/*.whl)
+            test "${#wheel[@]}" -eq 1
+            python3 -I scripts/release_bundle.py sources --root . --commit "$GITHUB_SHA" --wheel "${wheel[0]}" --platform "$platform"
+          done
           python3 -I scripts/release_bundle.py create \
             --candidates "$RUNNER_TEMP/candidates" --out "$RUNNER_TEMP/release-bundle" \
             --repository "$GITHUB_REPOSITORY" --workflow-ref "$GITHUB_WORKFLOW_REF" --ref "$GITHUB_REF" \

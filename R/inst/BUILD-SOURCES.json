@@ -170,7 +170,7 @@
   "src/Makevars.in": "6fa688e853dfae1febba109000cbb96e69a8c36936692d277073bb162af67c15",
   "src/entrypoint.c": "acb5d9661d27e74fd5aae6b47808d799edc79ad0211153364938882cdf661fc3",
   "src/rust/vendor.tar.xz": "b4f0a9221c138e51ed0e543df7cbbf607b661aeaaef5c05e3c796817465665aa",
-  "src/rust/workspace.tar.xz": "14fd9c4d7b0d70523e54bfd8a61f516238d2593906872ff1f786696ebac70618",
+  "src/rust/workspace.tar.xz": "217009c2a5fd464a48a2f0ca965d07a2804f688d3d2615d8e8133e3c84a8dd97",
   "tests/json-routes.R": "5db4428030db1960d8263a62c0c32d1287c01906f1b3dbdc60fa3ab3addb1c6a",
   "tests/smoke.R": "f3c520c3f5d04968cfc488ad5c3f4f5867f6a69ee8398434ce98681fca90511f"
 }

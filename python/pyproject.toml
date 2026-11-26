@@ -21,6 +21,8 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Rust",
   "Operating System :: MacOS :: MacOS X",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: Microsoft :: Windows",
   "Topic :: Scientific/Engineering :: Mathematics",
 ]
 
@@ -30,49 +32,32 @@ text = """
 # EigenTrail
 
 EigenTrail tracks covariance eigenvalues and eigenspaces over time with TRACE,
-using Rust producers and independent numerical checking. Candidate **0.3.0** adds
+using Rust producers and independent numerical checking. Version **0.3.0** adds
 observed-date rolling lineage, founder reach and optional plotting. Tied groups,
 explicit missing slots, unavailable transfers and unresolved bounds stay visible.
 Statistical conclusions require the caller's declared joint event and premises.
 
-This is an **unreleased candidate**. PyPI still distributes Python **0.2.0**;
-GitHub's latest published release is **v0.2.2** for R maintenance. No 0.3.0 tag or
-registry publication is implied. Candidate installation requires a receipt for
-the exact artifact digest and OS/architecture/ABI/CPU tuple.
-
 Python receives real NumPy float64 arrays with shape `(dates, features, features)`.
 CPython **3.14** and NumPy **>=2.3,<3** are required. The optional `plot` extra adds
-Matplotlib **>=3.10,<4**; plots work offline without TeX. A built wheel needs no
-Rust toolchain. Source installation requires Rust **1.99.0** and native C/C++ tools.
-
-After the candidate wheel is qualified for macOS ARM64/CPython 3.14, install its
-verified local bytes in an activated virtual environment:
+Matplotlib **>=3.10,<4**; plots work offline without TeX.
 
 ```sh
-python -m pip install --only-binary=:all: "./candidate/eigentrail-0.3.0-cp314-cp314-macosx_14_0_arm64.whl[plot]"
+python -m pip install "eigentrail[plot]==0.3.0"
 ```
 
-A separately qualified source archive is installed with:
+Wheels need no Rust toolchain. They are built for:
 
-```sh
-python -m pip install "./candidate/eigentrail-0.3.0.tar.gz[plot]"
-```
+- macOS 14 or later on Apple silicon (arm64).
+- Linux x86-64 with glibc 2.28 or later (manylinux_2_28). EigenTrail's own native
+  code uses only baseline x86-64 (SSE2) instructions; current NumPy releases need
+  x86-64-v2 (SSE4.2 and POPCNT).
+- Windows x86-64 on Haswell-class processors: x86-64-v3 plus PCLMULQDQ, RDRAND and
+  XSAVEOPT, with AVX state enabled by the operating system. A packaged guard checks
+  every active logical processor and refuses others before the extension loads.
 
-The public Linux workspace now stages the preserved baseline SSE2 interval fork
-with `RUSTFLAGS="-C target-cpu=x86-64"`, `CFLAGS="-march=x86-64"` and matching
-CXXFLAGS. Generic Linux wheels remain held until native baseline, manylinux,
-independent endpoint and scientific checks pass. Windows MSVC/Haswell candidates
-need their own backend, helper/DLL and installed-artifact qualification; Windows
-source installation remains unqualified until its helper-build route is checked.
-
-For the **earlier published Python 0.2.0** API, use:
-
-```sh
-python -m pip install --only-binary=eigentrail "eigentrail==0.2.0"
-```
-
-That release's Linux source builds retain their original Haswell/OS-AVX
-requirements. The new rolling API is available only in a qualified 0.3.0 candidate.
+Elsewhere pip builds the source distribution, which needs Rust **1.99.0** and
+native C/C++ build tools. Windows source builds are not supported: the Windows
+wheel carries a separately built CPU guard.
 
 [Quickstart](https://github.com/TrompetteMarine/EigenTrail/blob/main/docs/quickstart.md)
 | [Source](https://github.com/TrompetteMarine/EigenTrail)
