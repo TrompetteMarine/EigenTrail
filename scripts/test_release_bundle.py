@@ -634,7 +634,7 @@ exit 90
             'BUNDLE_SOURCE': str(self.bundle),
         }
         result = subprocess.run(['bash', '--noprofile', '--norc', '-euo', 'pipefail', '-c',
-                                 workflow_bundle_publish_block()], cwd=self.tmp, env=env,
+                                 workflow_bundle_publish_block()], cwd=runner, env=env,
                                 capture_output=True, text=True)
         return result, runner / 'dist'
 
