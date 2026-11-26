@@ -1,26 +1,116 @@
 name: Publish qualified Python release
 
+# Publishes only bytes from the release-bundle artifact of a successful
+# release-validation.yml run for the tagged commit of a published, non-prerelease
+# GitHub release, and only when the private qualification receipt attached to
+# that release approves exactly those bytes. Qualify and attach the bundle's own
+# files: a locally rebuilt wheel has a different hash and is refused. The tagged
+# commit must be on main's first-parent history and must itself be the validated
+# commit, so validate the merged commit you will tag.
+# Dispatch from main: the verify job runs main's checking code, reads the
+# candidate commit and the release assets only as data, and holds no registry
+# credentials. The publish job holds the PyPI OIDC permission, checks out nothing
+# and runs no repository code: after environment approval it re-checks the
+# release, every release asset against the inventory verify checked, the tag, that
+# the tagged commit is still on main's first-parent history, and that the
+# validation run is still the successful attempt verify checked, then re-downloads
+# the same bundle and keeps only the verified bytes.
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing qualified GitHub release tag
+        description: Published release tag (vX.Y.Z)
         required: true
         type: string
       expected_sha:
-        description: Exact qualified release commit
+        description: Exact commit the tag names and validation qualified
+        required: true
+        type: string
+      validation_run_id:
+        description: Successful release-validation.yml run for expected_sha
         required: true
         type: string
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: publish-pypi
   cancel-in-progress: false
 
 jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      sdist: ${{ steps.bundle.outputs.sdist }}
+      sdist_sha256: ${{ steps.bundle.outputs.sdist_sha256 }}
+      wheel: ${{ steps.bundle.outputs.wheel }}
+      wheel_sha256: ${{ steps.bundle.outputs.wheel_sha256 }}
+      release_inventory_sha256: ${{ steps.bundle.outputs.release_inventory_sha256 }}
+      validation_run_attempt: ${{ steps.bundle.outputs.validation_run_attempt }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ inputs.tag }}
+      EXPECTED_SHA: ${{ inputs.expected_sha }}
+      VALIDATION_RUN_ID: ${{ inputs.validation_run_id }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Require main's publishing code and well-formed inputs
+        run: |
+          [[ "$GITHUB_REF" == refs/heads/main ]]
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          [[ "$VALIDATION_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check out the candidate commit as data only
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.expected_sha }}
+          path: candidate
+          persist-credentials: false
+      - name: Verify the release, tag and validation run, then fetch the bundle and release assets
+        run: |
+          # The candidate's own validation workflow wrote the bundle receipt, so take
+          # only commits on main's first-parent line, not commits that arrived inside a
+          # merged branch. (grep without -q: under pipefail, -q's early exit would fail
+          # the pipe with SIGPIPE.)
+          git rev-list --first-parent HEAD | grep -Fx "$EXPECTED_SHA" > /dev/null
+          [[ "$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" --jq '.draft == false and .prerelease == false')" == true ]]
+          git -C candidate fetch origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+          [[ "$(git -C candidate rev-parse "$RELEASE_TAG^{commit}")" == "$EXPECTED_SHA" ]]
+          [[ "$(git -C candidate rev-parse HEAD)" == "$EXPECTED_SHA" ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release-validation.yml" > "$RUNNER_TEMP/validation-workflow.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$VALIDATION_RUN_ID" > "$RUNNER_TEMP/validation-run.json"
+          gh run download "$VALIDATION_RUN_ID" --repo "$GITHUB_REPOSITORY" --name release-bundle --dir "$RUNNER_TEMP/bundle"
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir "$RUNNER_TEMP/release"
+      - name: Check the release approval and the bundle, then stage the allowlisted files
+        id: bundle
+        run: |
+          python3 scripts/test_qualified_artifacts.py
+          python3 -I scripts/test_release_bundle.py
+          tree=$(git -C candidate rev-parse 'HEAD^{tree}')
+          python3 -I scripts/qualified_artifacts.py --directory "$RUNNER_TEMP/release" \
+            --project candidate/python/pyproject.toml --commit "$EXPECTED_SHA" --tree "$tree" \
+            --out "$RUNNER_TEMP/approved" > "$RUNNER_TEMP/approved.json"
+          python3 -I scripts/release_bundle.py verify --root candidate \
+            --bundle "$RUNNER_TEMP/bundle" --run "$RUNNER_TEMP/validation-run.json" \
+            --workflow "$RUNNER_TEMP/validation-workflow.json" --approved "$RUNNER_TEMP/approved.json" \
+            --release "$RUNNER_TEMP/release" --repository "$GITHUB_REPOSITORY" --run-id "$VALIDATION_RUN_ID" \
+            --commit "$EXPECTED_SHA" --tree "$tree" --tag "$RELEASE_TAG" \
+            --dist "$RUNNER_TEMP/dist" --github-output "$GITHUB_OUTPUT"
+          python3 -I scripts/check_release.py --root candidate \
+            --artifact "$RUNNER_TEMP"/dist/*.whl --artifact "$RUNNER_TEMP"/dist/*.tar.gz
+
   publish:
+    needs: verify
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     environment:
@@ -28,46 +118,68 @@ jobs:
       url: https://pypi.org/p/eigentrail
     permissions:
       contents: read
+      actions: read
       id-token: write
     env:
       GH_TOKEN: ${{ github.token }}
       RELEASE_TAG: ${{ inputs.tag }}
       EXPECTED_SHA: ${{ inputs.expected_sha }}
+      VALIDATION_RUN_ID: ${{ inputs.validation_run_id }}
+      SDIST: ${{ needs.verify.outputs.sdist }}
+      SDIST_SHA256: ${{ needs.verify.outputs.sdist_sha256 }}
+      WHEEL: ${{ needs.verify.outputs.wheel }}
+      WHEEL_SHA256: ${{ needs.verify.outputs.wheel_sha256 }}
+      RELEASE_INVENTORY_SHA256: ${{ needs.verify.outputs.release_inventory_sha256 }}
+      VALIDATION_RUN_ATTEMPT: ${{ needs.verify.outputs.validation_run_attempt }}
+    defaults:
+      run:
+        shell: bash
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          ref: ${{ inputs.expected_sha }}
-          persist-credentials: false
-      - name: Verify tag, release and qualified artifact manifest
+      - name: Re-check the release, its assets, the tag and main's history after approval
         run: |
           [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
           [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
-          git fetch origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
-          [[ "$(git rev-parse "$RELEASE_TAG^{commit}")" == "$EXPECTED_SHA" ]]
-          [[ "$(git rev-parse HEAD)" == "$EXPECTED_SHA" ]]
-          gh release view "$RELEASE_TAG" --json isDraft,isPrerelease > release-state.json
-          gh release download "$RELEASE_TAG" --dir qualified
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          state = json.loads(Path('release-state.json').read_text())
-          assert not state['isDraft'] and not state['isPrerelease']
-          PY
-          python - <<'PY'
-          import os, tomllib
-          from pathlib import Path
-          project = tomllib.loads(Path('python/pyproject.toml').read_text())['project']
-          assert os.environ['RELEASE_TAG'] == 'v' + project['version']
-          PY
-          python scripts/test_qualified_artifacts.py
-          python scripts/qualified_artifacts.py --directory qualified --project python/pyproject.toml --commit "$EXPECTED_SHA" --tree "$(git rev-parse 'HEAD^{tree}')" --out dist > selected-artifacts.json
-          python - <<'PY'
-          import subprocess, sys
-          from pathlib import Path
-          arguments = [part for path in sorted(Path('dist').iterdir())
-                       for part in ['--artifact', str(path)]]
-          subprocess.run([sys.executable, 'scripts/check_release.py', *arguments], check=True)
-          PY
+          [[ "$RELEASE_INVENTORY_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          [[ "$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" --jq '.draft == false and .prerelease == false')" == true ]]
+          object=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq '.object.type + " " + .object.sha')
+          for _ in {1..16}; do  # Peel annotated tags as git's ^{commit} does.
+            [[ "$object" == tag\ * ]] || break
+            object=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/${object#tag }" --jq '.object.type + " " + .object.sha')
+          done
+          [[ "$object" == "commit $EXPECTED_SHA" ]]
+          # main may have moved or been rewound while approval was pending: the tagged
+          # commit must still be on its first-parent line. A bare, treeless clone reads
+          # only main's commit graph; nothing is checked out or run.
+          git clone --quiet --bare --filter=tree:0 --single-branch --branch main --no-tags \
+            "https://github.com/$GITHUB_REPOSITORY.git" "$RUNNER_TEMP/main-history"
+          git -C "$RUNNER_TEMP/main-history" rev-list --first-parent refs/heads/main | grep -Fx "$EXPECTED_SHA" > /dev/null
+          # A release changed while approval was pending stops the upload: every asset, by
+          # name and content, must be what verify checked. Hash literal ./name paths, so an
+          # asset named "-" is not read from stdin.
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir "$RUNNER_TEMP/approval"
+          cd "$RUNNER_TEMP/approval"
+          inventory=$(ls -A | LC_ALL=C sort | while IFS= read -r name; do
+            printf '%s  %s\n' "$(sha256sum < "./$name" | cut -d ' ' -f 1)" "$name"
+          done)
+          [[ "$(printf '%s\n' "$inventory" | sha256sum | cut -d ' ' -f 1)" == "$RELEASE_INVENTORY_SHA256" ]]
+      - name: Download the validation bundle and keep only the verified bytes
+        run: |
+          [[ "$VALIDATION_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+          [[ "$SDIST" =~ ^eigentrail-[0-9]+\.[0-9]+\.[0-9]+\.tar\.gz$ ]]
+          [[ "$WHEEL" =~ ^eigentrail-[0-9]+\.[0-9]+\.[0-9]+-cp314-cp314-macosx_14_0_arm64\.whl$ ]]
+          [[ "$SDIST_SHA256" =~ ^[0-9a-f]{64}$ && "$WHEEL_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          [[ "$VALIDATION_RUN_ATTEMPT" =~ ^[1-9][0-9]*$ ]]
+          # A re-run started, failed or finished while approval was pending: the run must
+          # still be the attempt verify checked, completed and successful, for this commit.
+          run=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$VALIDATION_RUN_ID" \
+            --jq '[.status, (.conclusion // "none"), (.run_attempt | tostring), .head_sha] | join(" ")')
+          [[ "$run" == "completed success $VALIDATION_RUN_ATTEMPT $EXPECTED_SHA" ]]
+          gh run download "$VALIDATION_RUN_ID" --repo "$GITHUB_REPOSITORY" --name release-bundle --dir "$RUNNER_TEMP/bundle"
+          mkdir dist
+          cp -- "$RUNNER_TEMP/bundle/$SDIST" "$RUNNER_TEMP/bundle/$WHEEL" dist/
+          printf '%s  %s\n' "$SDIST_SHA256" "$SDIST" "$WHEEL_SHA256" "$WHEEL" > "$RUNNER_TEMP/SHA256SUMS"
+          (cd dist && sha256sum --strict --check "$RUNNER_TEMP/SHA256SUMS")
+          [[ "$(ls -A dist | sort)" == "$(printf '%s\n' "$SDIST" "$WHEEL" | sort)" ]]
       - name: Publish exact qualified bytes through Trusted Publishing
         uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086
         with:

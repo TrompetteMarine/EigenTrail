@@ -2,6 +2,9 @@ name: Package installation checks
 
 # Artifact validation only. Publishing requires a separate explicitly approved
 # workflow with a protected environment; this job has no registry credentials.
+# After the native platforms pass, the bundle job binds the exact sdist and the
+# allowlisted wheel to this commit and run as the release-bundle artifact, the
+# only bytes publish-pypi.yml accepts.
 on:
   workflow_dispatch:
     inputs:
@@ -115,6 +118,7 @@ jobs:
           python scripts/test_python_cpu_guard.py
           python scripts/test_windows_cpu_guard.py
           python scripts/test_qualified_artifacts.py
+          python scripts/test_release_bundle.py
           cargo test --release --locked --lib --bins -- --test-threads=1 2>&1 | tee artifacts/rust-tests.log
           cargo install --offline --locked --path crates/eigentrail-check --root "$RUNNER_TEMP/eigentrail-cli"
       - name: Upstream registry packaging smoke without publishing
@@ -142,6 +146,9 @@ jobs:
           wheels=(artifacts/python/*.whl)
           [[ ${#wheels[@]} -eq 1 ]]
           python scripts/check_release.py --artifact "${wheels[0]}" --artifact "artifacts/python/$(basename "${raw[0]}")" > artifacts/python/metadata-check.json
+          # Keep the built bytes; staging later requires every smoke test to have used them.
+          mkdir "$RUNNER_TEMP/release-candidate"
+          cp -- "${wheels[0]}" "artifacts/python/$(basename "${raw[0]}")" "$RUNNER_TEMP/release-candidate/"
       - name: Install wheel outside checkout and run smoke
         run: |
           python -m venv "$RUNNER_TEMP/eigentrail-wheel"
@@ -203,6 +210,23 @@ jobs:
               f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(root)}\n'
               for p in packages))
           PY
+      - name: Stage this platform's release candidate
+        run: |
+          candidate="$RUNNER_TEMP/release-candidate"
+          built=("$candidate"/*)
+          tested=(artifacts/python/*.whl artifacts/python/*.tar.gz)
+          # Plain test commands: the macOS runner's /bin/bash 3.2 does not stop on a failed [[ ]].
+          test "${#built[@]}" -eq 2
+          test "${#tested[@]}" -eq 2
+          for file in "${tested[@]}"; do cmp -- "$file" "$candidate/$(basename "$file")"; done
+          cp artifacts/source-commit.txt artifacts/source-tree.txt "$candidate/"
+      - name: Upload this platform's release candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: candidate-${{ matrix.os }}-${{ matrix.machine }}
+          retention-days: 90
+          if-no-files-found: error
+          path: ${{ runner.temp }}/release-candidate/
       - name: Upload candidate artifacts and actual logs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -353,3 +377,42 @@ jobs:
             artifacts/windows/
             ${{ runner.temp }}/eigentrail-windows-rolling/
             ${{ runner.temp }}/eigentrail-windows-plots/
+
+  bundle:
+    name: Release bundle
+    # Wait for every job: re-running any failed job then re-runs this one too, so the
+    # receipt's run attempt matches the run's final attempt.
+    needs: [native, windows-candidate]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Require the exact staged workflow commit
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$GITHUB_SHA" == "$EXPECTED_SHA" ]]
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: candidate-*
+          path: ${{ runner.temp }}/candidates
+      - name: Bind the published files to this commit and run
+        run: |
+          python3 -I scripts/release_bundle.py create \
+            --candidates "$RUNNER_TEMP/candidates" --out "$RUNNER_TEMP/release-bundle" \
+            --repository "$GITHUB_REPOSITORY" --workflow-ref "$GITHUB_WORKFLOW_REF" --ref "$GITHUB_REF" \
+            --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --commit "$GITHUB_SHA" --tree "$(git rev-parse 'HEAD^{tree}')"
+      - name: Retain the immutable release bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-bundle
+          retention-days: 90
+          if-no-files-found: error
+          path: ${{ runner.temp }}/release-bundle/
