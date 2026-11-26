@@ -623,6 +623,7 @@ exit 90
         wheel_names = wheel_names or [name for name in self.names if name.endswith('.whl')]
         wheel_hashes = wheel_hashes or [self.hashes[name] for name in wheel_names]
         runner = self.tmp / f'runner-{len(list(self.tmp.glob("runner-*")))}'
+        runner.mkdir()
         env = {
             'PATH': str(self.bindir) + os.pathsep + os.environ['PATH'],
             'RUNNER_TEMP': str(runner), 'GITHUB_REPOSITORY': REPO,
