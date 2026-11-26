@@ -47,8 +47,8 @@ jobs:
     outputs:
       sdist: ${{ steps.bundle.outputs.sdist }}
       sdist_sha256: ${{ steps.bundle.outputs.sdist_sha256 }}
-      wheel: ${{ steps.bundle.outputs.wheel }}
-      wheel_sha256: ${{ steps.bundle.outputs.wheel_sha256 }}
+      wheels: ${{ steps.bundle.outputs.wheels }}
+      wheel_sha256s: ${{ steps.bundle.outputs.wheel_sha256s }}
       release_inventory_sha256: ${{ steps.bundle.outputs.release_inventory_sha256 }}
       validation_run_attempt: ${{ steps.bundle.outputs.validation_run_attempt }}
     env:
@@ -109,8 +109,10 @@ jobs:
             --release "$RUNNER_TEMP/release" --repository "$GITHUB_REPOSITORY" --run-id "$VALIDATION_RUN_ID" \
             --commit "$EXPECTED_SHA" --tree "$tree" --tag "$RELEASE_TAG" \
             --dist "$RUNNER_TEMP/dist" --github-output "$GITHUB_OUTPUT"
-          python3 -I scripts/check_release.py --root candidate \
-            --artifact "$RUNNER_TEMP"/dist/*.whl --artifact "$RUNNER_TEMP"/dist/*.tar.gz
+          artifacts=("$RUNNER_TEMP"/dist/*.whl "$RUNNER_TEMP"/dist/*.tar.gz)
+          artifact_args=()
+          for artifact in "${artifacts[@]}"; do artifact_args+=(--artifact "$artifact"); done
+          python3 -I scripts/check_release.py --root candidate "${artifact_args[@]}"
 
   publish:
     needs: verify
@@ -130,8 +132,8 @@ jobs:
       VALIDATION_RUN_ID: ${{ inputs.validation_run_id }}
       SDIST: ${{ needs.verify.outputs.sdist }}
       SDIST_SHA256: ${{ needs.verify.outputs.sdist_sha256 }}
-      WHEEL: ${{ needs.verify.outputs.wheel }}
-      WHEEL_SHA256: ${{ needs.verify.outputs.wheel_sha256 }}
+      WHEELS: ${{ needs.verify.outputs.wheels }}
+      WHEEL_SHA256S: ${{ needs.verify.outputs.wheel_sha256s }}
       RELEASE_INVENTORY_SHA256: ${{ needs.verify.outputs.release_inventory_sha256 }}
       VALIDATION_RUN_ATTEMPT: ${{ needs.verify.outputs.validation_run_attempt }}
     defaults:
@@ -167,9 +169,20 @@ jobs:
         run: |
           [[ "$VALIDATION_RUN_ID" =~ ^[1-9][0-9]*$ ]]
           [[ "$SDIST" =~ ^eigentrail-[0-9]+\.[0-9]+\.[0-9]+\.tar\.gz$ ]]
-          [[ "$WHEEL" =~ ^eigentrail-[0-9]+\.[0-9]+\.[0-9]+-cp314-cp314-macosx_14_0_arm64\.whl$ ]]
-          [[ "$SDIST_SHA256" =~ ^[0-9a-f]{64}$ && "$WHEEL_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          [[ "$SDIST_SHA256" =~ ^[0-9a-f]{64}$ ]]
           [[ "$VALIDATION_RUN_ATTEMPT" =~ ^[1-9][0-9]*$ ]]
+          IFS=, read -r -a wheels <<< "$WHEELS"
+          IFS=, read -r -a wheel_hashes <<< "$WHEEL_SHA256S"
+          [[ "${#wheels[@]}" -eq 3 && "${#wheel_hashes[@]}" -eq 3 ]]
+          declare -A wheel_tags=()
+          for wheel in "${wheels[@]}"; do
+            [[ "$wheel" =~ ^eigentrail-[0-9]+\.[0-9]+\.[0-9]+-cp314-cp314-(macosx_14_0_arm64|manylinux_2_28_x86_64|win_amd64)\.whl$ ]]
+            tag=${wheel##*-cp314-cp314-}; tag=${tag%.whl}
+            [[ -z "${wheel_tags[$tag]+x}" ]]
+            wheel_tags[$tag]=1
+          done
+          [[ "${#wheel_tags[@]}" -eq 3 && -n "${wheel_tags[macosx_14_0_arm64]+x}" && -n "${wheel_tags[manylinux_2_28_x86_64]+x}" && -n "${wheel_tags[win_amd64]+x}" ]]
+          for digest in "${wheel_hashes[@]}"; do [[ "$digest" =~ ^[0-9a-f]{64}$ ]]; done
           # A re-run started, failed or finished while approval was pending: the run must
           # still be the attempt verify checked, completed and successful, for this commit.
           run=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$VALIDATION_RUN_ID" \
@@ -177,10 +190,14 @@ jobs:
           [[ "$run" == "completed success $VALIDATION_RUN_ATTEMPT $EXPECTED_SHA" ]]
           gh run download "$VALIDATION_RUN_ID" --repo "$GITHUB_REPOSITORY" --name release-bundle --dir "$RUNNER_TEMP/bundle"
           mkdir dist
-          cp -- "$RUNNER_TEMP/bundle/$SDIST" "$RUNNER_TEMP/bundle/$WHEEL" dist/
-          printf '%s  %s\n' "$SDIST_SHA256" "$SDIST" "$WHEEL_SHA256" "$WHEEL" > "$RUNNER_TEMP/SHA256SUMS"
+          cp -- "$RUNNER_TEMP/bundle/$SDIST" "${wheels[@]/#/$RUNNER_TEMP/bundle/}" dist/
+          {
+            printf '%s  %s\n' "$SDIST_SHA256" "$SDIST"
+            for index in "${!wheels[@]}"; do printf '%s  %s\n' "${wheel_hashes[$index]}" "${wheels[$index]}"; done
+          } > "$RUNNER_TEMP/SHA256SUMS"
           (cd dist && sha256sum --strict --check "$RUNNER_TEMP/SHA256SUMS")
-          [[ "$(ls -A dist | sort)" == "$(printf '%s\n' "$SDIST" "$WHEEL" | sort)" ]]
+          expected=$(printf '%s\n' "$SDIST" "${wheels[@]}" | LC_ALL=C sort)
+          [[ "$(ls -A dist | LC_ALL=C sort)" == "$expected" ]]
       - name: Publish exact qualified bytes through Trusted Publishing
         uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086
         with:

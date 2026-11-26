@@ -2,8 +2,8 @@ name: Package installation checks
 
 # Artifact validation only. Publishing requires a separate explicitly approved
 # workflow with a protected environment; this job has no registry credentials.
-# After the native platforms pass, the bundle job binds the exact sdist and the
-# allowlisted wheel to this commit and run as the release-bundle artifact, the
+# After the native platforms pass, the bundle job binds the exact sdist and all
+# three platform wheels to this commit and run as the release-bundle artifact, the
 # only bytes publish-pypi.yml accepts.
 on:
   workflow_dispatch:
@@ -104,7 +104,7 @@ jobs:
               'schema': 'eigentrail.linux-candidate.v1', 'candidate_only': True,
               'backend': 'inari-r-backport-sse2', 'cpu_floor': 'x86-64-v1',
               'publication': 'held',
-              'remaining': 'Actual baseline CPU and exact-artifact private scientific replay; manylinux build/library audit'}, indent=2))
+              'remaining': 'Native x86-64-v1 execution, independent endpoint controls, exact-wheel private scientific replay, and external shared-library inspection'}, indent=2))
           PY
           fi
       - name: Check package sources and build CLI
@@ -134,11 +134,24 @@ jobs:
           cargo package --locked --offline --no-verify -p eigentrail-core -p eigentrail-check
           mkdir -p artifacts/cargo
           cp "$CARGO_TARGET_DIR"/package/eigentrail-{core,check}-*.crate artifacts/cargo/
-      - name: Build Python wheel and locked source distribution
+      - name: Build Linux manylinux 2.28 wheel
+        if: matrix.os == 'ubuntu-24.04'
+        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
+        with:
+          command: build
+          working-directory: python
+          target: x86_64-unknown-linux-gnu
+          manylinux: 2_28
+          rust-toolchain: 1.99.0
+          maturin-version: v1.9.6
+          args: --release --locked --compatibility pypi --out ../artifacts/python --interpreter python3.14
+          docker-options: -e CARGO_BUILD_JOBS -e CARGO_INCREMENTAL -e RUSTFLAGS -e CFLAGS -e CXXFLAGS -e PKG_CFLAGS -e PKG_CXXFLAGS
+      - name: Build macOS wheel
+        if: matrix.os == 'macos-15'
         run: |
-          extra=()
-          if [[ "$RUNNER_OS" == Linux ]]; then extra+=(--compatibility linux); fi
-          (cd python && python -m maturin build --release --locked --out ../artifacts/python --interpreter python "${extra[@]}")
+          (cd python && python -m maturin build --release --locked --out ../artifacts/python --interpreter python)
+      - name: Build and stage the Python source distribution
+        run: |
           (cd python && python -m maturin sdist --out ../artifacts/raw)
           raw=(artifacts/raw/eigentrail-*.tar.gz)
           [[ ${#raw[@]} -eq 1 ]]
@@ -377,6 +390,21 @@ jobs:
             artifacts/windows/
             ${{ runner.temp }}/eigentrail-windows-rolling/
             ${{ runner.temp }}/eigentrail-windows-plots/
+      - name: Stage the tested Windows wheel for the release bundle
+        run: |
+          $wheels = @(Get-ChildItem artifacts\windows\*.whl)
+          if ($wheels.Count -ne 1) { throw 'Expected one tested Windows wheel' }
+          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\release-candidate" | Out-Null
+          Copy-Item $wheels[0].FullName "$env:RUNNER_TEMP\release-candidate\"
+          git rev-parse HEAD | Out-File "$env:RUNNER_TEMP\release-candidate\source-commit.txt" -NoNewline -Encoding ascii
+          git rev-parse 'HEAD^{tree}' | Out-File "$env:RUNNER_TEMP\release-candidate\source-tree.txt" -NoNewline -Encoding ascii
+      - name: Upload tested Windows wheel candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: candidate-windows-2022-x86_64
+          retention-days: 90
+          if-no-files-found: error
+          path: ${{ runner.temp }}/release-candidate/
 
   bundle:
     name: Release bundle

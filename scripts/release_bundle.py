@@ -1,8 +1,8 @@
 """Assemble and verify the immutable EigenTrail release bundle.
 
 `create` runs in release-validation.yml after every platform job has passed. It
-binds the exact staged sdist and the one allowlisted wheel to the source commit
-and the workflow run, and writes release-receipt.json and SHA256SUMS beside them.
+binds the exact staged sdist and each allowlisted platform wheel to the source
+commit and workflow run, and writes release-receipt.json and SHA256SUMS beside them.
 
 `verify` runs in publish-pypi.yml, in a job without PyPI credentials and from
 the protected publishing branch, with the candidate commit checked out as data
@@ -24,17 +24,19 @@ import tomllib
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-# v2: candidates are copied at build time. v1 receipts (commit 630be8f) copied
-# them after the smoke tests, so they are refused.
-SCHEMA = 'eigentrail.release-bundle.v2'
+# v3 binds macOS, manylinux and Windows wheels. Earlier bundles omit platforms.
+SCHEMA = 'eigentrail.release-bundle.v3'
 APPROVAL_SCHEMA = 'eigentrail.python-distribution.v1'  # What qualified_artifacts.py prints.
 WORKFLOW = '.github/workflows/release-validation.yml'
 RECEIPT = 'release-receipt.json'
 SUMS = 'SHA256SUMS'
-# Platform jobs in release-validation.yml and the wheel platform tag each builds.
-PLATFORMS = {'macos-15-arm64': 'macosx_14_0_arm64', 'ubuntu-24.04-x86_64': 'linux_x86_64'}
-WHEEL_PLATFORM = 'macos-15-arm64'       # PyPI rejects plain linux_x86_64 wheels.
-SDIST_PLATFORM = 'ubuntu-24.04-x86_64'  # Linux installs build from the sdist.
+# Platform jobs in release-validation.yml and the wheel tag each builds.
+PLATFORMS = {'macos-15-arm64': 'macosx_14_0_arm64',
+             'ubuntu-24.04-x86_64': 'manylinux_2_28_x86_64',
+             'windows-2022-x86_64': 'win_amd64'}
+WHEEL_PLATFORM = 'macos-15-arm64'
+SDIST_PLATFORMS = ('macos-15-arm64', 'ubuntu-24.04-x86_64')
+SDIST_PLATFORM = 'ubuntu-24.04-x86_64'
 PYTHON_TAG = 'cp314-cp314'
 SOURCE_FILES = ('source-commit.txt', 'source-tree.txt')
 HEX40 = re.compile(r'[0-9a-f]{40}')
@@ -76,7 +78,7 @@ def wheel_name(version, platform):
 def allowlist(version):
     """Published file name -> (kind, platform job that built and tested it)."""
     return {sdist_name(version): ('sdist', SDIST_PLATFORM),
-            wheel_name(version, WHEEL_PLATFORM): ('wheel', WHEEL_PLATFORM)}
+            **{wheel_name(version, platform): ('wheel', platform) for platform in PLATFORMS}}
 
 
 def project_version(root):
@@ -144,22 +146,24 @@ def check_bundle(bundle, *, repository, run_id, run_attempt, commit, tree, versi
     receipt = load_json(bundle / RECEIPT)
     facts = {'schema': SCHEMA, 'repository': repository, 'workflow': WORKFLOW, 'run_id': run_id,
              'run_attempt': run_attempt, 'commit': commit, 'tree': tree, 'version': version}
-    require(set(receipt) == set(facts) | {'qualification', 'artifacts'},
+    require(set(receipt) == set(facts) | {'ci_validation', 'artifacts'},
             f'Unexpected receipt fields: {sorted(receipt)}')
     for key, value in facts.items():
         # Compare types too: JSON true would otherwise equal run attempt 1.
         require(type(receipt[key]) is type(value) and receipt[key] == value,
                 f'Receipt {key} is {receipt[key]!r}, expected {value!r}')
-    qualification, artifacts = receipt['qualification'], receipt['artifacts']
-    require(isinstance(qualification, dict) and qualification.get('status') == 'passed'
-            and isinstance(qualification.get('tested'), dict) and set(qualification['tested']) == set(PLATFORMS),
-            'Receipt does not record a passed qualification on every platform')
+    validation, artifacts = receipt['ci_validation'], receipt['artifacts']
+    require(isinstance(validation, dict) and validation.get('status') == 'passed'
+            and isinstance(validation.get('tested'), dict) and set(validation['tested']) == set(PLATFORMS),
+            'Receipt does not record passed CI checks on every platform')
     for platform in PLATFORMS:
-        tested = qualification['tested'][platform]
-        expected = {sdist_name(version), wheel_name(version, platform)}
+        tested = validation['tested'][platform]
+        expected = {wheel_name(version, platform)}
+        if platform in SDIST_PLATFORMS:
+            expected.add(sdist_name(version))
         require(isinstance(tested, dict) and set(tested) == expected
                 and all(isinstance(value, str) and HEX64.fullmatch(value) for value in tested.values()),
-                f'Receipt qualification for {platform} does not list exactly {sorted(expected)}')
+                f'Receipt CI checks for {platform} do not list exactly {sorted(expected)}')
     require(isinstance(artifacts, dict) and set(artifacts) == set(allowed),
             f'Receipt artifacts {sorted(artifacts)} differ from the allowlist {sorted(allowed)}')
     sums = read_sums(bundle / SUMS)
@@ -168,19 +172,22 @@ def check_bundle(bundle, *, repository, run_id, run_attempt, commit, tree, versi
         entry, actual = artifacts[name], sha256(bundle / name)
         require(isinstance(entry, dict) and entry.get('kind') == kind and entry.get('platform') == platform,
                 f'Receipt misdescribes {name}')
-        require(entry.get('sha256') == sums[name] == actual == qualification['tested'][platform][name],
+        require(entry.get('sha256') == sums[name] == actual == validation['tested'][platform][name],
                 f'SHA-256 mismatch for {name}')
         require(type(entry.get('size')) is int and entry['size'] == (bundle / name).stat().st_size,
                 f'Size mismatch for {name}')
     require((bundle / SUMS).read_bytes() == sums_text(sums).encode('ascii'), f'{SUMS} is not in canonical form')
-    sdist, wheel = sdist_name(version), wheel_name(version, WHEEL_PLATFORM)
+    sdist = sdist_name(version)
     require(artifacts[sdist].get('payload_sha256') == payload_sha256(bundle / sdist), 'sdist payload mismatch')
-    check_wheel_tags(bundle / wheel, WHEEL_PLATFORM)
+    for platform in PLATFORMS:
+        check_wheel_tags(bundle / wheel_name(version, platform), platform)
     return {name: sums[name] for name in sorted(allowed)}
 
 
 def read_candidate(folder, platform, *, commit, tree, version):
-    expected = {sdist_name(version), wheel_name(version, platform), *SOURCE_FILES}
+    expected = {wheel_name(version, platform), *SOURCE_FILES}
+    if platform in SDIST_PLATFORMS:
+        expected.add(sdist_name(version))
     files = flat_files(folder)
     require(files == expected, f'{platform} candidate files {sorted(files)} differ from {sorted(expected)}')
     require((folder / 'source-commit.txt').read_text().strip() == commit, f'{platform} built a different source commit')
@@ -201,18 +208,19 @@ def create(candidates, out, *, repository, workflow_ref, ref, run_id, run_attemp
     tested = {platform: read_candidate(candidates / folder, platform, commit=commit, tree=tree, version=version)
               for folder, platform in folders.items()}
     sdist = sdist_name(version)
-    payloads = {platform: payload_sha256(candidates / ('candidate-' + platform) / sdist) for platform in PLATFORMS}
+    payloads = {platform: payload_sha256(candidates / ('candidate-' + platform) / sdist) for platform in SDIST_PLATFORMS}
     require(len(set(payloads.values())) == 1, f'Platforms tested different sdist contents: {payloads}')
     out.mkdir()
     artifacts = {}
     for name, (kind, platform) in allowlist(version).items():
-        shutil.copyfile(candidates / ('candidate-' + platform) / name, out / name)
+        source_platform = SDIST_PLATFORM if kind == 'sdist' else platform
+        shutil.copyfile(candidates / ('candidate-' + source_platform) / name, out / name)
         artifacts[name] = {'kind': kind, 'platform': platform, 'sha256': sha256(out / name),
                            'size': (out / name).stat().st_size}
     artifacts[sdist]['payload_sha256'] = payloads[SDIST_PLATFORM]
     receipt = {'schema': SCHEMA, 'repository': repository, 'workflow': WORKFLOW, 'run_id': run_id,
                'run_attempt': run_attempt, 'commit': commit, 'tree': tree, 'version': version,
-               'qualification': {'status': 'passed', 'tested': tested}, 'artifacts': artifacts}
+               'ci_validation': {'status': 'passed', 'tested': tested}, 'artifacts': artifacts}
     (out / RECEIPT).write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')
     (out / SUMS).write_text(sums_text({name: entry['sha256'] for name, entry in artifacts.items()}),
                             encoding='ascii')
@@ -343,9 +351,11 @@ def main():
         summary['release_inventory'] = inventory.splitlines()
         summary['validation_run_attempt'] = run['run_attempt']
         if args.github_output:
-            sdist, wheel = sdist_name(version), wheel_name(version, WHEEL_PLATFORM)
+            sdist = sdist_name(version)
+            wheels = sorted(name for name in hashes if name.endswith('.whl'))
             with args.github_output.open('a', encoding='ascii') as output:
-                output.write(f'sdist={sdist}\nsdist_sha256={hashes[sdist]}\nwheel={wheel}\nwheel_sha256={hashes[wheel]}\n'
+                output.write(f'sdist={sdist}\nsdist_sha256={hashes[sdist]}\nwheels={",".join(wheels)}\n'
+                             f'wheel_sha256s={",".join(hashes[name] for name in wheels)}\n'
                              f'release_inventory_sha256={inventory_sha256(inventory)}\n'
                              f'validation_run_attempt={run["run_attempt"]}\n')
     print(json.dumps(summary, indent=2))

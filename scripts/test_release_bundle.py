@@ -30,6 +30,11 @@ SHADOW = rb.WORKFLOW + '@alternate.yml'  # A different file whose name starts wi
 SDIST = rb.sdist_name(VERSION)
 WHEEL = rb.wheel_name(VERSION, rb.WHEEL_PLATFORM)
 LINUX_WHEEL = rb.wheel_name(VERSION, rb.SDIST_PLATFORM)
+WINDOWS_PLATFORM = 'windows-2022-x86_64'
+WINDOWS_WHEEL = rb.wheel_name(VERSION, WINDOWS_PLATFORM)
+MAC_TAG = 'cp314-cp314-macosx_14_0_arm64'
+LINUX_TAG = 'cp314-cp314-manylinux_2_28_x86_64'
+WINDOWS_TAG = 'cp314-cp314-win_amd64'
 UNIVERSAL2 = f'eigentrail-{VERSION}-cp314-cp314-macosx_14_0_universal2.whl'
 ARM64_TAG = 'cp314-cp314-macosx_14_0_arm64'
 R_SOURCE = f'eigentrail_{VERSION}.tar.gz'
@@ -93,8 +98,9 @@ class Fixture(unittest.TestCase):
             candidate = self.candidate(platform)
             candidate.mkdir(parents=True)
             write_wheel(candidate / rb.wheel_name(VERSION, platform), [f'{rb.PYTHON_TAG}-{tag}'])
-            # Same tar payload, different gzip bytes, as runners with different zlib builds give.
-            write_sdist(candidate / SDIST, level=9 if platform == rb.SDIST_PLATFORM else 1)
+            if platform in rb.SDIST_PLATFORMS:
+                # Same tar payload, different gzip bytes, as runners with different zlib builds give.
+                write_sdist(candidate / SDIST, level=9 if platform == rb.SDIST_PLATFORM else 1)
             (candidate / 'source-commit.txt').write_text(COMMIT + '\n')
             (candidate / 'source-tree.txt').write_text(TREE + '\n')
 
@@ -123,12 +129,13 @@ class CreateTests(Fixture):
         linux, mac = (self.candidate(p) / SDIST for p in (rb.SDIST_PLATFORM, rb.WHEEL_PLATFORM))
         self.assertNotEqual(linux.read_bytes(), mac.read_bytes())
         hashes = self.create()
-        self.assertEqual({p.name for p in self.bundle.iterdir()}, {SDIST, WHEEL, rb.RECEIPT, rb.SUMS})
+        self.assertEqual({p.name for p in self.bundle.iterdir()},
+                         {SDIST, WHEEL, LINUX_WHEEL, WINDOWS_WHEEL, rb.RECEIPT, rb.SUMS})
         self.assertEqual((self.bundle / SDIST).read_bytes(), linux.read_bytes())
         receipt = json.loads((self.bundle / rb.RECEIPT).read_text())
         self.assertEqual((receipt['commit'], receipt['tree'], receipt['run_id'], receipt['run_attempt']),
                          (COMMIT, TREE, RUN_ID, ATTEMPT))
-        self.assertIn(LINUX_WHEEL, receipt['qualification']['tested'][rb.SDIST_PLATFORM])
+        self.assertIn(LINUX_WHEEL, receipt['ci_validation']['tested'][rb.SDIST_PLATFORM])
         self.assertEqual(self.verify(), hashes)
 
     def test_rejects_wrong_source_commit_or_tree(self):
@@ -160,6 +167,13 @@ class CreateTests(Fixture):
                 shutil.rmtree(self.bundle, ignore_errors=True)  # A wrongly accepted case must not mask the next.
                 write_wheel(mac / WHEEL, tags, extra)
                 self.rejects(error, self.create)
+
+    def test_every_platform_wheel_must_have_its_exact_internal_tag(self):
+        for platform, tag in rb.PLATFORMS.items():
+            with self.subTest(platform=platform):
+                path = self.candidate(platform) / rb.wheel_name(VERSION, platform)
+                write_wheel(path, [f'{rb.PYTHON_TAG}-{tag}-extra'])
+                self.rejects('declares wheel tags', self.create)
 
     def test_rejects_missing_or_extra_platforms(self):
         shutil.rmtree(self.candidate(rb.SDIST_PLATFORM))
@@ -199,7 +213,7 @@ class VerifyTests(Fixture):
         """Make receipt and sums consistent with the file's current bytes, as a careful forger would."""
         receipt = self.receipt()
         entry = receipt['artifacts'].pop(name)
-        tested = receipt['qualification']['tested'][entry['platform']]
+        tested = receipt['ci_validation']['tested'][entry['platform']]
         del tested[name]
         if rename:
             (self.bundle / name).rename(self.bundle / rename)
@@ -225,23 +239,23 @@ class VerifyTests(Fixture):
             return change
 
         def drop(platform, name):
-            return lambda receipt: receipt['qualification']['tested'][platform].pop(name)
+            return lambda receipt: receipt['ci_validation']['tested'][platform].pop(name)
         cases = [('Receipt commit', edit(['commit'], OTHER)),
                  ('Receipt run_id', edit(['run_id'], RUN_ID + 1)),
                  ('Receipt run_attempt', edit(['run_attempt'], ATTEMPT + 1)),
                  ('Receipt run_attempt', edit(['run_attempt'], True)),  # JSON true == 1 in Python.
-                 ('qualification for', drop(rb.SDIST_PLATFORM, LINUX_WHEEL)),
-                 ('qualification for', drop(rb.WHEEL_PLATFORM, SDIST)),
-                 ('qualification for', edit(['qualification', 'tested', rb.WHEEL_PLATFORM, SDIST], 'unchecked')),
+                 ('CI checks for', drop(rb.SDIST_PLATFORM, LINUX_WHEEL)),
+                 ('CI checks for', drop(rb.WHEEL_PLATFORM, SDIST)),
+                 ('CI checks for', edit(['ci_validation', 'tested', rb.WHEEL_PLATFORM, SDIST], 'unchecked')),
                  ('Receipt workflow', edit(['workflow'], '.github/workflows/other.yml')),
-                 ('Receipt schema', edit(['schema'], 'eigentrail.release-bundle.v1')),  # Pre-snapshot receipts.
-                 ('passed qualification', edit(['qualification', 'status'], 'failed')),
-                 ('passed qualification', edit(['qualification', 'tested'], {rb.WHEEL_PLATFORM: {}})),
+                 ('Receipt schema', edit(['schema'], 'eigentrail.release-bundle.v2')),  # Two-platform bundles.
+                 ('passed CI checks', edit(['ci_validation', 'status'], 'failed')),
+                 ('passed CI checks', edit(['ci_validation', 'tested'], {rb.WHEEL_PLATFORM: {}})),
                  ('Unexpected receipt fields', edit(['note'], 'trust me')),
-                 ('Receipt artifacts', edit(['artifacts', LINUX_WHEEL], {'kind': 'wheel'})),
+                 ('Receipt artifacts', edit(['artifacts', 'unlisted.whl'], {'kind': 'wheel'})),
                  ('misdescribes', edit(['artifacts', WHEEL, 'platform'], rb.SDIST_PLATFORM)),
                  ('SHA-256 mismatch', edit(['artifacts', WHEEL, 'sha256'], '0' * 64)),
-                 ('SHA-256 mismatch', edit(['qualification', 'tested', rb.WHEEL_PLATFORM, WHEEL], '0' * 64)),
+                 ('SHA-256 mismatch', edit(['ci_validation', 'tested', rb.WHEEL_PLATFORM, WHEEL], '0' * 64)),
                  ('Size mismatch', edit(['artifacts', SDIST, 'size'], 1)),
                  ('payload mismatch', edit(['artifacts', SDIST, 'payload_sha256'], '0' * 64))]
         for pattern, change in cases:
@@ -285,7 +299,8 @@ class VerifyTests(Fixture):
         (self.bundle / WHEEL).unlink()
         self.rejects('Bundle files', self.verify)
         self.fresh()
-        shutil.copyfile(self.candidate(rb.SDIST_PLATFORM) / LINUX_WHEEL, self.bundle / LINUX_WHEEL)
+        shutil.copyfile(self.candidate(rb.SDIST_PLATFORM) / LINUX_WHEEL,
+                        self.bundle / f'eigentrail-{VERSION}-cp314-cp314-manylinux_2_28_aarch64.whl')
         self.rejects('Bundle files', self.verify)
         self.fresh()
         sums = (self.bundle / rb.SUMS).read_text()
@@ -368,7 +383,7 @@ class CommandLineFixture(Fixture):
         subprocess.run([sys.executable, '-I', self.script, 'create', *self.common, '--candidates', str(self.candidates),
                         '--out', str(self.bundle), '--workflow-ref', WORKFLOW_REF, '--ref', REF,
                         '--run-attempt', str(ATTEMPT)], check=True, capture_output=True)
-        return {name: rb.sha256(self.bundle / name) for name in (SDIST, WHEEL)}
+        return {name: rb.sha256(self.bundle / name) for name in (SDIST, WHEEL, LINUX_WHEEL, WINDOWS_WHEEL)}
 
     def verify_command(self, approved, dist, *extra):
         return subprocess.run([sys.executable, '-I', self.script, 'verify', *self.common, '--bundle', str(self.bundle),
@@ -388,9 +403,12 @@ class CommandLineTests(CommandLineFixture):
         self.assertEqual(result.returncode, 0, result.stderr)
         values = dict(line.split('=', 1) for line in output.read_text().splitlines())
         self.assertEqual(values, {'sdist': SDIST, 'sdist_sha256': hashes[SDIST],
-                                  'wheel': WHEEL, 'wheel_sha256': hashes[WHEEL], **self.release_outputs(),
+                                  'wheels': ','.join(sorted((WHEEL, LINUX_WHEEL, WINDOWS_WHEEL))),
+                                  'wheel_sha256s': ','.join(hashes[name] for name in sorted((WHEEL, LINUX_WHEEL, WINDOWS_WHEEL))),
+                                  **self.release_outputs(),
                                   'validation_run_attempt': str(ATTEMPT)})
-        self.assertEqual({p.name for p in (self.tmp / 'dist').iterdir()}, {SDIST, WHEEL})
+        self.assertEqual({p.name for p in (self.tmp / 'dist').iterdir()},
+                         {SDIST, WHEEL, LINUX_WHEEL, WINDOWS_WHEEL})
         # The version must come from --root (the candidate checkout), not this script's own checkout.
         self.set_version('0.2.0')
         failed = self.verify_command(approved, self.tmp / 'dist2')
@@ -454,7 +472,7 @@ class ReleaseApprovalTests(CommandLineFixture):
     def setUp(self):
         super().setUp()
         self.hashes = self.create_command()
-        for name in (SDIST, WHEEL):
+        for name in (SDIST, WHEEL, LINUX_WHEEL, WINDOWS_WHEEL):
             shutil.copyfile(self.bundle / name, self.release / name)
         (self.release / R_SOURCE).write_bytes(b'R source package')
 
@@ -462,15 +480,23 @@ class ReleaseApprovalTests(CommandLineFixture):
         """Write the private qualification receipt and checksums for the release's current files."""
         approved = {'qualification': 'passed', 'publication': 'approved', 'candidate_only': False,
                     'qualification_receipt_sha256': 'd' * 64}
-        target = {'os': 'macos', 'architecture': 'arm64', 'abi': 'cp314', 'minimum_cpu': 'arm64',
-                  'numerical_backend': 'inari-directed-v1'}
-        artifacts = {SDIST: dict(approved), WHEEL: dict(approved, wheel_tag=ARM64_TAG, target=target),
-                     R_SOURCE: {'qualification': 'passed'}}
+        targets = {
+            WHEEL: (MAC_TAG, {'os': 'macos', 'architecture': 'arm64', 'abi': 'cp314', 'minimum_cpu': 'arm64',
+                              'numerical_backend': 'inari-directed-v1'}),
+            LINUX_WHEEL: (LINUX_TAG, {'os': 'linux', 'architecture': 'x86_64', 'abi': 'cp314',
+                                      'minimum_cpu': 'x86-64-v1', 'numerical_backend': 'inari-r-backport-sse2'}),
+            WINDOWS_WHEEL: (WINDOWS_TAG, {'os': 'windows', 'architecture': 'x86_64', 'abi': 'cp314',
+                                          'minimum_cpu': 'haswell+os-avx', 'numerical_backend': 'inari-r-backport-avx-fma'}),
+        }
+        artifacts = {SDIST: dict(approved), R_SOURCE: {'qualification': 'passed'}}
+        for name, (tag, target) in targets.items():
+            artifacts[name] = dict(approved, wheel_tag=tag, target=target)
         for name, entry in artifacts.items():
             entry['sha256'] = rb.sha256(self.release / name)
         receipt = {'commit': COMMIT, 'tree': TREE, 'pypi_ready': True, 'qualification': {'status': 'passed'},
                    'artifacts': artifacts,
-                   'python_distribution': {'schema': rb.APPROVAL_SCHEMA, 'wheel_tags': [ARM64_TAG], 'sdist': SDIST}}
+                   'python_distribution': {'schema': rb.APPROVAL_SCHEMA,
+                                           'wheel_tags': [MAC_TAG, LINUX_TAG, WINDOWS_TAG], 'sdist': SDIST}}
         (self.release / 'release-receipt.json').write_text(json.dumps(receipt))
         (self.release / 'SHA256SUMS').write_text(''.join(f'{entry["sha256"]}  {name}\n'
                                                          for name, entry in artifacts.items()))
@@ -514,6 +540,17 @@ def workflow_inventory_block():
     return '\n'.join(line[indent:] for line in lines[start:end + 1]) + '\n'
 
 
+def workflow_bundle_publish_block():
+    """The publisher's post-approval copy, wheel allowlist and hash check."""
+    lines = PUBLISH_WORKFLOW.read_text().splitlines()
+    step = lines.index('      - name: Download the validation bundle and keep only the verified bytes')
+    start = next(i for i in range(step, len(lines)) if lines[i].strip().startswith('[[ "$VALIDATION_RUN_ID"'))
+    end = next(i for i in range(start, len(lines))
+               if '[[ "$(ls -A dist | LC_ALL=C sort)" == "$expected" ]]' in lines[i])
+    indent = len(lines[start]) - len(lines[start].lstrip())
+    return '\n'.join(line[indent:] for line in lines[start:end + 1]) + '\n'
+
+
 @unittest.skipUnless(shutil.which('bash') and shutil.which('sha256sum'),
                      'needs bash and GNU sha256sum, as on the publish runner')
 class PublishShellTests(unittest.TestCase):
@@ -549,6 +586,70 @@ class PublishShellTests(unittest.TestCase):
         (self.release / 'extra.txt').unlink()
         (self.release / 'Bravo.whl').unlink()
         self.assertNotEqual(self.run_block().returncode, 0)
+
+
+@unittest.skipUnless(shutil.which('bash') and shutil.which('sha256sum'),
+                     'needs bash and GNU sha256sum, as on the publish runner')
+class PublishWheelTests(unittest.TestCase):
+    """Execute the publisher's exact wheel/hash block against synthetic bundle files."""
+
+    def setUp(self):
+        folder = tempfile.TemporaryDirectory()
+        self.addCleanup(folder.cleanup)
+        self.tmp = Path(folder.name)
+        self.bundle = self.tmp / 'source-bundle'
+        self.bundle.mkdir()
+        self.names = sorted((SDIST, WHEEL, LINUX_WHEEL, WINDOWS_WHEEL))
+        for name in self.names:
+            (self.bundle / name).write_bytes(('artifact:' + name).encode())
+        self.hashes = {name: rb.sha256(self.bundle / name) for name in self.names}
+        self.bindir = self.tmp / 'bin'
+        self.bindir.mkdir()
+        gh = self.bindir / 'gh'
+        gh.write_text('''#!/bin/bash
+set -euo pipefail
+if [[ "$1" == api ]]; then printf '%s\\n' "$RUN_RECORD"; exit 0; fi
+if [[ "$1" == run && "$2" == download ]]; then
+  while (($#)); do if [[ "$1" == --dir ]]; then destination=$2; shift 2; else shift; fi; done
+  mkdir -p "$destination"
+  cp "$BUNDLE_SOURCE"/* "$destination/"
+  exit 0
+fi
+exit 90
+''')
+        gh.chmod(0o755)
+
+    def run_block(self, wheel_names=None, wheel_hashes=None):
+        wheel_names = wheel_names or [name for name in self.names if name.endswith('.whl')]
+        wheel_hashes = wheel_hashes or [self.hashes[name] for name in wheel_names]
+        runner = self.tmp / f'runner-{len(list(self.tmp.glob("runner-*")))}'
+        env = {
+            'PATH': str(self.bindir) + os.pathsep + os.environ['PATH'],
+            'RUNNER_TEMP': str(runner), 'GITHUB_REPOSITORY': REPO,
+            'VALIDATION_RUN_ID': str(RUN_ID), 'VALIDATION_RUN_ATTEMPT': str(ATTEMPT),
+            'EXPECTED_SHA': COMMIT, 'RUN_RECORD': f'completed success {ATTEMPT} {COMMIT}',
+            'SDIST': SDIST, 'SDIST_SHA256': self.hashes[SDIST],
+            'WHEELS': ','.join(wheel_names), 'WHEEL_SHA256S': ','.join(wheel_hashes),
+            'BUNDLE_SOURCE': str(self.bundle),
+        }
+        result = subprocess.run(['bash', '--noprofile', '--norc', '-euo', 'pipefail', '-c',
+                                 workflow_bundle_publish_block()], cwd=self.tmp, env=env,
+                                capture_output=True, text=True)
+        return result, runner / 'dist'
+
+    def test_publisher_stages_exact_wheels_for_paired_hashes(self):
+        wheels = [name for name in self.names if name.endswith('.whl')]
+        hashes = [self.hashes[name] for name in wheels]
+        result, dist = self.run_block(wheels[::-1], hashes[::-1])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual({path.name: rb.sha256(path) for path in dist.iterdir()}, self.hashes)
+
+    def test_publisher_refuses_swapped_hashes_and_unsupported_tags(self):
+        wheels = [name for name in self.names if name.endswith('.whl')]
+        hashes = [self.hashes[name] for name in wheels]
+        self.assertNotEqual(self.run_block(wheels, hashes[::-1])[0].returncode, 0)
+        unsupported = [name.replace('manylinux_2_28', 'manylinux_2_17') for name in wheels]
+        self.assertNotEqual(self.run_block(unsupported, hashes)[0].returncode, 0)
 
 
 # How both publish-pypi.yml jobs peel the release tag, after pointing tag_repo at their own clone.

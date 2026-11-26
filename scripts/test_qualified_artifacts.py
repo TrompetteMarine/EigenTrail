@@ -101,8 +101,10 @@ class SelectorTests(unittest.TestCase):
         with self.assertRaises(ValueError): self.selected()
 
     def test_internal_wheel_tags_are_checked_after_hashes(self):
-        wheel(self.root / WHEEL, 'cp313-cp313-macosx_14_0_arm64'); seal(self.root, self.receipt)
-        with self.assertRaises(ValueError): self.selected()
+        for tag in ('cp313-cp313-macosx_14_0_arm64', TAG + '\u00a0', '\u00a0' + TAG, TAG + '\u3000'):
+            with self.subTest(tag=tag):
+                wheel(self.root / WHEEL, tag); seal(self.root, self.receipt)
+                with self.assertRaises(ValueError): self.selected()
 
     def test_unqualified_candidate_and_tuple_tampering(self):
         changes = [('qualification', 'pending'), ('candidate_only', True), ('publication', 'held'),

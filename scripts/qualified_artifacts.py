@@ -69,7 +69,7 @@ def headers(text):
             continue
         key, separator, value = line.partition(':')
         require(separator, 'Malformed wheel metadata header')
-        result.setdefault(key.lower(), []).append(value.strip())
+        result.setdefault(key.lower(), []).append(value.strip(' \\t\\r\\n'))
     return result
 
 
@@ -139,7 +139,8 @@ def select(directory, project, commit, tree):
         require(set(target) == {'os', 'architecture', 'abi', 'minimum_cpu', 'numerical_backend'}
                 and target['os'] == os_name and target['architecture'] == architecture and target['abi'] == 'cp314',
                 'Wheel target tuple differs from tag')
-        require(all(isinstance(value, str) and value.strip() for value in target.values()), 'Incomplete target qualification tuple')
+        require(all(isinstance(value, str) and value.strip(' \\t\\r\\n') for value in target.values()),
+                'Incomplete target qualification tuple')
         require(not any(word in target['numerical_backend'].lower() for word in ('unknown', 'pending', 'unqualified', 'candidate')),
                 'Unqualified numerical backend')
         require(os_name != 'linux' or target['minimum_cpu'] == 'x86-64-v1', 'Generic PyPI Linux wheels require a qualified baseline CPU backend')
